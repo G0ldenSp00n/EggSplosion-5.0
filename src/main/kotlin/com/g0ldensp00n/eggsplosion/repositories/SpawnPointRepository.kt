@@ -13,7 +13,25 @@ public class SpawnPointRepository {
     gameMapToTeamSpawnPointMap.set(mapName, teamSpawnPointsMap)
   }
 
+  fun findSpawnPointByMapAndTeamNameAndPosition(mapName: String, teamName: String, x: Int, y: Int, z: Int): SpawnPoint? {
+    val spawnPoints: ArrayList<SpawnPoint>? = findSpawnPointsByMapAndTeamName(mapName, teamName)
+    var matchingSpawnPoint: SpawnPoint? = null
+    spawnPoints?.forEach { spawnPoint ->
+      if (spawnPoint.position.x.toInt() == x && spawnPoint.position.y.toInt() == y && spawnPoint.position.z.toInt() == z) {
+        matchingSpawnPoint = spawnPoint
+      }
+    }
+    return matchingSpawnPoint
+  }
+
   fun findSpawnPointsByMapAndTeamName(mapName: String, teamName: String): ArrayList<SpawnPoint>? {
     return gameMapToTeamSpawnPointMap.get(mapName)?.get(teamName)
+  }
+
+  fun removeSpawnPointFromTeam(mapName: String, teamName: String, spawnPoint: SpawnPoint) {
+    val spawnPoints: ArrayList<SpawnPoint>? = findSpawnPointsByMapAndTeamName(mapName, teamName)
+    spawnPoints?.removeAll {
+      it == spawnPoint
+    }
   }
 }
