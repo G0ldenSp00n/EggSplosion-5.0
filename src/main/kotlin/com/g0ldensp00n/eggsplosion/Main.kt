@@ -12,6 +12,7 @@ import com.g0ldensp00n.eggsplosion.commands.SavePlayerStateCommand
 import com.g0ldensp00n.eggsplosion.commands.LoadPlayerStateCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateSpawnPointCommand
 import com.g0ldensp00n.eggsplosion.commands.GivePlayerMapToolCommand
+import com.g0ldensp00n.eggsplosion.commands.RemoveSpawnPointCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateMapTeamCommand
 import com.g0ldensp00n.eggsplosion.repositories.GameMapRepository
 import com.g0ldensp00n.eggsplosion.repositories.PlayerStateRepository
@@ -37,12 +38,13 @@ class Main: JavaPlugin() {
   private val createSpawnPointCommand: CreateSpawnPointCommand = CreateSpawnPointCommand(gameMapRepository, spawnPointRepository, teamConfigRepository)
   private val createMapTeamCommand: CreateMapTeamCommand = CreateMapTeamCommand(gameMapRepository, teamConfigRepository)
   private val givePlayerMapToolCommand: GivePlayerMapToolCommand = GivePlayerMapToolCommand(gameMapRepository, teamConfigRepository)
+  private val removeSpawnPointCommand: RemoveSpawnPointCommand = RemoveSpawnPointCommand(spawnPointRepository)
 
   private val mapCommandHandler = MapCommandHandler(createGameMapCommand, editGameMapCommand, createMapTeamCommand, givePlayerMapToolCommand)
   private val playerJoinHandler = PlayerJoinHandler(editGameMapCommand)
   private val playerWorldSwitchHandler = PlayerWorldSwitchHandler(savePlayerStateCommand, loadPlayerStateCommand)
   private val playerUseMapToolHandler = PlayerUseMapToolHandler(createSpawnPointCommand)
-  private val playerEditSpawnHandler = PlayerEditSpawnHandler()
+  private val playerEditSpawnHandler = PlayerEditSpawnHandler(removeSpawnPointCommand)
 
   override fun onEnable() {
     getLogger().info("Enabled EggSplosion v5.0")
