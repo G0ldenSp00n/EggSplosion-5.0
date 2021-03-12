@@ -14,6 +14,7 @@ import com.g0ldensp00n.eggsplosion.commands.CreateSpawnPointCommand
 import com.g0ldensp00n.eggsplosion.commands.GivePlayerMapToolCommand
 import com.g0ldensp00n.eggsplosion.commands.RemoveSpawnPointCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateMapTeamCommand
+import com.g0ldensp00n.eggsplosion.commands.ShowMapSpawnPointsCommand
 import com.g0ldensp00n.eggsplosion.repositories.GameMapRepository
 import com.g0ldensp00n.eggsplosion.repositories.PlayerStateRepository
 import com.g0ldensp00n.eggsplosion.repositories.SpawnPointRepository
@@ -39,11 +40,12 @@ class Main: JavaPlugin() {
   private val createMapTeamCommand: CreateMapTeamCommand = CreateMapTeamCommand(gameMapRepository, teamConfigRepository)
   private val givePlayerMapToolCommand: GivePlayerMapToolCommand = GivePlayerMapToolCommand(gameMapRepository, teamConfigRepository)
   private val removeSpawnPointCommand: RemoveSpawnPointCommand = RemoveSpawnPointCommand(spawnPointRepository)
+  private val showMapSpawnPointsCommand: ShowMapSpawnPointsCommand = ShowMapSpawnPointsCommand(gameMapRepository, teamConfigRepository, spawnPointRepository, this)
 
   private val mapCommandHandler = MapCommandHandler(createGameMapCommand, editGameMapCommand, createMapTeamCommand, givePlayerMapToolCommand)
   private val playerJoinHandler = PlayerJoinHandler(editGameMapCommand)
   private val playerWorldSwitchHandler = PlayerWorldSwitchHandler(savePlayerStateCommand, loadPlayerStateCommand)
-  private val playerUseMapToolHandler = PlayerUseMapToolHandler(createSpawnPointCommand)
+  private val playerUseMapToolHandler = PlayerUseMapToolHandler(createSpawnPointCommand, showMapSpawnPointsCommand)
   private val playerEditSpawnHandler = PlayerEditSpawnHandler(removeSpawnPointCommand)
 
   override fun onEnable() {
@@ -52,6 +54,7 @@ class Main: JavaPlugin() {
     gameMapRepository.loadFromFile(pluginConfigFolderAbsolutePath)
     playerStateRepository.loadEditorsFromFile(gameMapRepository.gameMaps)
     teamConfigRepository.loadFromFile(gameMapRepository.gameMaps)
+    spawnPointRepository.loadFromFile(gameMapRepository.gameMaps)
 
     createSpawnPointCommand.register(this)
 
@@ -70,6 +73,7 @@ class Main: JavaPlugin() {
     }}
     playerStateRepository.saveEditorsToFile()
     teamConfigRepository.saveToFile()
+    spawnPointRepository.saveToFile()
     gameMapRepository.saveToFile(pluginConfigFolderAbsolutePath)
     getLogger().info("Disabled EggSplosion v5.0")
   }

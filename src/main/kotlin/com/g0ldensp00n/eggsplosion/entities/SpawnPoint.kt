@@ -69,6 +69,9 @@ public data class SpawnPoint(val position: Position) {
   }
 
   fun hide() {
+    scheduledHideTask?.let {
+      it.cancel()
+    }
     spawnDisplay?.let { armorStand ->
       armorStand.remove()
       spawnDisplay = null
