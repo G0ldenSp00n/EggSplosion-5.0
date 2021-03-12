@@ -7,11 +7,34 @@ import org.bukkit.entity.HumanEntity
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.World
+import org.bukkit.configuration.serialization.ConfigurationSerializable
 
-public data class Position(val x: Double, val y: Double, val z: Double, val pitch: Float, val yaw: Float) {
+public data class Position(val x: Double, val y: Double, val z: Double, val pitch: Float, val yaw: Float): ConfigurationSerializable {
+  companion object {
+    @JvmStatic
+    fun deserialize(serializedPosition: Map<String, Object>): Position {
+      serializedPosition.get("x")?.toString()?.toDouble()?.let { x ->
+        serializedPosition.get("y")?.toString()?.toDouble()?.let { y ->
+          serializedPosition.get("z")?.toString()?.toDouble()?.let { z ->
+            serializedPosition.get("pitch")?.toString()?.toFloat()?.let { pitch ->
+              serializedPosition.get("yaw")?.toString()?.toFloat()?.let { yaw ->
+                return Position(x, y, z, pitch, yaw)
+              }
+            }
+          }
+        }
+      }
+      throw IllegalArgumentException("Invalid Serialized Position passed to serialize position constructor")
+    }
+  }
+
   fun toLocation(world: World): Location {
     val location = Location(world, x, y, z, yaw, pitch)
     return location;
+  }
+
+  override fun serialize(): Map<String, Object> {
+    return mapOf("x" to x as Object, "y" to y as Object, "z" to z as Object, "pitch" to pitch as Object, "yaw" to yaw as Object);
   }
 }
 

@@ -23,7 +23,7 @@ public class TeamConfigRepository {
   fun saveToFile() {
     for ((mapName, teamConfigMap) in gameMapToTeamMap) {
       Bukkit.getLogger().info("[EggSplosion:ME] Saving Teams for Map " + mapName)
-      for ((teamName, teamConfig: TeamConfig) in teamConfigMap) {
+      for ((teamName, teamConfig) in teamConfigMap) {
         val teamConfigFile: File = File(Bukkit.getServer().getWorldContainer().getAbsolutePath(), mapName + "/teams/" + teamName + "/config.yaml")
         val teamConfigYaml = YamlConfiguration.loadConfiguration(teamConfigFile)
 
