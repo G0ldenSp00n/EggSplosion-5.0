@@ -5,5 +5,8 @@ version: 5.0
 api-version: 1.16
 commands:
   map:
-    descripton: Map Creation Commands
+    descripton: Map Commands
     usage: /map [edit|create]
+  weapon:
+    descripton: Weapon Commands
+    usage: /weapon [create]

@@ -53,7 +53,7 @@ public data class SpawnPoint(val position: Position) {
 
     gameMap.world?.let { world ->
       if (spawnDisplay == null) {
-        val entity: Entity = world.spawnEntity(position.toLocation(world), EntityType.ARMOR_STAND);
+        val entity: Entity = world.spawnEntity(position.toLocation(world, true), EntityType.ARMOR_STAND);
         entity.teleport(position.toLocation(world))
         entity.setMetadata("gameMap", FixedMetadataValue(plugin, gameMap.name))
         entity.setMetadata("team", FixedMetadataValue(plugin, team.name))

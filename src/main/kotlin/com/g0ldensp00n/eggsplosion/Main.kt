@@ -11,15 +11,17 @@ import com.g0ldensp00n.eggsplosion.commands.EditGameMapCommand
 import com.g0ldensp00n.eggsplosion.commands.SavePlayerStateCommand
 import com.g0ldensp00n.eggsplosion.commands.LoadPlayerStateCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateSpawnPointCommand
-import com.g0ldensp00n.eggsplosion.commands.GivePlayerMapToolCommand
+import com.g0ldensp00n.eggsplosion.commands.CreateMapToolCommand
 import com.g0ldensp00n.eggsplosion.commands.RemoveSpawnPointCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateMapTeamCommand
 import com.g0ldensp00n.eggsplosion.commands.ShowMapSpawnPointsCommand
+import com.g0ldensp00n.eggsplosion.commands.CreateWeaponCommand
 import com.g0ldensp00n.eggsplosion.repositories.GameMapRepository
 import com.g0ldensp00n.eggsplosion.repositories.PlayerStateRepository
 import com.g0ldensp00n.eggsplosion.repositories.SpawnPointRepository
 import com.g0ldensp00n.eggsplosion.repositories.TeamConfigRepository
 import com.g0ldensp00n.eggsplosion.handlers.MapCommandHandler
+import com.g0ldensp00n.eggsplosion.handlers.WeaponCommandHandler
 import com.g0ldensp00n.eggsplosion.handlers.PlayerJoinHandler
 import com.g0ldensp00n.eggsplosion.handlers.PlayerWorldSwitchHandler
 import com.g0ldensp00n.eggsplosion.handlers.PlayerUseMapToolHandler
@@ -38,11 +40,13 @@ class Main: JavaPlugin() {
   private val loadPlayerStateCommand: LoadPlayerStateCommand = LoadPlayerStateCommand(playerStateRepository)
   private val createSpawnPointCommand: CreateSpawnPointCommand = CreateSpawnPointCommand(gameMapRepository, spawnPointRepository, teamConfigRepository)
   private val createMapTeamCommand: CreateMapTeamCommand = CreateMapTeamCommand(gameMapRepository, teamConfigRepository)
-  private val givePlayerMapToolCommand: GivePlayerMapToolCommand = GivePlayerMapToolCommand(gameMapRepository, teamConfigRepository)
+  private val givePlayerMapToolCommand: CreateMapToolCommand = CreateMapToolCommand(gameMapRepository, teamConfigRepository)
   private val removeSpawnPointCommand: RemoveSpawnPointCommand = RemoveSpawnPointCommand(spawnPointRepository)
   private val showMapSpawnPointsCommand: ShowMapSpawnPointsCommand = ShowMapSpawnPointsCommand(gameMapRepository, teamConfigRepository, spawnPointRepository, this)
+  private val createWeaponCommand: CreateWeaponCommand = CreateWeaponCommand()
 
   private val mapCommandHandler = MapCommandHandler(createGameMapCommand, editGameMapCommand, createMapTeamCommand, givePlayerMapToolCommand)
+  private val weaponCommandHandler = WeaponCommandHandler(createWeaponCommand)
   private val playerJoinHandler = PlayerJoinHandler(editGameMapCommand)
   private val playerWorldSwitchHandler = PlayerWorldSwitchHandler(savePlayerStateCommand, loadPlayerStateCommand)
   private val playerUseMapToolHandler = PlayerUseMapToolHandler(createSpawnPointCommand, showMapSpawnPointsCommand)
@@ -64,13 +68,13 @@ class Main: JavaPlugin() {
     playerEditSpawnHandler.register(this)
 
     getCommand("map")?.setExecutor(mapCommandHandler)
+    getCommand("weapon")?.setExecutor(weaponCommandHandler)
   }
 
   override fun onDisable() {
-    Bukkit.getOnlinePlayers().forEach { player -> {
-      getLogger().info("Saving Player " + player.name + " State")
+    Bukkit.getOnlinePlayers().forEach { player -> 
       savePlayerStateCommand.execute(player)
-    }}
+    }
     playerStateRepository.saveEditorsToFile()
     teamConfigRepository.saveToFile()
     spawnPointRepository.saveToFile()

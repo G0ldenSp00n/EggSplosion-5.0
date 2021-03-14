@@ -8,15 +8,14 @@ import org.bukkit.entity.Player
 import com.g0ldensp00n.eggsplosion.commands.CreateGameMapCommand
 import com.g0ldensp00n.eggsplosion.commands.EditGameMapCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateMapTeamCommand
-import com.g0ldensp00n.eggsplosion.commands.GivePlayerMapToolCommand
+import com.g0ldensp00n.eggsplosion.commands.CreateMapToolCommand
 import com.g0ldensp00n.eggsplosion.commands.ToolFunction
 
-public class MapCommandHandler (val createGameMapCommand: CreateGameMapCommand, val editGameMapCommand: EditGameMapCommand, val createMapTeamCommand: CreateMapTeamCommand, val givePlayerMapToolCommand: GivePlayerMapToolCommand): CommandExecutor {
+public class MapCommandHandler (val createGameMapCommand: CreateGameMapCommand, val editGameMapCommand: EditGameMapCommand, val createMapTeamCommand: CreateMapTeamCommand, val givePlayerMapToolCommand: CreateMapToolCommand): CommandExecutor {
   override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
     if (label == "map") {
       when (args[0]) {
         "create" -> {
-          Bukkit.getLogger().info("" + args.size);
           if (args.size > 1) {
             createGameMapCommand.execute(args[1], args.getOrNull(2), args.getOrNull(3), args.getOrNull(4))
             return true

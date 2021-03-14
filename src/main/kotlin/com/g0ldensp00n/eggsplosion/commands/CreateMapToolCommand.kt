@@ -9,19 +9,19 @@ import org.bukkit.inventory.meta.LeatherArmorMeta
 import org.bukkit.Material
 import org.bukkit.entity.Player
 
-private data class GivePlayerMapToolCommandPrepareResponse (val gameMap: GameMap, val team: TeamConfig?)
+private data class CreateMapToolCommandPrepareResponse (val gameMap: GameMap, val team: TeamConfig?)
 
 public enum class ToolFunction {
   SPAWN_TOOL
 }
 
-public class GivePlayerMapToolCommand (val gameMapRepository: GameMapRepository, val teamConfigRepository: TeamConfigRepository){
-  private fun prepare(player: Player, mapName: String?, teamName: String): GivePlayerMapToolCommandPrepareResponse {
+public class CreateMapToolCommand (val gameMapRepository: GameMapRepository, val teamConfigRepository: TeamConfigRepository){
+  private fun prepare(player: Player, mapName: String?, teamName: String): CreateMapToolCommandPrepareResponse {
     val gameMap = gameMapRepository.findGameMapByName(mapName ?: "") ?: gameMapRepository.findGameMapByPlayer(player) ?: run {
       throw IllegalArgumentException("Supplied map does not exist")
     }
     val teamConfig = teamConfigRepository.findTeamsByMapNameAndTeamName(gameMap.name, teamName)
-    return GivePlayerMapToolCommandPrepareResponse(gameMap, teamConfig)
+    return CreateMapToolCommandPrepareResponse(gameMap, teamConfig)
   }
 
   companion object {
@@ -59,7 +59,7 @@ public class GivePlayerMapToolCommand (val gameMapRepository: GameMapRepository,
     try {
       val prepareResponse = prepare(player, mapName, teamName)
       prepareResponse.team?.let { teamConfig ->
-        val mapTool = GivePlayerMapToolCommand.run(prepareResponse.gameMap, teamConfig, toolFunction)
+        val mapTool = CreateMapToolCommand.run(prepareResponse.gameMap, teamConfig, toolFunction)
         mapTool?.let {
           persist(player, mapTool)
         }

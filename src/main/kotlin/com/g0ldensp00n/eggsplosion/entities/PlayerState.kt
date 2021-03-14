@@ -28,9 +28,13 @@ public data class Position(val x: Double, val y: Double, val z: Double, val pitc
     }
   }
 
-  fun toLocation(world: World): Location {
-    val location = Location(world, x, y, z, yaw, pitch)
-    return location;
+  fun toLocation(world: World, armorStandPosition: Boolean = false): Location {
+    if (armorStandPosition) {
+      val location = Location(world, x, y, z, yaw, pitch)
+      return location
+    }
+    val location = Location(world, x, y, z, pitch, yaw)
+    return location
   }
 
   override fun serialize(): Map<String, Object> {
