@@ -12,10 +12,10 @@ public class PlayerEditSpawnHandler(val removeSpawnPointsCommand: RemoveSpawnPoi
     val spawnLocation = entityDeathEvent.entity.location
     entityDeathEvent?.entity?.getMetadata("gameMap")?.let { gameMapMeta ->
       if (gameMapMeta.size > 0) {
-        gameMapMeta.get(0)?.asString()?.let { mapName ->
+        gameMapMeta.getOrNull(0)?.asString()?.let { mapName ->
           entityDeathEvent?.entity?.getMetadata("team")?.let { teamMeta ->
             if (teamMeta.size > 0) {
-              teamMeta?.get(0)?.asString()?.let { teamName ->
+              teamMeta?.getOrNull(0)?.asString()?.let { teamName ->
                 removeSpawnPointsCommand.execute(mapName, teamName, spawnLocation.blockX, spawnLocation.blockY, spawnLocation.blockZ)
               }
             }

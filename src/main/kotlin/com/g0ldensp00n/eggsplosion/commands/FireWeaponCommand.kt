@@ -25,6 +25,7 @@ public class FireWeaponCommand(val plugin: Main) {
           loc.world?.spawnEntity(loc, EntityType.EGG)?.let { entity ->
             if (entity is Egg) {
               entity.velocity = loc.direction.multiply(2)
+              entity.setMetadata("function", FixedMetadataValue(plugin, "weaponProjectile"))
               entity.setMetadata("explosionSize", FixedMetadataValue(plugin, weapon.explosionSize))
               if (weapon.fuse > 0) {
                 object : BukkitRunnable() {
