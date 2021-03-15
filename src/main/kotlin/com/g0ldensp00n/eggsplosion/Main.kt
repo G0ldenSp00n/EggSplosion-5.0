@@ -16,6 +16,7 @@ import com.g0ldensp00n.eggsplosion.commands.RemoveSpawnPointCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateMapTeamCommand
 import com.g0ldensp00n.eggsplosion.commands.ShowMapSpawnPointsCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateWeaponCommand
+import com.g0ldensp00n.eggsplosion.commands.FireWeaponCommand
 import com.g0ldensp00n.eggsplosion.repositories.GameMapRepository
 import com.g0ldensp00n.eggsplosion.repositories.PlayerStateRepository
 import com.g0ldensp00n.eggsplosion.repositories.SpawnPointRepository
@@ -26,6 +27,7 @@ import com.g0ldensp00n.eggsplosion.handlers.PlayerJoinHandler
 import com.g0ldensp00n.eggsplosion.handlers.PlayerWorldSwitchHandler
 import com.g0ldensp00n.eggsplosion.handlers.PlayerUseMapToolHandler
 import com.g0ldensp00n.eggsplosion.handlers.PlayerEditSpawnHandler
+import com.g0ldensp00n.eggsplosion.handlers.PlayerUseWeaponHandler
 
 class Main: JavaPlugin() {
   private val pluginConfigFolderAbsolutePath: String = getDataFolder().getAbsolutePath()
@@ -44,6 +46,7 @@ class Main: JavaPlugin() {
   private val removeSpawnPointCommand: RemoveSpawnPointCommand = RemoveSpawnPointCommand(spawnPointRepository)
   private val showMapSpawnPointsCommand: ShowMapSpawnPointsCommand = ShowMapSpawnPointsCommand(gameMapRepository, teamConfigRepository, spawnPointRepository, this)
   private val createWeaponCommand: CreateWeaponCommand = CreateWeaponCommand()
+  private val fireWeaponCommand: FireWeaponCommand = FireWeaponCommand(this)
 
   private val mapCommandHandler = MapCommandHandler(createGameMapCommand, editGameMapCommand, createMapTeamCommand, givePlayerMapToolCommand)
   private val weaponCommandHandler = WeaponCommandHandler(createWeaponCommand)
@@ -51,6 +54,7 @@ class Main: JavaPlugin() {
   private val playerWorldSwitchHandler = PlayerWorldSwitchHandler(savePlayerStateCommand, loadPlayerStateCommand)
   private val playerUseMapToolHandler = PlayerUseMapToolHandler(createSpawnPointCommand, showMapSpawnPointsCommand)
   private val playerEditSpawnHandler = PlayerEditSpawnHandler(removeSpawnPointCommand)
+  private val playerUseWeaponHandler = PlayerUseWeaponHandler(fireWeaponCommand)
 
   override fun onEnable() {
     getLogger().info("Enabled EggSplosion v5.0")
@@ -66,6 +70,7 @@ class Main: JavaPlugin() {
     playerWorldSwitchHandler.register(this)
     playerUseMapToolHandler.register(this)
     playerEditSpawnHandler.register(this)
+    playerUseWeaponHandler.register(this)
 
     getCommand("map")?.setExecutor(mapCommandHandler)
     getCommand("weapon")?.setExecutor(weaponCommandHandler)

@@ -1,5 +1,7 @@
 package com.g0ldensp00n.eggsplosion.services
 
+import org.bukkit.inventory.ItemStack
+
 public class Util() {
   companion object {
     @JvmStatic
@@ -11,6 +13,16 @@ public class Util() {
               return lorePair.getOrNull(1)
             }
           }
+        }
+      }
+      return null
+    }
+
+    @JvmStatic
+    fun getLoreValue(key: String, itemStack: ItemStack): String? {
+      itemStack.itemMeta?.let { itemMeta ->
+        itemMeta.lore?.let { lore ->
+          return Util.getLoreValue(key, lore)
         }
       }
       return null
