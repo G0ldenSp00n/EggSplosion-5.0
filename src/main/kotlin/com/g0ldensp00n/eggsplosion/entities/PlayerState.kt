@@ -26,6 +26,11 @@ public data class Position(val x: Double, val y: Double, val z: Double, val pitc
       }
       throw IllegalArgumentException("Invalid Serialized Position passed to serialize position constructor")
     }
+
+    @JvmStatic
+    fun fromLocation(location: Location): Position {
+      return Position(location.x, location.y, location.z, location.pitch, location.yaw)
+    }
   }
 
   fun toLocation(world: World, armorStandPosition: Boolean = false): Location {

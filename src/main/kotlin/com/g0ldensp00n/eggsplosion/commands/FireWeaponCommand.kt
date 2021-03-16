@@ -2,6 +2,7 @@ package com.g0ldensp00n.eggsplosion.commands
 
 import com.g0ldensp00n.eggsplosion.Main
 import com.g0ldensp00n.eggsplosion.entities.Weapon
+import com.g0ldensp00n.eggsplosion.entities.Position
 import org.bukkit.entity.Egg
 import org.bukkit.entity.Entity
 import org.bukkit.entity.EntityType
@@ -30,6 +31,11 @@ public class FireWeaponCommand(val plugin: Main) {
               if (weapon.fuse > 0) {
                 object : BukkitRunnable() {
                   override fun run() {
+                    entity.location?.let { location ->
+                      location.world?.let { world ->
+                        CreateExplosionCommand.run(Position.fromLocation(location), world, weapon.explosionSize, player)
+                      }
+                    }
                     entity.remove()
                   }
                 }.runTaskLater(plugin, (20 * weapon.fuse).toLong())
