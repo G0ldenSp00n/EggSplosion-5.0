@@ -18,6 +18,7 @@ import com.g0ldensp00n.eggsplosion.commands.ShowMapSpawnPointsCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateWeaponCommand
 import com.g0ldensp00n.eggsplosion.commands.FireWeaponCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateExplosionCommand
+import com.g0ldensp00n.eggsplosion.commands.LoadPaginatedMenuCommand
 import com.g0ldensp00n.eggsplosion.repositories.GameMapRepository
 import com.g0ldensp00n.eggsplosion.repositories.PlayerStateRepository
 import com.g0ldensp00n.eggsplosion.repositories.SpawnPointRepository
@@ -50,12 +51,13 @@ class Main: JavaPlugin() {
   private val createWeaponCommand: CreateWeaponCommand = CreateWeaponCommand()
   private val fireWeaponCommand: FireWeaponCommand = FireWeaponCommand(this)
   private val createExplosionCommand: CreateExplosionCommand = CreateExplosionCommand()
+  private val loadPaginatedMenuCommand: LoadPaginatedMenuCommand = LoadPaginatedMenuCommand()
 
   private val mapCommandHandler = MapCommandHandler(createGameMapCommand, editGameMapCommand, createMapTeamCommand, givePlayerMapToolCommand)
   private val weaponCommandHandler = WeaponCommandHandler(createWeaponCommand)
   private val playerJoinHandler = PlayerJoinHandler(editGameMapCommand)
   private val playerWorldSwitchHandler = PlayerWorldSwitchHandler(savePlayerStateCommand, loadPlayerStateCommand)
-  private val playerUseMapToolHandler = PlayerUseMapToolHandler(createSpawnPointCommand, showMapSpawnPointsCommand)
+  private val playerUseMapToolHandler = PlayerUseMapToolHandler(createSpawnPointCommand, showMapSpawnPointsCommand, loadPaginatedMenuCommand)
   private val playerEditSpawnHandler = PlayerEditSpawnHandler(removeSpawnPointCommand)
   private val playerUseWeaponHandler = PlayerUseWeaponHandler(fireWeaponCommand)
   private val projectileExplodeHandler = ProjectileExplodeHandler(createExplosionCommand)

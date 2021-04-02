@@ -49,9 +49,6 @@ public class FireWeaponCommand(val plugin: Main) {
     }
   }
 
-  private fun persists() {
-  }
-
   fun execute(player: Player, itemStack: ItemStack) {
     prepare(itemStack)?.let { weapon ->
       FireWeaponCommand.run(player, weapon, plugin)

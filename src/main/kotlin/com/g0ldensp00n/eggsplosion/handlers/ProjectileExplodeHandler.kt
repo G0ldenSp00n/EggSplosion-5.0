@@ -8,6 +8,7 @@ import org.bukkit.Bukkit
 
 public class ProjectileExplodeHandler (val createExplosionCommand: CreateExplosionCommand): ListenerHandler() {
   @EventHandler
+  public fun onProjectileHitEvent(projectileHitEvent: ProjectileHitEvent) {
     Bukkit.getLogger().info("entity death")
     projectileHitEvent?.entity?.getMetadata("function")?.let { functionMeta ->
       if (functionMeta.size > 0) {
