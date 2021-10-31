@@ -3,6 +3,7 @@ package com.g0ldensp00n.eggsplosion.handlers
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.Command
+import org.bukkit.command.TabCompleter
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import com.g0ldensp00n.eggsplosion.commands.CreateGameMapCommand
@@ -11,7 +12,7 @@ import com.g0ldensp00n.eggsplosion.commands.CreateMapTeamCommand
 import com.g0ldensp00n.eggsplosion.commands.CreateMapToolCommand
 import com.g0ldensp00n.eggsplosion.commands.ToolFunction
 
-public class MapCommandHandler (val createGameMapCommand: CreateGameMapCommand, val editGameMapCommand: EditGameMapCommand, val createMapTeamCommand: CreateMapTeamCommand, val givePlayerMapToolCommand: CreateMapToolCommand): CommandExecutor {
+public class MapCommandHandler (val createGameMapCommand: CreateGameMapCommand, val editGameMapCommand: EditGameMapCommand, val createMapTeamCommand: CreateMapTeamCommand, val givePlayerMapToolCommand: CreateMapToolCommand): CommandExecutor, TabCompleter {
   override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
     if (label == "map") {
       when (args[0]) {
@@ -59,5 +60,16 @@ public class MapCommandHandler (val createGameMapCommand: CreateGameMapCommand, 
     }
 
     return false
+  }
+
+  override fun onTabComplete(sender: CommandSender, command: Command, label: String, args:  Array<String>): List<String> {
+    if (label == "map") {
+      when(args.size){
+        0, 1 -> {
+          return listOf("create", "edit", "team", "tool")
+        }
+      }
+    }
+    return listOf("")
   }
 }

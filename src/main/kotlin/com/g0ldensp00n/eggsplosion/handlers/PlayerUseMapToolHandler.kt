@@ -44,7 +44,7 @@ public class PlayerUseMapToolHandler(val createSpawnPointCommand: CreateSpawnPoi
               itemStacks.add(itemStack)
             }
 
-            loadPaginatedMenuCommand.execute(itemStacks, inv, 0, playerInteractEvent.player
+            loadPaginatedMenuCommand.execute(itemStacks, inv, 0, playerInteractEvent.player)
           }
           else -> {}
         }

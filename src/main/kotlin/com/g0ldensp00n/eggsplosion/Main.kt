@@ -80,6 +80,7 @@ class Main: JavaPlugin() {
     projectileExplodeHandler.register(this)
 
     getCommand("map")?.setExecutor(mapCommandHandler)
+    getCommand("map")?.setTabCompleter(mapCommandHandler)
     getCommand("weapon")?.setExecutor(weaponCommandHandler)
   }
 
