@@ -1,8 +1,12 @@
-api-version: 1.13
+api-version: '1.13'
+name: EggSplosion
+version: '5.0'
+main: com.g0ldensp00n.eggsplosion.EggSplosion
+description: My first Bukkit plugin with Gradle
 commands:
-  lobby:
-    description: Join a lobby
-    usage: /lobby <join|create|list> <lobbyName>
-  map:
-    description: Create and Edit Maps
-    usage: /map <tools>
+    lobby:
+        description: Join a lobby
+        usage: /lobby <join|create|list> <lobbyName>
+    map:
+        description: Create and Edit Maps
+        usage: /map <tools>

@@ -48,7 +48,8 @@ public abstract class Lobby {
     this(plugin, mapManager, lobbyName, gameMode, gameMap, null);
   }
 
-  public Lobby(Plugin plugin, MapManager mapManager, String lobbyName, GameMode gameMode, GameMap gameMap, List<Player> playersInLobby) {
+  public Lobby(Plugin plugin, MapManager mapManager, String lobbyName, GameMode gameMode, GameMap gameMap,
+      List<Player> playersInLobby) {
     this(plugin, lobbyName);
     // Initialize Managers
     this.mapManager = mapManager;
@@ -62,29 +63,33 @@ public abstract class Lobby {
   }
 
   public abstract void equipPlayer(Player player);
+
   protected abstract void handlePlayerJoin(Player player);
+
   protected abstract void handlePlayerLeave(Player player);
+
   protected abstract void handleScoreManagerChange(Player player, ScoreManager scoreManager);
+
   protected abstract void handleMapChange(GameMap gameMap);
 
   public void applyMapEffects() {
-    new BukkitRunnable(){
-        @Override
-        public void run() {
-          if (getMap() != null && getPlayers() != null) {
-            for (Player player: getPlayers()) {
-                for(PotionEffect mapEffect: getMap().getMapEffects()) {
-                  player.addPotionEffect(mapEffect);
-                }
+    new BukkitRunnable() {
+      @Override
+      public void run() {
+        if (getMap() != null && getPlayers() != null) {
+          for (Player player : getPlayers()) {
+            for (PotionEffect mapEffect : getMap().getMapEffects()) {
+              player.addPotionEffect(mapEffect);
             }
           }
         }
-      }.runTaskTimer(this.plugin, 0, (long) 5 * 20);
+      }
+    }.runTaskTimer(this.plugin, 0, (long) 5 * 20);
   }
 
   public Boolean anyOnlinePlayersExcluding(Player excludedPlayer) {
     Boolean anyOnline = false;
-    for (Player player: getPlayers()) {
+    for (Player player : getPlayers()) {
       if (!player.equals(excludedPlayer)) {
         if (Bukkit.getServer().getOnlinePlayers().contains(player)) {
           anyOnline = true;
@@ -123,7 +128,7 @@ public abstract class Lobby {
   }
 
   public void removeAllPlayers() {
-    for (Player player: playersInLobby) {
+    for (Player player : playersInLobby) {
       handlePlayerLeave(player);
     }
     playersInLobby = new ArrayList<>();
@@ -187,24 +192,36 @@ public abstract class Lobby {
     return itemStack;
   }
 
-  private void equipDefaultInventory(Player player) {
+  protected void equipDefaultInventory(Player player) {
     ItemStack woodenHoe = new ItemStack(Material.WOODEN_HOE);
     ItemStack stoneHoe = new ItemStack(Material.STONE_HOE);
+    ItemStack copperHoe = new ItemStack(Material.COPPER_HOE);
     ItemStack ironHoe = new ItemStack(Material.IRON_HOE);
     ItemStack goldenHoe = new ItemStack(Material.GOLDEN_HOE);
     ItemStack diamondHoe = new ItemStack(Material.DIAMOND_HOE);
 
     player.getInventory().setItem(0, setUnbreakable(woodenHoe));
     player.getInventory().setItem(1, setUnbreakable(stoneHoe));
-    player.getInventory().setItem(2, setUnbreakable(ironHoe));
-    player.getInventory().setItem(3, setUnbreakable(goldenHoe));
-    player.getInventory().setItem(4, setUnbreakable(diamondHoe));
+    player.getInventory().setItem(2, setUnbreakable(copperHoe));
+    player.getInventory().setItem(3, setUnbreakable(ironHoe));
+    player.getInventory().setItem(4, setUnbreakable(goldenHoe));
+    player.getInventory().setItem(5, setUnbreakable(diamondHoe));
+  }
+
+  protected void equipLobbyMenuSelector(Player player) {
+    ItemStack lobby_selector_menu = new ItemStack(Material.EMERALD);
+
+    ItemMeta lobby_selector_menu_meta = lobby_selector_menu.getItemMeta();
+    lobby_selector_menu_meta.setItemName("Lobby Menu");
+    lobby_selector_menu.setItemMeta(lobby_selector_menu_meta);
+
+    player.getInventory().setItem(8, setUnbreakable(lobby_selector_menu));
   }
 
   protected void equipInventory(Player player) {
     if (getMap() != null) {
       Boolean equippedInventory = false;
-      for (ItemStack itemStack: getMap().getLoadout().getContents()) {
+      for (ItemStack itemStack : getMap().getLoadout().getContents()) {
         if (itemStack != null) {
           player.getInventory().setContents(getMap().getLoadout().getContents());
           equippedInventory = true;
@@ -278,7 +295,7 @@ public abstract class Lobby {
     }
 
     if (boots.getItemMeta() instanceof LeatherArmorMeta) {
-      LeatherArmorMeta leatherBootsMeta = (LeatherArmorMeta) boots.getItemMeta(); 
+      LeatherArmorMeta leatherBootsMeta = (LeatherArmorMeta) boots.getItemMeta();
       leatherBootsMeta.setColor(color);
       boots.setItemMeta(leatherBootsMeta);
     }
@@ -289,8 +306,8 @@ public abstract class Lobby {
     player.getInventory().setBoots(setUnbreakable(boots));
   }
 
-  public void broadcastMessageTypeMessage(ChatMessageType chatMessageType , String message) {
-    for(Player player: playersInLobby) {
+  public void broadcastMessageTypeMessage(ChatMessageType chatMessageType, String message) {
+    for (Player player : playersInLobby) {
       player.spigot().sendMessage(chatMessageType, new TextComponent(message));
     }
   }
@@ -311,7 +328,7 @@ public abstract class Lobby {
   }
 
   public void broadcastTitle(String title, String subTitle, int fadeIn, int stay, int fadeOut) {
-    for (Player player: playersInLobby) {
+    for (Player player : playersInLobby) {
       player.sendTitle(title, subTitle, fadeIn, stay, fadeOut);
     }
   }
@@ -323,7 +340,7 @@ public abstract class Lobby {
   }
 
   protected String gameModeToString(GameMode gameMode) {
-    switch(gameMode) {
+    switch (gameMode) {
       case TEAM_DEATH_MATCH:
         return "Team Death Match";
       case CAPTURE_THE_FLAG:
@@ -339,4 +356,3 @@ public abstract class Lobby {
     }
   }
 }
-

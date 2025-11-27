@@ -32,7 +32,7 @@ public void entityCollide(ProjectileHitEvent projectileHitEvent) {
           Location location = projectileHitEvent.getEntity().getLocation();
 
           world.createExplosion(location, explosionPower, false, true, (Entity) playerShooter);
-          world.spawnParticle(Particle.EXPLOSION_HUGE, location, 0);
+          world.spawnParticle(Particle.EXPLOSION, location, 0);
           world.playSound(location, Sound.ENTITY_GENERIC_EXPLODE, 3, 1);
         }
       }

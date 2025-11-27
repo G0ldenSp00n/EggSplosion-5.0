@@ -92,7 +92,7 @@ public abstract class GameLobby extends Lobby {
         if (team != null) {
           for(Player playerOnTeam : getPlayers()) {
             if (team.equals(scoreManager.getPlayerTeam(playerOnTeam))) {
-              Firework firework = (Firework) playerOnTeam.getWorld().spawnEntity(playerOnTeam.getLocation(), EntityType.FIREWORK);
+              Firework firework = (Firework) playerOnTeam.getWorld().spawnEntity(playerOnTeam.getLocation(), EntityType.FIREWORK_ROCKET);
               FireworkMeta fireworkMeta = firework.getFireworkMeta();
               FireworkEffect fireworkEffect = FireworkEffect.builder().withColor(Color.WHITE).build();
               fireworkMeta.addEffect(fireworkEffect);

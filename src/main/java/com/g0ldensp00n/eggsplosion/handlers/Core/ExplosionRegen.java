@@ -154,7 +154,7 @@ public class ExplosionRegen implements Listener {
                   } else { 
                     block.getLocation().getWorld().createExplosion(block.getLocation(), 2.8f);
                   }
-                  block.getLocation().getWorld().spawnParticle(Particle.EXPLOSION_HUGE, block.getLocation(), 0);
+                  block.getLocation().getWorld().spawnParticle(Particle.EXPLOSION, block.getLocation(), 0);
               }
         // Handle Non-Solid Blocks
           } else {

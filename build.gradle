@@ -1,40 +1,27 @@
 plugins {
-    id "ru.endlesscode.bukkitgradle" version "0.8.2"
+    id("ru.endlesscode.bukkitgradle") version "1.0.0"
 }
  
 // Project information
-group "com.g0ldensp00n"
+group "com.g0ldensp00n.eggsplosion"
 description "My first Bukkit plugin with Gradle"
-version "4.0"
+version "5.0"
 
 // Override default configurations
 bukkit {
     // Version of API (if you will not set this property, will be used latest available)
-    version = "1.16.5"
- 
-    // Attributes for plugin.yml
-    meta {
-        name = "EggSplosion"
-        description = "EggSplosion Game Mode"
-        main = "com.g0ldensp00n.eggsplosion.EggSplosion"
-        version = "4.0"
-        authors = ["G0ldenSp00n"]
-    }
+    apiVersion = "1.21.10"
 
-    run {
-      core = "spigot"
-      eula = true
-      debug = false
-      onlineMode = true
-    }
+    // Attributes for plugin.yml
 }
 
 repositories {
     spigot() // Adds spigot repo
+    mavenCentral()
 }
 
 // Let's add needed API to project
 dependencies {
-    compileOnly spigotApi()
+    compileOnly(spigotApi)
     // see section 'Dependencies' for more info
 }

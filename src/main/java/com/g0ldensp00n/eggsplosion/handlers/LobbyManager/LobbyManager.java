@@ -148,15 +148,20 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
           switch (args[0]) {
             case "create":
               if (lobbies.get(args[1]) == null) {
-                Lobby createdLobby = addLobby(10, args[1], mapManager.getMapByName("WAITING_ROOM"));
-                sender.sendMessage("[EggSplosion] Lobby " + args[1] + " created!");
-                if (sender instanceof Player) {
-                  Player playerCmdSender = (Player) sender;
-                  joinLobby(createdLobby, playerCmdSender);
+                GameMap waiting_room = mapManager.getMapByName("WAITING_ROOM");
+                if (waiting_room != null) {
+                  Lobby createdLobby = addLobby(10, args[1], waiting_room);
+                  sender.sendMessage("[EggSplosion] Lobby " + args[1] + " created!");
+                  if (sender instanceof Player) {
+                    Player playerCmdSender = (Player) sender;
+                    joinLobby(createdLobby, playerCmdSender);
+                  }
+                } else {
+                  sender.sendMessage("[EggSplosion] No waiting room found, create a WAITING_ROOM map before starting a lobby");
                 }
                 return true;
               } else {
-                sender.sendMessage("[EggSplosion] Lobby " + args[1] + " already exists, use /join lobby " + args[1]);
+                sender.sendMessage("[EggSplosion] Lobby " + args[1] + " already exists, use /lobby join " + args[1]);
               }
               break;
             case "join":

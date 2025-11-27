@@ -43,12 +43,14 @@ public class WaitingLobby extends Lobby {
 
   public void equipPlayer(Player player) {
     player.getInventory().clear();
-    equipInventory(player);
+    equipDefaultInventory(player);
+    equipLobbyMenuSelector(player);
   }
 
   protected void handlePlayerJoin(Player player) {
     if (getPlayers().size() >= maxPlayers) {
-      throw new Error("[EggSplosion] Lobby " + ChatColor.AQUA + getLobbyName() + ChatColor.RESET + " is full, please join a different lobby");
+      throw new Error("[EggSplosion] Lobby " + ChatColor.AQUA + getLobbyName() + ChatColor.RESET
+          + " is full, please join a different lobby");
     }
     // Player Ready Status
     playerReadyStatus.put(player, false);
@@ -112,7 +114,7 @@ public class WaitingLobby extends Lobby {
       Boolean allPlayersReady = allPlayersReady();
 
       if (allPlayersReady) {
-        new BukkitRunnable(){
+        new BukkitRunnable() {
           Integer countDown = 5;
 
           @Override
@@ -134,16 +136,20 @@ public class WaitingLobby extends Lobby {
               GameLobby gameLobby = null;
               switch (gameMode) {
                 case TEAM_DEATH_MATCH:
-                  gameLobby = (GameLobby) new GameLobby_TeamDeathMatch(plugin, mapManager, getLobbyName(), gameMap, playersToMove);
+                  gameLobby = (GameLobby) new GameLobby_TeamDeathMatch(plugin, mapManager, getLobbyName(), gameMap,
+                      playersToMove);
                   break;
                 case CAPTURE_THE_FLAG:
-                  gameLobby = (GameLobby) new GameLobby_CaptureTheFlag(plugin, mapManager, getLobbyName(), gameMap, playersToMove);
+                  gameLobby = (GameLobby) new GameLobby_CaptureTheFlag(plugin, mapManager, getLobbyName(), gameMap,
+                      playersToMove);
                   break;
                 case DEATH_MATCH:
-                  gameLobby = (GameLobby) new GameLobby_DeathMatch(plugin, mapManager, getLobbyName(), gameMap, playersToMove);
+                  gameLobby = (GameLobby) new GameLobby_DeathMatch(plugin, mapManager, getLobbyName(), gameMap,
+                      playersToMove);
                   break;
                 case CAPTURE_POINT:
-                  gameLobby = (GameLobby) new GameLobby_CapturePoint(plugin, mapManager, getLobbyName(), gameMap, playersToMove);
+                  gameLobby = (GameLobby) new GameLobby_CapturePoint(plugin, mapManager, getLobbyName(), gameMap,
+                      playersToMove);
                   break;
                 default:
                   broadcastMessage("Unsupported Gamemode Selected");
@@ -153,8 +159,9 @@ public class WaitingLobby extends Lobby {
                 LobbyManager.getInstance(plugin, mapManager).replaceLobby(getLobbyName(), gameLobby);
               }
               return;
-            } if (allPlayersReady()) {
-              broadcastTitle("Game Starting", ""+countDown--, 0, 21, 0);
+            }
+            if (allPlayersReady()) {
+              broadcastTitle("Game Starting", "" + countDown--, 0, 21, 0);
             }
           }
         }.runTaskTimer(this.plugin, 0, (long) 20);
@@ -165,13 +172,15 @@ public class WaitingLobby extends Lobby {
   public void registerGameModeVote(GameMode gameMode, Player player) {
     if (getPlayers().contains(player)) {
       if (gameModeVotes.get(player) == null) {
-        player.sendMessage("[EggSplosion] Vote Registered for Game Mode " + ChatColor.GREEN + gameModeToString(gameMode));
+        player
+            .sendMessage("[EggSplosion] Vote Registered for Game Mode " + ChatColor.GREEN + gameModeToString(gameMode));
         gameModeVotes.put(player, gameMode);
-      } else if (gameModeVotes.get(player) != gameMode){
+      } else if (gameModeVotes.get(player) != gameMode) {
         player.sendMessage("[EggSplosion] Vote Update to Game Mode " + ChatColor.GREEN + gameModeToString(gameMode));
         gameModeVotes.put(player, gameMode);
       } else {
-        player.sendMessage("[EggSplosion] Vote Already Registered for Game Mode " + ChatColor.GREEN + gameModeToString(gameMode));
+        player.sendMessage(
+            "[EggSplosion] Vote Already Registered for Game Mode " + ChatColor.GREEN + gameModeToString(gameMode));
       }
     }
   }
@@ -192,13 +201,13 @@ public class WaitingLobby extends Lobby {
 
   private GameMode tallyGameModeVote() {
     Map<GameMode, Integer> gameModeVoteTally = new Hashtable<GameMode, Integer>();
-    for(GameMode gameMode: GameMode.values()) {
+    for (GameMode gameMode : GameMode.values()) {
       if (gameMode != GameMode.LOBBY && gameMode != GameMode.WAITING) {
         gameModeVoteTally.put(gameMode, 0);
       }
     }
 
-    for(Player player : getPlayers()) {
+    for (Player player : getPlayers()) {
       GameMode gameMode = gameModeVotes.get(player);
       if (gameMode != null && gameModeVoteTally.get(gameMode) != null) {
         gameModeVoteTally.put(gameMode, gameModeVoteTally.get(gameMode) + 1);
@@ -206,7 +215,7 @@ public class WaitingLobby extends Lobby {
     }
 
     Integer largestInteger = 0;
-    for(GameMode gameMode: GameMode.values()) {
+    for (GameMode gameMode : GameMode.values()) {
       Integer voteTally = gameModeVoteTally.get(gameMode);
       if (voteTally != null && voteTally > largestInteger) {
         largestInteger = voteTally;
@@ -214,7 +223,7 @@ public class WaitingLobby extends Lobby {
     }
 
     List<GameMode> options = new ArrayList<>();
-    for(GameMode gameMode: GameMode.values()) {
+    for (GameMode gameMode : GameMode.values()) {
       Integer voteTally = gameModeVoteTally.get(gameMode);
       if (voteTally != null && voteTally == largestInteger) {
         options.add(gameMode);
@@ -227,13 +236,13 @@ public class WaitingLobby extends Lobby {
 
   private String tallyGameMapVote() {
     Map<String, Integer> mapVoteTally = new Hashtable<String, Integer>();
-    for(String mapName: mapManager.getMaps().keySet()) {
+    for (String mapName : mapManager.getMaps().keySet()) {
       if (!mapName.equalsIgnoreCase("WAITING_ROOM")) {
         mapVoteTally.put(mapName, 0);
       }
     }
 
-    for(Player player : getPlayers()) {
+    for (Player player : getPlayers()) {
       String mapName = mapVotes.get(player);
       if (mapName != null && mapVoteTally.get(mapName) != null) {
         mapVoteTally.put(mapName, mapVoteTally.get(mapName) + 1);
@@ -241,7 +250,7 @@ public class WaitingLobby extends Lobby {
     }
 
     Integer largestInteger = 0;
-    for(String mapName: mapManager.getMaps().keySet()) {
+    for (String mapName : mapManager.getMaps().keySet()) {
       Integer voteTally = mapVoteTally.get(mapName);
       if (voteTally != null && voteTally > largestInteger) {
         largestInteger = voteTally;
@@ -249,7 +258,7 @@ public class WaitingLobby extends Lobby {
     }
 
     List<String> options = new ArrayList<>();
-    for(String mapName: mapManager.getMaps().keySet()) {
+    for (String mapName : mapManager.getMaps().keySet()) {
       Integer voteTally = mapVoteTally.get(mapName);
       if (voteTally != null && voteTally == largestInteger) {
         options.add(mapName);
