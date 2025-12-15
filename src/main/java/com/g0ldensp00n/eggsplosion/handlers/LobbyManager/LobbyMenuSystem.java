@@ -37,14 +37,19 @@ import net.md_5.bungee.api.chat.TextComponent;
 public class LobbyMenuSystem implements Listener {
 
     private Map<Player, Inventory> Screen_Personal_lobbyMain;
+    private Inventory Screen_adminMainMenu;
     private Inventory Screen_gameModeSelect;
     private Inventory Screen_mapSelect;
+    private Inventory Screen_teamSelect;
     private ItemStack UI_Button_gameModeSelect;
     private ItemStack UI_Button_mapSelect;
+    private ItemStack UI_Button_teamSelect;
     private ItemStack UI_Button_ctfGameMode;
     private ItemStack UI_Button_tdmGameMode;
     private ItemStack UI_Button_cpGameMode;
     private ItemStack UI_Button_dmGameMode;
+    private ItemStack UI_Button_blueTeam;
+    private ItemStack UI_Button_redTeam;
     private LobbyManager lobbyManager;
     private MapManager mapManager;
 
@@ -72,8 +77,20 @@ public class LobbyMenuSystem implements Listener {
       Screen_gameModeSelect.setItem(14, UI_Button_tdmGameMode);
       Screen_gameModeSelect.setItem(22, UI_Button_dmGameMode);
 
+      // Admin Screen
+      Screen_adminMainMenu = Bukkit.getServer().createInventory(null, InventoryType.CHEST, "Admin Menu");
+
       // Map Select Screen
       Screen_mapSelect = Bukkit.getServer().createInventory(null, InventoryType.CHEST, "Map Select Menu");
+
+      //Team Select Screen
+      Screen_teamSelect = Bukkit.getServer().createInventory(null, InventoryType.CHEST, "Team Select Menu");
+
+      UI_Button_blueTeam = createMenuButton(Material.BLUE_BANNER, "Blue Team");
+      UI_Button_redTeam = createMenuButton(Material.RED_BANNER, "Red Team");
+
+      Screen_teamSelect.setItem(12, UI_Button_blueTeam);
+      Screen_teamSelect.setItem(14, UI_Button_redTeam);
     }
 
     private ItemStack createMenuButton(Material material, String displayName, List<String> lore) {
@@ -95,7 +112,30 @@ public class LobbyMenuSystem implements Listener {
     }
 
     private boolean isMenuInventory(Inventory inventory) {
-      return Screen_Personal_lobbyMain.containsValue(inventory) || inventory == Screen_gameModeSelect || inventory == Screen_mapSelect;
+      return Screen_Personal_lobbyMain.containsValue(inventory) || inventory == Screen_gameModeSelect || inventory == Screen_mapSelect || inventory == Screen_teamSelect;
+    }
+
+    private boolean setupPersonalMenu(Inventory lobbyToSetup, Player player) {
+      UI_Button_gameModeSelect = createMenuButton(Material.FIREWORK_ROCKET, "Game Mode Select");
+      UI_Button_mapSelect = createMenuButton(Material.MAP, "Map Select");
+      UI_Button_teamSelect = createMenuButton(Material.LEATHER_HELMET, "Team Select");
+      ItemStack UI_Button_ReadyUnready;
+      Lobby lobby = lobbyManager.getPlayersLobby(player);
+      if (lobby instanceof WaitingLobby) {
+        WaitingLobby waitingLobby = (WaitingLobby) lobby;
+        if (waitingLobby.isPlayerReady(player)) {
+          UI_Button_ReadyUnready = createMenuButton(Material.RED_STAINED_GLASS_PANE, ChatColor.RED + "Unready");
+        } else {
+          UI_Button_ReadyUnready = createMenuButton(Material.GREEN_STAINED_GLASS_PANE, ChatColor.GREEN + "Ready");
+        }
+
+        lobbyToSetup.setItem(12, UI_Button_gameModeSelect);
+        lobbyToSetup.setItem(13, UI_Button_teamSelect);
+        lobbyToSetup.setItem(14, UI_Button_mapSelect);
+        lobbyToSetup.setItem(22, UI_Button_ReadyUnready);
+        return true;
+      }
+      return false;
     }
 
     @EventHandler
@@ -104,33 +144,26 @@ public class LobbyMenuSystem implements Listener {
           if (playerInteractEvent.getItem() != null) {
             if (playerInteractEvent.getItem().getType().equals(Material.EMERALD)) {
               Player player = playerInteractEvent.getPlayer();
+              Lobby lobby = lobbyManager.getPlayersLobby(player);
 
-              if (!(lobbyManager.getPlayersLobby(player) instanceof MainLobby)) {
+              if (!(lobby instanceof MainLobby)) {
                 Inventory Screen_lobbyMain;
+
+                if (lobby.isAdmin(player)) {
+                  Screen_lobbyMain = Screen_adminMainMenu;
+                }
                 // Main Screen
-                if(Screen_Personal_lobbyMain.containsKey(player)) {
+                else if(Screen_Personal_lobbyMain.containsKey(player)) {
                   Screen_lobbyMain = Screen_Personal_lobbyMain.get(player);
                 } else {
                   Screen_lobbyMain = Bukkit.getServer().createInventory(null, InventoryType.CHEST, "Lobby Main Menu");
                   Screen_Personal_lobbyMain.put(player, Screen_lobbyMain);
                 }
 
-                UI_Button_gameModeSelect = createMenuButton(Material.FIREWORK_ROCKET, "Game Mode Select");
-                UI_Button_mapSelect = createMenuButton(Material.MAP, "Map Select");
-                ItemStack UI_Button_ReadyUnready;
-                Lobby playerLobby = lobbyManager.getPlayersLobby(player);
-                if (playerLobby instanceof WaitingLobby) {
-                  WaitingLobby waitingLobby = (WaitingLobby) playerLobby;
-                  if (waitingLobby.isPlayerReady(player)) {
-                    UI_Button_ReadyUnready = createMenuButton(Material.RED_STAINED_GLASS_PANE, ChatColor.RED + "Unready");
-                  } else {
-                    UI_Button_ReadyUnready = createMenuButton(Material.GREEN_STAINED_GLASS_PANE, ChatColor.GREEN + "Ready");
+                if (lobby instanceof WaitingLobby) {
+                  if (!lobby.isAdmin(player)) {
+                    setupPersonalMenu(Screen_lobbyMain, player);
                   }
-
-                  Screen_lobbyMain.setItem(12, UI_Button_gameModeSelect);
-                  Screen_lobbyMain.setItem(14, UI_Button_mapSelect);
-                  Screen_lobbyMain.setItem(22, UI_Button_ReadyUnready);
-
                   playerInteractEvent.getPlayer().openInventory(Screen_lobbyMain);
                 } else {
                   player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("Lobby Menu can only be opened in the waiting room"));
@@ -175,6 +208,8 @@ public class LobbyMenuSystem implements Listener {
           } else if (clickedItem.equals(UI_Button_mapSelect)) {
             loadMapsScreen();
             player.openInventory(Screen_mapSelect);
+          } else if (clickedItem.equals(UI_Button_teamSelect)) {
+            player.openInventory(Screen_teamSelect);
           } else if (clickedItem.equals(UI_Button_ctfGameMode)) {
             player.closeInventory();
             waitingLobby.registerGameModeVote(GameMode.CAPTURE_THE_FLAG, player);
@@ -187,6 +222,12 @@ public class LobbyMenuSystem implements Listener {
           } else if (clickedItem.equals(UI_Button_cpGameMode)) {
             player.closeInventory();
             waitingLobby.registerGameModeVote(GameMode.CAPTURE_POINT, player);
+          } else if (clickedItem.equals(UI_Button_blueTeam)) {
+            player.closeInventory();
+            waitingLobby.registerBlueTeamSelection(player);
+          } else if (clickedItem.equals(UI_Button_redTeam)) {
+            player.closeInventory();
+            waitingLobby.registerRedTeamSelection(player);
           } else if (inventoryClickEvent.getSlot() == 22) {
             waitingLobby.togglePlayerReady(player);
             ItemStack UI_Button_ReadyUnready;

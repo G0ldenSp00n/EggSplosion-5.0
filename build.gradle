@@ -4,13 +4,13 @@ plugins {
  
 // Project information
 group "com.g0ldensp00n.eggsplosion"
-description "My first Bukkit plugin with Gradle"
+description "EggSplosion 5.0 - Remastered"
 version "5.0"
 
 // Override default configurations
 bukkit {
     // Version of API (if you will not set this property, will be used latest available)
-    apiVersion = "1.21.10"
+    apiVersion = "1.21.11"
 
     // Attributes for plugin.yml
 }

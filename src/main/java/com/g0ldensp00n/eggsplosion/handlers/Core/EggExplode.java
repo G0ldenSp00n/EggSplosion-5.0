@@ -8,6 +8,8 @@ import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.WindCharge;
+import org.bukkit.entity.BreezeWindCharge;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
@@ -30,6 +32,20 @@ public void entityCollide(ProjectileHitEvent projectileHitEvent) {
           Player playerShooter = (Player) entityShooter;
           World world = projectileHitEvent.getEntity().getWorld();
           Location location = projectileHitEvent.getEntity().getLocation();
+
+          int charge_count = 0;
+          if (explosionPower <= 2.5) {
+            charge_count = 1;
+          } else if (explosionPower < 3) {
+            charge_count = 2;
+          } else {
+            charge_count = 3;
+          }
+
+          for (int i = 0; i < charge_count; i++) {
+            WindCharge wind_charge = (WindCharge) world.spawnEntity(location, EntityType.WIND_CHARGE);
+            wind_charge.explode();
+          }
 
           world.createExplosion(location, explosionPower, false, true, (Entity) playerShooter);
           world.spawnParticle(Particle.EXPLOSION, location, 0);

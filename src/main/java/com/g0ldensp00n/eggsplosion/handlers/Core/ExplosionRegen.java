@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.ExplosionResult;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
@@ -104,6 +105,8 @@ public class ExplosionRegen implements Listener {
 
     @EventHandler
     public void explosionRegeneration(EntityExplodeEvent event) {
+    ExplosionResult result = event.getExplosionResult();
+    if (result == ExplosionResult.DESTROY || result == ExplosionResult.DESTROY_WITH_DECAY) {
       event.setCancelled(true);
 
       final int delay = 20 * 10;
@@ -222,6 +225,7 @@ public class ExplosionRegen implements Listener {
           }
       }.runTaskTimer(this.plugin, delay, (long) 0.01);
     }
+  }
 
     public void repairAll() {
         Iterator<ExplosionRegen> blocksQueue = blockQueue.iterator();

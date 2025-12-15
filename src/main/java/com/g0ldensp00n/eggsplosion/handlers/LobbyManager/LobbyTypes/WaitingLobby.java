@@ -185,6 +185,18 @@ public class WaitingLobby extends Lobby {
     }
   }
 
+  public void registerBlueTeamSelection(Player player) {
+    if (getPlayers().contains(player)) {
+      player.sendMessage("[EggSplosion] Joined " + ChatColor.BLUE + "Blue Team");
+    }
+  }
+  
+  public void registerRedTeamSelection(Player player) {
+    if (getPlayers().contains(player)) {
+      player.sendMessage("[EggSplosion] Joined " + ChatColor.RED + "Red Team");
+    }
+  }
+
   public void registerMapVote(String mapName, Player player) {
     if (getPlayers().contains(player)) {
       if (mapVotes.get(player) == null) {

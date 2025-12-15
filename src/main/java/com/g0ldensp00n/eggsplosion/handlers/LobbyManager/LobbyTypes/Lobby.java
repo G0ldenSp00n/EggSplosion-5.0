@@ -33,6 +33,7 @@ public abstract class Lobby {
   private GameMode gameMode;
   private GameMap currentMap;
   private List<Player> playersInLobby;
+  private List<Player> lobbyAdmins;
   private String lobbyName;
 
   public Lobby(Plugin plugin, String lobbyName) {
@@ -42,6 +43,7 @@ public abstract class Lobby {
     // Initialize Map Data
     this.lobbyName = lobbyName;
     this.playersInLobby = new ArrayList<>();
+    this.lobbyAdmins = new ArrayList<>();
   }
 
   public Lobby(Plugin plugin, MapManager mapManager, String lobbyName, GameMode gameMode, GameMap gameMap) {
@@ -331,6 +333,14 @@ public abstract class Lobby {
     for (Player player : playersInLobby) {
       player.sendTitle(title, subTitle, fadeIn, stay, fadeOut);
     }
+  }
+
+  public boolean isAdmin(Player player) {
+    return lobbyAdmins.contains(player);
+  }
+
+  public void addAdmin(Player player) {
+    lobbyAdmins.add(player);
   }
 
   protected void configurePlayer(Player player) {
