@@ -1,27 +1,83 @@
 plugins {
-    id("ru.endlesscode.bukkitgradle") version "1.0.0"
+    id 'java'
+    // The "Run Paper" plugin handles server setup and running
+    id "xyz.jpenilla.run-paper" version "2.3.0"
 }
- 
-// Project information
-group "com.g0ldensp00n.eggsplosion"
-description "EggSplosion 5.0 - Remastered"
-version "5.0"
 
-// Override default configurations
-bukkit {
-    // Version of API (if you will not set this property, will be used latest available)
-    apiVersion = "1.21.11"
-
-    // Attributes for plugin.yml
-}
+group = 'com.g0ldensp00n.eggsplosion'
+version = '5.0'
 
 repositories {
-    spigot() // Adds spigot repo
     mavenCentral()
+    // The official Spigot repository
+    maven {
+        url = uri("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
+    }
+    // (Optional) PaperMC repository if you ever want to switch to the Paper API
+    maven {
+        url = uri("https://repo.papermc.io/repository/maven-public/")
+    }
 }
 
-// Let's add needed API to project
 dependencies {
-    compileOnly(spigotApi)
-    // see section 'Dependencies' for more info
+    // The Spigot API for 1.21.11
+    // "compileOnly" is used because the server provides the code at runtime
+    compileOnly("org.spigotmc:spigot-api:1.21.11-R0.1-SNAPSHOT")
 }
+
+// This task ensures the "version" in your plugin.yml is updated automatically
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+// Configure the run task
+tasks {
+    runServer {
+        // Set the Minecraft version you want to test on
+        minecraftVersion("1.21.11") 
+        jvmArgs(
+            "-XX:+AllowEnhancedClassRedefinition",
+            "-XX:HotswapAgent=fatjar",
+            "-javaagent:${project.rootDir}/hotswap-agent-2.0.1.jar=disablePlugin=Log4j2,disablePlugin=Proxy,autoHotswap=true",
+            "-DextraClasspath=${project.buildDir}/classes/java/main",
+            "--add-opens=java.base/java.net=ALL-UNNAMED",
+            "--add-opens=java.base/java.lang=ALL-UNNAMED",
+            "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+            "--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED"
+        )
+
+    }
+}
+
+// plugins {
+//     id("ru.endlesscode.bukkitgradle") version "1.0.0"
+// }
+//
+// // Project information
+// group "com.g0ldensp00n.eggsplosion"
+// description "EggSplosion 5.0 - Remastered"
+// version "5.0"
+//
+// // Override default configurations
+// bukkit {
+//     // Version of API (if you will not set this property, will be used latest available)
+//     apiVersion = "1.21.11"
+//
+//     // Attributes for plugin.yml
+// }
+//
+// repositories {
+//     spigot() // Adds spigot repo
+//     mavenCentral()
+// }
+//
+// // Let's add needed API to project
+// dependencies {
+//     compileOnly(spigotApi)
+//     // see section 'Dependencies' for more info
+// }

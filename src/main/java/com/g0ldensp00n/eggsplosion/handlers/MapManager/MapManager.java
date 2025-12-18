@@ -69,9 +69,9 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
 
   private List<Location> convertToLocationList(List<?> list) {
     List<Location> locationList = new ArrayList<>();
-    if (list != null) { 
+    if (list != null) {
       Iterator<?> listIterator = list.iterator();
-      while(listIterator.hasNext()) {
+      while (listIterator.hasNext()) {
         Object nextObject = listIterator.next();
         if (nextObject instanceof Location) {
           Location loc = (Location) nextObject;
@@ -83,13 +83,13 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
   }
 
   public Map<String, GameMap> getMaps() {
-    return  gameMaps;
+    return gameMaps;
   }
 
   private void loadMapsFromFiles() {
     File mapFolder = new File(pluginFolder, "map");
     if (mapFolder != null && mapFolder.listFiles() != null) {
-      for (File file: mapFolder.listFiles()) {
+      for (File file : mapFolder.listFiles()) {
         String fileName = file.getName().substring(0, file.getName().length() - 5);
         FileConfiguration mapConfigFile = YamlConfiguration.loadConfiguration(file);
         GameMap map = new GameMap(mapConfigFile.getLocation("cornerA"), mapConfigFile.getLocation("cornerB"));
@@ -100,7 +100,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         List<Location> soloSpawnLocations = convertToLocationList(soloSpawnItems);
         List<Location> sideASpawnLocations = convertToLocationList(sideASpawnItems);
         List<Location> sideBSpawnLocations = convertToLocationList(sideBSpawnItems);
-        map.loadMapFromFile(soloSpawnLocations, sideASpawnLocations, sideBSpawnLocations, mapConfigFile.getLocation("teamAFlagLocation"), mapConfigFile.getLocation("teamBFlagLocation"));
+        map.loadMapFromFile(soloSpawnLocations, sideASpawnLocations, sideBSpawnLocations,
+            mapConfigFile.getLocation("teamAFlagLocation"), mapConfigFile.getLocation("teamBFlagLocation"));
 
         map.setDoSideSwitch(mapConfigFile.getBoolean("doSideSwitch"));
         map.setDoFlagMessages(mapConfigFile.getBoolean("doFlagMessages"));
@@ -117,13 +118,13 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         List<String> capturePointNames = mapConfigFile.getStringList("capturePointNames");
         if (capturePointNames.size() > 0) {
           for (String capturePointName : capturePointNames) {
-            Location capturePointLocation = mapConfigFile.getLocation("capturePoint"+capturePointName);
+            Location capturePointLocation = mapConfigFile.getLocation("capturePoint" + capturePointName);
             if (capturePointLocation != null) {
               map.addCapturePoint(capturePointName, capturePointLocation);
             }
           }
         }
-        
+
         if (mapConfigFile.getInt("pointsToWinTDM") != 0) {
           map.setPointsToWinTDM(mapConfigFile.getInt("pointsToWinTDM"));
         }
@@ -137,10 +138,10 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         }
 
         List<?> mapEffects = mapConfigFile.getList("mapEffects");
-        
+
         if (mapEffects != null) {
           Iterator<?> mapEffectIterator = mapEffects.iterator();
-          while(mapEffectIterator.hasNext()) {
+          while (mapEffectIterator.hasNext()) {
             Object nextObject = mapEffectIterator.next();
             if (nextObject instanceof PotionEffect) {
               map.addMapEffect((PotionEffect) nextObject);
@@ -168,7 +169,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
 
         if (helmet != null || chestplate != null || leggings != null || boots != null) {
           Inventory mapEquipmentMenu = Bukkit.createInventory(null, InventoryType.HOPPER, "Player Equipment Menu");
-          
+
           disabledSlot = createMapTool(Material.RED_STAINED_GLASS_PANE, "Disabled");
           mapEquipmentMenu.setItem(4, disabledSlot);
           gameMapEquipment.put(fileName, mapEquipmentMenu);
@@ -204,7 +205,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
   }
 
   public void saveMapsToFiles() {
-    for (String mapName: gameMaps.keySet()) {
+    for (String mapName : gameMaps.keySet()) {
       if (mapName != null) {
         GameMap map = gameMaps.get(mapName);
 
@@ -228,7 +229,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         if (map.getMapIcon() != null) {
           mapConfigFile.set("mapIcon", createMapTool(map.getMapIcon(), "mapIcon"));
         }
-        
+
         mapConfigFile.set("doSideSwitch", map.getDoSideSwitch());
         mapConfigFile.set("doFlagMessages", map.getDoFlagMessages());
         mapConfigFile.set("pointsToWinCTF", map.getPointsToWinCTF());
@@ -269,7 +270,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         if (map.getLoadout() != null) {
           mapConfigFile.set("playerLoadout", map.getLoadout().getContents());
         }
-        
+
         if (map.getChestplate() != null) {
           mapConfigFile.set("chestplate", map.getChestplate());
         }
@@ -288,7 +289,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
           for (String capturePointName : capturePointNames) {
             Location capturePointLocation = map.getCapturePoint(capturePointName);
             if (capturePointLocation != null) {
-              mapConfigFile.set("capturePoint"+capturePointName, capturePointLocation);
+              mapConfigFile.set("capturePoint" + capturePointName, capturePointLocation);
             }
           }
         }
@@ -304,7 +305,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
 
   private ItemStack createMapTool(Material material, String displayName, List<String> lore) {
     List<String> formattedLore = new ArrayList<String>();
-    for(String loreLine: lore) {
+    for (String loreLine : lore) {
       formattedLore.add(ChatColor.RESET + loreLine);
     }
     ItemStack Map_Tool = new ItemStack(material);
@@ -326,9 +327,9 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     Lobby playerLobby = lobbyManager.getPlayersLobby(player);
     if (playerLobby != null && playerLobby != lobbyManager.getMainLobby()) {
       if (playerLobby.getMap() != null) {
-        if (! playerLobby.getMap().locationInMap(playerMoveEvent.getTo())) {
+        if (!playerLobby.getMap().locationInMap(playerMoveEvent.getTo())) {
           playerMoveEvent.setCancelled(true);
-        } 
+        }
       }
     }
   }
@@ -340,10 +341,10 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
 
     if (playerLobby != null && playerLobby != lobbyManager.getMainLobby()) {
       if (playerLobby.getMap() != null) {
-        if (! playerLobby.getMap().locationInMap(playerTeleportEvent.getTo())) {
+        if (!playerLobby.getMap().locationInMap(playerTeleportEvent.getTo())) {
           playerTeleportEvent.setCancelled(true);
           player.sendMessage("[EggSplosion] Teleport out of map cancelled");
-        } 
+        }
       }
     }
   }
@@ -380,7 +381,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               spawnPoint.setYaw(player.getLocation().getYaw());
               if (map.locationInMap(spawnPoint)) {
                 map.addSoloSpawnpoint(spawnPoint);
-                player.sendMessage("Added Solo Spawn Point (" + spawnPoint.getBlockX() + ", " + spawnPoint.getBlockY() + ", " + spawnPoint.getBlockZ() + ")");
+                player.sendMessage("Added Solo Spawn Point (" + spawnPoint.getBlockX() + ", " + spawnPoint.getBlockY()
+                    + ", " + spawnPoint.getBlockZ() + ")");
               } else {
                 player.sendMessage("Spawn Point must be in Map Boundary");
               }
@@ -396,7 +398,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               spawnPoint.setYaw(player.getLocation().getYaw());
               if (map.locationInMap(spawnPoint)) {
                 map.addSideASpawnPoint(spawnPoint);
-                player.sendMessage("Added" + ChatColor.RED + " Team A " + ChatColor.RESET + "Spawn Point (" + spawnPoint.getBlockX() + ", " + spawnPoint.getBlockY() + ", " + spawnPoint.getBlockZ() + ")");
+                player.sendMessage("Added" + ChatColor.RED + " Team A " + ChatColor.RESET + "Spawn Point ("
+                    + spawnPoint.getBlockX() + ", " + spawnPoint.getBlockY() + ", " + spawnPoint.getBlockZ() + ")");
               } else {
                 player.sendMessage("Spawn Point must be in Map Boundary");
               }
@@ -412,7 +415,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               spawnPoint.setYaw(player.getLocation().getYaw());
               if (map.locationInMap(spawnPoint)) {
                 map.addSideBSpawnPoint(spawnPoint);
-                player.sendMessage("Added" + ChatColor.BLUE + " Team B " + ChatColor.RESET + "Spawn Point (" + spawnPoint.getBlockX() + ", " + spawnPoint.getBlockY() + ", " + spawnPoint.getBlockZ() + ")");
+                player.sendMessage("Added" + ChatColor.BLUE + " Team B " + ChatColor.RESET + "Spawn Point ("
+                    + spawnPoint.getBlockX() + ", " + spawnPoint.getBlockY() + ", " + spawnPoint.getBlockZ() + ")");
               } else {
                 player.sendMessage("Spawn Point must be in Map Boundary");
               }
@@ -427,7 +431,9 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               Location flagLocation = playerInteractEvent.getClickedBlock().getLocation();
               if (map.locationInMap(flagLocation)) {
                 map.setSideAFlagLocation(flagLocation);
-                player.sendMessage("Set" + ChatColor.RED + " Team A " + ChatColor.RESET + "Flag Location (" + flagLocation.getBlockX() + ", " + flagLocation.getBlockY() + ", " + flagLocation.getBlockZ() + ")");
+                player.sendMessage(
+                    "Set" + ChatColor.RED + " Team A " + ChatColor.RESET + "Flag Location (" + flagLocation.getBlockX()
+                        + ", " + flagLocation.getBlockY() + ", " + flagLocation.getBlockZ() + ")");
               } else {
                 player.sendMessage("Flag Location must be in Map Boundary");
               }
@@ -442,7 +448,9 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               Location flagLocation = playerInteractEvent.getClickedBlock().getLocation();
               if (map.locationInMap(flagLocation)) {
                 map.setSideBFlagLocation(flagLocation);
-                player.sendMessage("Set" + ChatColor.BLUE + " Team B " + ChatColor.RESET + "Flag Location (" + flagLocation.getBlockX() + ", " + flagLocation.getBlockY() + ", " + flagLocation.getBlockZ() + ")");
+                player.sendMessage(
+                    "Set" + ChatColor.BLUE + " Team B " + ChatColor.RESET + "Flag Location (" + flagLocation.getBlockX()
+                        + ", " + flagLocation.getBlockY() + ", " + flagLocation.getBlockZ() + ")");
               } else {
                 player.sendMessage("Flag Location must be in Map Boundary");
               }
@@ -471,7 +479,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
   public void playerCloseEvent(InventoryCloseEvent inventoryCloseEvent) {
     if (inventoryCloseEvent.getView().getTitle().equals("Player Equipment Menu")) {
       String mapName = null;
-      for(Entry<String, Inventory> entry : gameMapEquipment.entrySet()) {
+      for (Entry<String, Inventory> entry : gameMapEquipment.entrySet()) {
         if (entry.getValue().equals(inventoryCloseEvent.getInventory())) {
           mapName = entry.getKey();
         }
@@ -495,6 +503,19 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     if (commandLabel.equalsIgnoreCase("map")) {
       if (args.length > 0) {
         switch (args[0]) {
+          case "locate":
+            if (args.length > 1) {
+              if (sender instanceof Player && gameMaps.get(args[1]) != null) {
+                Player player = (Player) sender;
+                Location to_teleport = gameMaps.get(args[1]).getSpawnPoint();
+                if (to_teleport != null) {
+                  player.teleport(to_teleport);
+                } else {
+                  to_teleport = gameMaps.get(args[1]).getCornerA();
+                  player.teleport(to_teleport);
+                }
+              }
+            }
           case "tools":
             if (args.length > 1) {
               if (sender instanceof Player && gameMaps.get(args[1]) != null) {
@@ -502,17 +523,18 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                 player.getInventory().clear();
 
                 List<String> lore = new ArrayList<>();
-                lore.add("Map: "+args[1]);
+                lore.add("Map: " + args[1]);
 
                 ItemStack Map_Tool_spawnPointsSolo = createMapTool(Material.IRON_AXE, "Spawn Point Tool - Solo", lore);
                 player.getInventory().addItem(Map_Tool_spawnPointsSolo);
 
-                ItemStack Map_Tool_spawnPointsTeamA = createMapTool(Material.GOLDEN_AXE, "Spawn Point Tool - Team A", lore);
-                ItemStack Map_Tool_spawnPointsTeamB = createMapTool(Material.DIAMOND_AXE, "Spawn Point Tool - Team B", lore);
+                ItemStack Map_Tool_spawnPointsTeamA = createMapTool(Material.GOLDEN_AXE, "Spawn Point Tool - Team A",
+                    lore);
+                ItemStack Map_Tool_spawnPointsTeamB = createMapTool(Material.DIAMOND_AXE, "Spawn Point Tool - Team B",
+                    lore);
 
                 ItemStack Map_Tool_flagSpawnTeamA = createMapTool(Material.GOLDEN_SHOVEL, "Flag Spawn - Team A", lore);
                 ItemStack Map_Tool_flagSpawnTeamB = createMapTool(Material.DIAMOND_SHOVEL, "Flag Spawn - Team B", lore);
-
 
                 player.getInventory().setItem(2, Map_Tool_spawnPointsTeamA);
                 player.getInventory().setItem(3, Map_Tool_spawnPointsTeamB);
@@ -530,7 +552,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                 Map_Tool_boundary = createMapTool(Material.WOODEN_SHOVEL, "Boundary Tool");
                 player.getInventory().addItem(Map_Tool_boundary);
 
-                player.sendMessage("[EggSplosion] Select the boudarys of the map by right clicking the shovel, then run the command /map create <mapName>");
+                player.sendMessage(
+                    "[EggSplosion] Select the boudarys of the map by right clicking the shovel, then run the command /map create <mapName>");
                 return true;
               }
             }
@@ -541,7 +564,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                 Player player = (Player) sender;
                 if (boundaryToolTracker.get(player) != null && boundaryToolTracker.get(player).size() == 2) {
                   player.sendMessage("Map " + ChatColor.GRAY + args[1] + ChatColor.RESET + " created");
-                  GameMap map = new GameMap(boundaryToolTracker.get(player).get(0), boundaryToolTracker.get(player).get(1));
+                  GameMap map = new GameMap(boundaryToolTracker.get(player).get(0),
+                      boundaryToolTracker.get(player).get(1));
                   gameMaps.put(args[1], map);
                   boundaryToolTracker.remove(player);
 
@@ -561,7 +585,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                   mapEquipmentMenu = gameMapEquipment.get(args[1]);
                 } else {
                   mapEquipmentMenu = Bukkit.createInventory(null, InventoryType.HOPPER, "Player Equipment Menu");
-                  
+
                   disabledSlot = createMapTool(Material.RED_STAINED_GLASS_PANE, "Disabled");
                   mapEquipmentMenu.setItem(4, disabledSlot);
                   gameMapEquipment.put(args[1], mapEquipmentMenu);
@@ -592,40 +616,52 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                 if (args.length == 3) {
                   switch (args[2]) {
                     case "doSideSwitch":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule doSideSwitch is currently set to: " + map.getDoSideSwitch());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule doSideSwitch is currently set to: " + map.getDoSideSwitch());
                       break;
                     case "doFlagMessages":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule doFlagMessages is currently set to: " + map.getDoFlagMessages());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule doFlagMessages is currently set to: " + map.getDoFlagMessages());
                       break;
                     case "allowItemDrop":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowItemDrop is currently set to: " + map.getAllowItemDrop());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule allowItemDrop is currently set to: " + map.getAllowItemDrop());
                       break;
                     case "allowItemPickup":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowItemPickup is currently set to: " + map.getAllowItemPickup());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule allowItemPickup is currently set to: " + map.getAllowItemPickup());
                       break;
                     case "pointsToWinCTF":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule pointsToWinCTF is currently set to: " + map.getPointsToWinCTF());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule pointsToWinCTF is currently set to: " + map.getPointsToWinCTF());
                       break;
                     case "pointsToWinTDM":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule pointsToWinTDM is currently set to: " + map.getPointsToWinTDM());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule pointsToWinTDM is currently set to: " + map.getPointsToWinTDM());
                       break;
                     case "pointsToWinDM":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule pointsToWinDM is currently set to: " + map.getPointsToWinDM());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule pointsToWinDM is currently set to: " + map.getPointsToWinDM());
                       break;
                     case "allowHelmetRemoval":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowHelmetRemoval is currently set to: " + map.getAllowHelmetRemoval());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule allowHelmetRemoval is currently set to: " + map.getAllowHelmetRemoval());
                       break;
                     case "allowChestplateRemoval":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowChestplateRemoval is currently set to: " + map.getAllowChestplateRemoval());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule allowChestplateRemoval is currently set to: " + map.getAllowChestplateRemoval());
                       break;
                     case "allowLeggingRemoval":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowLeggingRemoval is currently set to: " + map.getAllowLeggingRemoval());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule allowLeggingRemoval is currently set to: " + map.getAllowLeggingRemoval());
                       break;
                     case "allowBootRemoval":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowBootRemoval is currently set to: " + map.getAllowBootRemoval());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule allowBootRemoval is currently set to: " + map.getAllowBootRemoval());
                       break;
                     case "flagSpawnDelay":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule flagSpawnDelay is currently set to: " + map.getFlagSpawnDelay());
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule flagSpawnDelay is currently set to: " + map.getFlagSpawnDelay());
                       break;
                     default:
                       return false;
@@ -636,88 +672,104 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                     case "doSideSwitch":
                       if (args[3].equalsIgnoreCase("true")) {
                         map.setDoSideSwitch(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule doSideSwitch is now set to: true");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule doSideSwitch is now set to: true");
                         return true;
                       } else if (args[3].equalsIgnoreCase("false")) {
                         map.setDoSideSwitch(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule doSideSwitch is now set to: false");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule doSideSwitch is now set to: false");
                         return true;
                       }
                       break;
                     case "doFlagMessages":
                       if (args[3].equalsIgnoreCase("true")) {
                         map.setDoFlagMessages(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule doFlagMessages is now set to: true");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule doFlagMessages is now set to: true");
                         return true;
                       } else if (args[3].equalsIgnoreCase("false")) {
                         map.setDoFlagMessages(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule doFlagMessages is now set to: false");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule doFlagMessages is now set to: false");
                         return true;
                       }
                       break;
                     case "allowItemDrop":
                       if (args[3].equalsIgnoreCase("true")) {
                         map.setAllowItemDrop(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowItemDrop is now set to: true");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowItemDrop is now set to: true");
                         return true;
                       } else if (args[3].equalsIgnoreCase("false")) {
                         map.setAllowItemDrop(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowItemDrop is now set to: false");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowItemDrop is now set to: false");
                         return true;
                       }
                       break;
                     case "allowItemPickup":
                       if (args[3].equalsIgnoreCase("true")) {
                         map.setAllowItemPickup(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowItemPickup is now set to: true");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowItemPickup is now set to: true");
                         return true;
                       } else if (args[3].equalsIgnoreCase("false")) {
                         map.setAllowItemPickup(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowItemPickup is now set to: false");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowItemPickup is now set to: false");
                         return true;
                       }
                       break;
                     case "allowHelmetRemoval":
                       if (args[3].equalsIgnoreCase("true")) {
                         map.setAllowHelmetRemoval(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowHelmetRemoval is now set to: true");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowHelmetRemoval is now set to: true");
                         return true;
                       } else if (args[3].equalsIgnoreCase("false")) {
                         map.setAllowHelmetRemoval(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowHelmetRemoval is now set to: false");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowHelmetRemoval is now set to: false");
                         return true;
                       }
                       break;
                     case "allowChestplateRemoval":
                       if (args[3].equalsIgnoreCase("true")) {
                         map.setAllowChestplateRemoval(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowChestplateRemoval is now set to: true");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowChestplateRemoval is now set to: true");
                         return true;
                       } else if (args[3].equalsIgnoreCase("false")) {
                         map.setAllowHelmetRemoval(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowChestplateRemoval is now set to: false");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowChestplateRemoval is now set to: false");
                         return true;
                       }
                       break;
                     case "allowLeggingRemoval":
                       if (args[3].equalsIgnoreCase("true")) {
                         map.setAllowLeggingRemoval(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowLeggingRemoval is now set to: true");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowLeggingRemoval is now set to: true");
                         return true;
                       } else if (args[3].equalsIgnoreCase("false")) {
                         map.setAllowLeggingRemoval(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowLeggingRemoval is now set to: false");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowLeggingRemoval is now set to: false");
                         return true;
                       }
                       break;
                     case "allowBootRemoval":
                       if (args[3].equalsIgnoreCase("true")) {
                         map.setAllowBootRemoval(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowBootRemoval is now set to: true");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowBootRemoval is now set to: true");
                         return true;
                       } else if (args[3].equalsIgnoreCase("false")) {
                         map.setAllowBootRemoval(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule allowBootRemoval is now set to: false");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule allowBootRemoval is now set to: false");
                         return true;
                       }
                       break;
@@ -730,7 +782,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                         return true;
                       }
                       map.setPointsToWinCTF(pointsToWin);
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule pointsToWinCTF is now set to: " + pointsToWin);
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule pointsToWinCTF is now set to: " + pointsToWin);
                       return true;
                     case "pointsToWinTDM":
                       Integer pointsToWinTDM;
@@ -741,7 +794,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                         return true;
                       }
                       map.setPointsToWinTDM(pointsToWinTDM);
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule pointsToWinCTF is now set to: " + pointsToWinTDM);
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule pointsToWinCTF is now set to: " + pointsToWinTDM);
                       return true;
                     case "pointsToWinDM":
                       Integer pointsToWinDM;
@@ -752,7 +806,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                         return true;
                       }
                       map.setPointsToWinDM(pointsToWinDM);
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule pointsToWinCTF is now set to: " + pointsToWinDM);
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule pointsToWinCTF is now set to: " + pointsToWinDM);
                       return true;
                     case "flagSpawnDelay":
                       Integer flagSpawnDelay;
@@ -763,7 +818,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                         return true;
                       }
                       map.setFlagSpawnDelay(flagSpawnDelay);
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Gamerule flagSpawnDelay is now set to: " + flagSpawnDelay);
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule flagSpawnDelay is now set to: " + flagSpawnDelay);
                       return true;
                     default:
                       return false;
@@ -778,7 +834,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               GameMap map = gameMaps.get(args[1]);
               if (map != null) {
                 Integer amplifier = 1;
-                switch(args.length) {
+                switch (args.length) {
                   case 5:
                     try {
                       amplifier = Integer.parseInt(args[4]);
@@ -793,10 +849,11 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                       if (args[2].equals("add")) {
                         PotionEffectType potionEffectType = PotionEffectType.getByName(potionEffectName);
                         map.addMapEffect(potionEffectType, amplifier);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Effect " + ChatColor.GRAY + args[3] + ChatColor.RESET + " Added!");
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Effect " + ChatColor.GRAY + args[3] + ChatColor.RESET + " Added!");
                       } else if (args[2].equals("remove")) {
                         PotionEffect potionEffectToRemove = null;
-                        for (PotionEffect potionEffect: map.getMapEffects()) {
+                        for (PotionEffect potionEffect : map.getMapEffects()) {
                           if (potionEffect.getType().getName().equalsIgnoreCase(potionEffectName)) {
                             potionEffectToRemove = potionEffect;
                           }
@@ -804,7 +861,8 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
 
                         if (potionEffectToRemove != null) {
                           map.removeMapEffect(potionEffectToRemove);
-                          sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Effect " + ChatColor.GRAY + args[3] + ChatColor.RESET + " Removed!");
+                          sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                              + " Effect " + ChatColor.GRAY + args[3] + ChatColor.RESET + " Removed!");
                         } else {
                           return false;
                         }
@@ -822,7 +880,9 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                 Player player = (Player) sender;
                 if (player.getInventory().getItemInMainHand() != null) {
                   map.setMapIcon(player.getInventory().getItemInMainHand().getType());
-                  player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Icon Set to: " + ChatColor.DARK_GRAY + player.getInventory().getItemInMainHand().getType().name().toLowerCase());
+                  player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                      + " Icon Set to: " + ChatColor.DARK_GRAY
+                      + player.getInventory().getItemInMainHand().getType().name().toLowerCase());
                 } else {
                   player.sendMessage("[EggSplosion] Hold an item in your hand to set it as the map icon");
                 }
@@ -841,20 +901,28 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                     case "add":
                       Location playerLocation = player.getLocation();
                       if (!map.locationInMap(playerLocation)) {
-                        player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " point not inside map, move into map to add capture point");
+                        player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " point not inside map, move into map to add capture point");
                         return true;
                       }
                       map.addCapturePoint(args[3], playerLocation);
-                      player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Added Capture Point " + ChatColor.GREEN + args[3] + ChatColor.RESET + " (" + playerLocation.getBlockX() + ", " + playerLocation.getBlockY() + ", " + playerLocation.getBlockZ() + ")");
+                      player.sendMessage(
+                          "[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Added Capture Point "
+                              + ChatColor.GREEN + args[3] + ChatColor.RESET + " (" + playerLocation.getBlockX() + ", "
+                              + playerLocation.getBlockY() + ", " + playerLocation.getBlockZ() + ")");
                       break;
                     case "remove":
                       Location capturePointLocation = map.getCapturePoint(args[3]);
                       map.removeCapturePoint(args[3]);
-                      player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Removed Capture Point " + ChatColor.GREEN + args[3] + ChatColor.RESET + " (" + capturePointLocation.getBlockX() + ", " + capturePointLocation.getBlockY() + ", " + capturePointLocation.getBlockZ() + ")");
+                      player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Removed Capture Point " + ChatColor.GREEN + args[3] + ChatColor.RESET + " ("
+                          + capturePointLocation.getBlockX() + ", " + capturePointLocation.getBlockY() + ", "
+                          + capturePointLocation.getBlockZ() + ")");
                       break;
                   }
                 } else if (args.length == 3) {
-                  sender.sendMessage("[EggSplosion] Capture Point Name Unspecified /map capturepoint <mapName> <add|remove> <capturePointName>");
+                  sender.sendMessage(
+                      "[EggSplosion] Capture Point Name Unspecified /map capturepoint <mapName> <add|remove> <capturePointName>");
                 } else if (args.length == 2) {
                   Iterator<String> capturePointNames = map.getAllCapturePointName().iterator();
                   String formattedString = "";
@@ -867,9 +935,11 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                   }
 
                   if (formattedString != "") {
-                    sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Capture Points: " + formattedString);
+                    sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                        + " Capture Points: " + formattedString);
                   } else {
-                    sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " has no capture points! Create one with /map capturepoint add <capturePointName>");
+                    sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                        + " has no capture points! Create one with /map capturepoint add <capturePointName>");
                   }
                 }
                 return true;
@@ -895,9 +965,10 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
           commands.add("loadout");
           commands.add("icon");
           commands.add("capturepoint");
-          return Utils.FilterTabComplete(args[0], commands);         
+          commands.add("locate");
+          return Utils.FilterTabComplete(args[0], commands);
         case 2:
-          switch(args[0]) {
+          switch (args[0]) {
             case "equip":
             case "gamerule":
             case "tools":
@@ -905,6 +976,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
             case "loadout":
             case "icon":
             case "capturepoint":
+            case "locate":
               List<String> mapNames = new ArrayList<>();
               Iterator<String> mapNamesIterator = gameMaps.keySet().iterator();
               while (mapNamesIterator.hasNext()) {
@@ -916,7 +988,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               return new ArrayList<>();
           }
         case 3:
-          switch(args[0]) {
+          switch (args[0]) {
             case "gamerule":
               List<String> gameRules = new ArrayList<>();
               gameRules.add("doSideSwitch");
@@ -942,9 +1014,9 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               return new ArrayList<>();
           }
         case 4:
-          switch(args[0]) {
+          switch (args[0]) {
             case "gamerule":
-              switch(args[2]) {
+              switch (args[2]) {
                 case "doSideSwitch":
                 case "doFlagMessages":
                 case "allowItemPickup":
@@ -964,11 +1036,11 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                   return new ArrayList<>();
               }
             case "effect":
-              switch(args[2]) {
+              switch (args[2]) {
                 case "add":
                   PotionEffectType[] potionTypes = PotionEffectType.values();
                   List<String> potionNames = new ArrayList<>();
-                  for (PotionEffectType potionType: potionTypes) {
+                  for (PotionEffectType potionType : potionTypes) {
                     potionNames.add("minecraft:" + potionType.getName().toLowerCase());
                   }
                   return Utils.FilterTabComplete(args[3], potionNames);
@@ -976,7 +1048,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                   GameMap map = gameMaps.get(args[1]);
                   List<String> mapPotionTypes = new ArrayList<>();
                   if (map != null) {
-                    for(PotionEffect potionEffect: map.getMapEffects()) {
+                    for (PotionEffect potionEffect : map.getMapEffects()) {
                       mapPotionTypes.add("minecraft:" + potionEffect.getType().getName().toLowerCase());
                     }
                   }

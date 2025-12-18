@@ -3,6 +3,7 @@ package com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameMode;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
@@ -19,6 +20,7 @@ import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Team;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -33,7 +35,8 @@ public abstract class Lobby {
   private GameMode gameMode;
   private GameMap currentMap;
   private List<Player> playersInLobby;
-  private List<Player> lobbyAdmins;
+  protected List<Player> lobbyAdmins;
+  protected Map<Player, Team> adminTeamSelection;
   private String lobbyName;
 
   public Lobby(Plugin plugin, String lobbyName) {
@@ -47,14 +50,15 @@ public abstract class Lobby {
   }
 
   public Lobby(Plugin plugin, MapManager mapManager, String lobbyName, GameMode gameMode, GameMap gameMap) {
-    this(plugin, mapManager, lobbyName, gameMode, gameMap, null);
+    this(plugin, mapManager, lobbyName, gameMode, gameMap, null, null);
   }
 
   public Lobby(Plugin plugin, MapManager mapManager, String lobbyName, GameMode gameMode, GameMap gameMap,
-      List<Player> playersInLobby) {
+      List<Player> playersInLobby, Map<Player, Team> player_teams) {
     this(plugin, lobbyName);
     // Initialize Managers
     this.mapManager = mapManager;
+    this.adminTeamSelection = player_teams;
     if (playersInLobby != null) {
       this.playersInLobby = playersInLobby;
     }

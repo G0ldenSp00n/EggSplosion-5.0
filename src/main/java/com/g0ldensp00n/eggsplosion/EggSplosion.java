@@ -28,7 +28,7 @@ public class EggSplosion extends JavaPlugin {
         getLogger().info("Enabled EggSplosion v" + versionNumber);
         explosionRegen = new ExplosionRegen(this);
         mapManager = new MapManager(this, pluginFolder);
-        lobbyManager = LobbyManager.getInstance(this, mapManager); 
+        lobbyManager = LobbyManager.getInstance(this, mapManager);
         new DeathMessages(this, lobbyManager);
         new EggExplode(this);
         new Weapon(this);
@@ -50,6 +50,6 @@ public class EggSplosion extends JavaPlugin {
         explosionRegen.repairAll();
         mapManager.saveMapsToFiles();
         lobbyManager.cleanupLobbies();
-        getLogger().info("Disabled EggSplosion v" + versionNumber); 
+        getLogger().info("Disabled EggSplosion v" + versionNumber);
     }
 }

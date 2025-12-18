@@ -2,6 +2,7 @@ package com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.GameModeLob
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameMode;
@@ -28,8 +29,9 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
 public abstract class GameLobby extends Lobby {
-  public GameLobby(Plugin plugin, MapManager mapManager, String lobbyName, GameMode gameMode, GameMap gameMap, List<Player> playersInLobby) {
-    super(plugin, mapManager, lobbyName, gameMode, gameMap, playersInLobby);
+  public GameLobby(Plugin plugin, MapManager mapManager, String lobbyName, GameMode gameMode, GameMap gameMap,
+      List<Player> playersInLobby, Map<Player, Team> player_teams) {
+    super(plugin, mapManager, lobbyName, gameMode, gameMap, playersInLobby, player_teams);
     initializeGameLobby();
 
     for (Player player : getPlayers()) {
@@ -84,15 +86,16 @@ public abstract class GameLobby extends Lobby {
   protected abstract void initializeGameLobby();
 
   private void handleGameEnd(Team team) {
-    new BukkitRunnable(){
+    new BukkitRunnable() {
       Integer countDown = 6;
 
       @Override
       public void run() {
         if (team != null) {
-          for(Player playerOnTeam : getPlayers()) {
+          for (Player playerOnTeam : getPlayers()) {
             if (team.equals(scoreManager.getPlayerTeam(playerOnTeam))) {
-              Firework firework = (Firework) playerOnTeam.getWorld().spawnEntity(playerOnTeam.getLocation(), EntityType.FIREWORK_ROCKET);
+              Firework firework = (Firework) playerOnTeam.getWorld().spawnEntity(playerOnTeam.getLocation(),
+                  EntityType.FIREWORK_ROCKET);
               FireworkMeta fireworkMeta = firework.getFireworkMeta();
               FireworkEffect fireworkEffect = FireworkEffect.builder().withColor(Color.WHITE).build();
               fireworkMeta.addEffect(fireworkEffect);
@@ -108,6 +111,9 @@ public abstract class GameLobby extends Lobby {
 
           removeAllPlayers();
           WaitingLobby waitingLobby = new WaitingLobby(plugin, 10, mapManager, getLobbyName());
+          for (Player adminPlayer : lobbyAdmins) {
+            waitingLobby.addAdmin(adminPlayer);
+          }
 
           for (Player player : playersToMove) {
             waitingLobby.addPlayer(player);
@@ -125,7 +131,7 @@ public abstract class GameLobby extends Lobby {
   public void teamWon(Team team) {
     scoreManager.scoreFreeze();
     broadcastTitle(team.getDisplayName(), ChatColor.GOLD + " has won the game!", 0, 21, 0);
-    for(Player playerOnTeam : getPlayers()) {
+    for (Player playerOnTeam : getPlayers()) {
       if (team.equals(scoreManager.getPlayerTeam(playerOnTeam))) {
         playerOnTeam.playSound(playerOnTeam.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1, 1);
       } else {
@@ -147,7 +153,7 @@ public abstract class GameLobby extends Lobby {
     if (getMap().getDoSideSwitch()) {
       getMap().switchTeamSides();
       getMap().spawnFlags();
-      for(Player player: getPlayers()) {
+      for (Player player : getPlayers()) {
         equipPlayer(player);
       }
       broadcastTitle("Switching Sides", "", 0, 40, 0);
@@ -158,8 +164,24 @@ public abstract class GameLobby extends Lobby {
   }
 
   public void randomizeTeams() {
-    Random random = new Random();
     ScoreManager sm = getScoreManager();
+    if (adminTeamSelection != null) {
+      for (Player player : getPlayers()) {
+        Team team = adminTeamSelection.getOrDefault(player, sm.getTeamA());
+        if (team == sm.getTeamA()) {
+          Team team_a = sm.getTeamA();
+          sm.getTeamA().addEntry(player.getName());
+          player.sendMessage("[EggSplosion] Using Admin Assigned Team " + team_a.getColor() + team_a.getDisplayName());
+        } else {
+          Team team_b = sm.getTeamB();
+          sm.getTeamB().addEntry(player.getName());
+          player.sendMessage("[EggSplosion] Using Admin Assigned Team " + team_b.getColor() + team_b.getDisplayName());
+        }
+      }
+      return;
+    }
+
+    Random random = new Random();
     if (sm != null) {
       List<Player> playersToAdd = new ArrayList<>(getPlayers());
       Boolean teamA = true;
@@ -167,9 +189,11 @@ public abstract class GameLobby extends Lobby {
         Integer nextPlayer = random.nextInt(playersToAdd.size());
         Player player = playersToAdd.get(nextPlayer);
         if (teamA) {
-          sm.getTeamA().addEntry(player.getName());;
+          sm.getTeamA().addEntry(player.getName());
+          ;
         } else {
-          sm.getTeamB().addEntry(player.getName());;
+          sm.getTeamB().addEntry(player.getName());
+          ;
         }
         teamA = !teamA;
         playersToAdd.remove(player);

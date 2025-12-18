@@ -1,26 +1,33 @@
 package com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.GameModeLobbyTypes;
 
 import java.util.List;
+import java.util.Map;
 
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameMode;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreType;
+import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Team;
 
 public class GameLobby_CaptureTheFlag extends GameLobby {
-  public GameLobby_CaptureTheFlag(Plugin plugin, MapManager mapManager, String lobbyName, GameMap gameMap, List<Player> playersInLobby) {
-    super(plugin, mapManager, lobbyName, GameMode.CAPTURE_THE_FLAG, gameMap, playersInLobby);
+  public GameLobby_CaptureTheFlag(Plugin plugin, MapManager mapManager, String lobbyName, GameMap gameMap,
+      List<Player> playersInLobby, Map<Player, Team> player_teams) {
+    super(plugin, mapManager, lobbyName, GameMode.CAPTURE_THE_FLAG, gameMap, playersInLobby, player_teams);
   }
 
   public void initializeGameLobby() {
-    setScoreManager(new ScoreManager(getMap().getPointsToWinCTF(), ScoreType.TEAM, this, ChatColor.RED, ChatColor.BLUE, true));
+    setScoreManager(
+        new ScoreManager(getMap().getPointsToWinCTF(), ScoreType.TEAM, this, ChatColor.RED, ChatColor.BLUE, true));
     randomizeTeams();
     getMap().randomizeTeamSides(scoreManager.getTeams());
 
@@ -29,9 +36,9 @@ public class GameLobby_CaptureTheFlag extends GameLobby {
     } else {
       getMap().clearFlags();
       if (getMap().getFlagSpawnDelay() > 5 && getMap().getDoFlagMessages()) {
-           broadcastTitle("", "Flags Spawning in " + getMap().getFlagSpawnDelay(), 0, 21, 0);
+        broadcastTitle("", "Flags Spawning in " + getMap().getFlagSpawnDelay(), 0, 21, 0);
       }
-      new BukkitRunnable(){
+      new BukkitRunnable() {
         Integer countDown = getMap().getFlagSpawnDelay();
 
         @Override
@@ -40,7 +47,7 @@ public class GameLobby_CaptureTheFlag extends GameLobby {
             cancel();
             getMap().spawnFlags();
             return;
-          } else if (countDown <= 5){
+          } else if (countDown <= 5) {
             if (getMap().getDoFlagMessages()) {
               broadcastTitle("", "Flags Spawning in " + countDown, 0, 21, 0);
             }
@@ -55,23 +62,28 @@ public class GameLobby_CaptureTheFlag extends GameLobby {
     if (getGameMode().equals(GameMode.CAPTURE_THE_FLAG)) {
       if (player.getInventory().getHelmet() != null) {
         if (player.getInventory().getHelmet().getType().equals(Material.BLUE_BANNER)) {
+          Color armorColor = Utils.chatColorToColor(scoreManager.getPlayerTeam(player).getColor());
+          equipArmor(player, armorColor);
           if (getMap().getDoFlagMessages()) {
-            broadcastActionBar(getScoreManager().getPlayerDisplayName(player)  + " " + eventMessage + " " + ChatColor.BLUE + "Blue Team" + ChatColor.RESET + " Flag", true);
+            broadcastActionBar(getScoreManager().getPlayerDisplayName(player) + " " + eventMessage + " "
+                + ChatColor.BLUE + "Blue Team" + ChatColor.RESET + " Flag", true);
           }
           getMap().respawnFlag(getScoreManager().getTeamB());
           if (addScore) {
             getScoreManager().addScorePlayer(player);
           }
-          equipPlayer(player);
         } else if (player.getInventory().getHelmet().getType().equals(Material.RED_BANNER)) {
+          Color armorColor = Utils.chatColorToColor(scoreManager.getPlayerTeam(player).getColor());
+          equipArmor(player, armorColor);
+
           if (getMap().getDoFlagMessages()) {
-            broadcastActionBar(getScoreManager().getPlayerDisplayName(player) + " " + eventMessage + " " + ChatColor.RED + "Red Team" + ChatColor.RESET + " Flag", true);
+            broadcastActionBar(getScoreManager().getPlayerDisplayName(player) + " " + eventMessage + " " + ChatColor.RED
+                + "Red Team" + ChatColor.RESET + " Flag", true);
           }
           getMap().respawnFlag(getScoreManager().getTeamA());
           if (addScore) {
             getScoreManager().addScorePlayer(player);
           }
-          equipPlayer(player);
         }
       }
     }

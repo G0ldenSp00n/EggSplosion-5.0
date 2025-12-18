@@ -12,8 +12,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 public class GameLobby_DeathMatch extends GameLobby {
-  public GameLobby_DeathMatch(Plugin plugin, MapManager mapManager, String lobbyName, GameMap gameMap, List<Player> playersInLobby) {
-    super(plugin, mapManager, lobbyName, GameMode.DEATH_MATCH, gameMap, playersInLobby);
+  public GameLobby_DeathMatch(Plugin plugin, MapManager mapManager, String lobbyName, GameMap gameMap,
+      List<Player> playersInLobby) {
+    super(plugin, mapManager, lobbyName, GameMode.DEATH_MATCH, gameMap, playersInLobby, null);
   }
 
   public void initializeGameLobby() {

@@ -9,8 +9,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.ArrayList;
 
@@ -31,43 +36,50 @@ public class Weapon implements Listener {
       if ((playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_AIR)
           || playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
         Player player = playerInteractEvent.getPlayer();
-        switch (playerInteractEvent.getItem().getType()) {
-          case NETHERITE_HOE:
-            playerInteractEvent.setCancelled(true);
-            launchWeapon(player, 2, 15, 15);
-            break;
-          case DIAMOND_HOE:
-            playerInteractEvent.setCancelled(true);
-            launchWeapon(player, 2, 3, 1.0875f);
-            break;
-          case GOLDEN_HOE:
-            playerInteractEvent.setCancelled(true);
-            launchWeapon(player, 2, 2.8f, 0.8875f);
-            break;
-          case IRON_HOE:
-            playerInteractEvent.setCancelled(true);
-            launchWeapon(player, 2, 2.6f, 0.7f);
-            break;
-          case COPPER_HOE:
-            playerInteractEvent.setCancelled(true);
-            launchWeapon(player, 2, 2.5f, 0.6f);
-            break;
-          case STONE_HOE:
-            playerInteractEvent.setCancelled(true);
-            launchWeapon(player, 2, 2.4f, 0.53125f);
-            break;
-          case WOODEN_HOE:
-            playerInteractEvent.setCancelled(true);
-            launchWeapon(player, 2, 2, 0.05f);
-            break;
-          default:
-            break;
+        if (!player.hasPotionEffect(PotionEffectType.INVISIBILITY)
+            && !player.hasPotionEffect(PotionEffectType.REGENERATION)) {
+          switch (playerInteractEvent.getItem().getType()) {
+            case NETHERITE_HOE:
+              playerInteractEvent.setCancelled(true);
+              launchWeapon(player, 2, 15, 15, 4);
+              break;
+            case DIAMOND_HOE:
+              playerInteractEvent.setCancelled(true);
+              launchWeapon(player, 2, 3, 4.2f, 3);
+              break;
+            case GOLDEN_HOE:
+              playerInteractEvent.setCancelled(true);
+              launchWeapon(player, 2, 2.8f, 0.8875f, 1);
+              break;
+            case IRON_HOE:
+              playerInteractEvent.setCancelled(true);
+              launchWeapon(player, 2, 2.6f, 0.7f, 1);
+              break;
+            case COPPER_HOE:
+              playerInteractEvent.setCancelled(true);
+              launchWeapon(player, 2, 2.5f, 0.6f, 1);
+              break;
+            case STONE_HOE:
+              playerInteractEvent.setCancelled(true);
+              launchWeapon(player, 2, 2.4f, 2.5f, 2);
+              break;
+            case WOODEN_HOE:
+              playerInteractEvent.setCancelled(true);
+              launchWeapon(player, 2, 2, 0.05f, 1);
+              break;
+            default:
+              break;
+          }
+        } else {
+          player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+              TextComponent.fromLegacy("Can't Fire Weapon with Spawn Protection"));
         }
       }
     }
   }
 
-  private void launchWeapon(Player player, int velocityMultiplier, float explosionPower, double reloadTime) {
+  private void launchWeapon(Player player, int velocityMultiplier, float explosionPower, double reloadTime,
+      int rocket_jump_power) {
     reloadTime = reloadTime * 20;
     Long playerReloadTime = reloadingPlayerTimes.get(player.getUniqueId().toString());
     if (playerReloadTime == null || playerReloadTime <= System.currentTimeMillis()) {
@@ -77,7 +89,7 @@ public class Weapon implements Listener {
     }
 
     if (!reloadingPlayers.contains(player)) {
-      fireWeapon(player, velocityMultiplier, explosionPower);
+      fireWeapon(player, velocityMultiplier, explosionPower, rocket_jump_power);
       reloadingPlayers.add(player);
       xpLoading(player, reloadTime);
     }
@@ -102,10 +114,12 @@ public class Weapon implements Listener {
     }.runTaskTimer(this.plugin, 0, 1);
   }
 
-  private void fireWeapon(Player player, int velocityMultiplier, float explosionSize) {
+  private void fireWeapon(Player player, int velocityMultiplier, float explosionSize, int rocket_jump_power) {
     player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_EGG, 0.2f, 1f);
     Egg egg = player.launchProjectile(Egg.class);
     egg.setCustomName(player.getUniqueId() + " / " + explosionSize);
     egg.setVelocity(egg.getVelocity().multiply(velocityMultiplier));
+    egg.setMetadata("rocket_jump_power",
+        new FixedMetadataValue(Bukkit.getServer().getPluginManager().getPlugin("EggSplosion"), rocket_jump_power));
   }
 }

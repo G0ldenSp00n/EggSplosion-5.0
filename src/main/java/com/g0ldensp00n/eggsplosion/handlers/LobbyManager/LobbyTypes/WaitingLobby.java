@@ -22,11 +22,14 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.Team;
 
 public class WaitingLobby extends Lobby {
   private Hashtable<Player, Boolean> playerReadyStatus;
   private Map<Player, GameMode> gameModeVotes;
   private Map<Player, String> mapVotes;
+  private String adminMapSelection;
+  private GameMode adminGameModeSelection;
   private Integer maxPlayers;
 
   public WaitingLobby(Plugin plugin, Integer maxPlayers, MapManager mapManager, String lobbyName) {
@@ -77,6 +80,25 @@ public class WaitingLobby extends Lobby {
     if (scoreManager != null) {
       scoreManager.setPlayerScoreboard(player);
       scoreManager.initializeScorePlayer(player);
+    }
+  }
+
+  public boolean getAdminSetTeamIsRed(Player player) {
+    if (adminTeamSelection == null) {
+      return true;
+    }
+    return adminTeamSelection.getOrDefault(player, scoreManager.getTeamA()) == scoreManager.getTeamA();
+  }
+
+  public void adminToggleTeam(Player player) {
+    if (adminTeamSelection == null) {
+      adminTeamSelection = new Hashtable<Player, Team>();
+    }
+    Team team = this.adminTeamSelection.getOrDefault(player, scoreManager.getTeamA());
+    if (team == scoreManager.getTeamA()) {
+      adminTeamSelection.put(player, scoreManager.getTeamB());
+    } else {
+      adminTeamSelection.put(player, scoreManager.getTeamA());
     }
   }
 
@@ -137,11 +159,11 @@ public class WaitingLobby extends Lobby {
               switch (gameMode) {
                 case TEAM_DEATH_MATCH:
                   gameLobby = (GameLobby) new GameLobby_TeamDeathMatch(plugin, mapManager, getLobbyName(), gameMap,
-                      playersToMove);
+                      playersToMove, adminTeamSelection);
                   break;
                 case CAPTURE_THE_FLAG:
                   gameLobby = (GameLobby) new GameLobby_CaptureTheFlag(plugin, mapManager, getLobbyName(), gameMap,
-                      playersToMove);
+                      playersToMove, adminTeamSelection);
                   break;
                 case DEATH_MATCH:
                   gameLobby = (GameLobby) new GameLobby_DeathMatch(plugin, mapManager, getLobbyName(), gameMap,
@@ -149,13 +171,14 @@ public class WaitingLobby extends Lobby {
                   break;
                 case CAPTURE_POINT:
                   gameLobby = (GameLobby) new GameLobby_CapturePoint(plugin, mapManager, getLobbyName(), gameMap,
-                      playersToMove);
+                      playersToMove, adminTeamSelection);
                   break;
                 default:
                   broadcastMessage("Unsupported Gamemode Selected");
                   break;
               }
               if (gameLobby != null) {
+                gameLobby.lobbyAdmins = lobbyAdmins;
                 LobbyManager.getInstance(plugin, mapManager).replaceLobby(getLobbyName(), gameLobby);
               }
               return;
@@ -167,6 +190,23 @@ public class WaitingLobby extends Lobby {
         }.runTaskTimer(this.plugin, 0, (long) 20);
       }
     }
+  }
+
+  public void setAdminGameModeSelection(GameMode gameMode) {
+    adminGameModeSelection = gameMode;
+    for (Player player : lobbyAdmins) {
+      player
+          .sendMessage("[EggSplosion] Admin Set Game Mode to " + ChatColor.GREEN + gameModeToString(gameMode));
+    }
+  }
+
+  public void setAdminMapSelection(String mapName) {
+    adminMapSelection = mapName;
+    for (Player player : lobbyAdmins) {
+      player
+          .sendMessage("[EggSplosion] Admin Set Map to " + ChatColor.AQUA + mapName);
+    }
+
   }
 
   public void registerGameModeVote(GameMode gameMode, Player player) {
@@ -185,18 +225,6 @@ public class WaitingLobby extends Lobby {
     }
   }
 
-  public void registerBlueTeamSelection(Player player) {
-    if (getPlayers().contains(player)) {
-      player.sendMessage("[EggSplosion] Joined " + ChatColor.BLUE + "Blue Team");
-    }
-  }
-  
-  public void registerRedTeamSelection(Player player) {
-    if (getPlayers().contains(player)) {
-      player.sendMessage("[EggSplosion] Joined " + ChatColor.RED + "Red Team");
-    }
-  }
-
   public void registerMapVote(String mapName, Player player) {
     if (getPlayers().contains(player)) {
       if (mapVotes.get(player) == null) {
@@ -212,6 +240,10 @@ public class WaitingLobby extends Lobby {
   }
 
   private GameMode tallyGameModeVote() {
+    if (adminGameModeSelection != null) {
+      return adminGameModeSelection;
+    }
+
     Map<GameMode, Integer> gameModeVoteTally = new Hashtable<GameMode, Integer>();
     for (GameMode gameMode : GameMode.values()) {
       if (gameMode != GameMode.LOBBY && gameMode != GameMode.WAITING) {
@@ -247,6 +279,10 @@ public class WaitingLobby extends Lobby {
   }
 
   private String tallyGameMapVote() {
+    if (adminMapSelection != null) {
+      return adminMapSelection;
+    }
+
     Map<String, Integer> mapVoteTally = new Hashtable<String, Integer>();
     for (String mapName : mapManager.getMaps().keySet()) {
       if (!mapName.equalsIgnoreCase("WAITING_ROOM")) {

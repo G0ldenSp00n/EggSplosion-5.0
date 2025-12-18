@@ -25,8 +25,10 @@ public class GameLobby_CapturePoint extends GameLobby {
   private Map<String, List<Player>> pointsCapturers;
   private Map<String, Map<Team, Integer>> capturePointsPointsByTeam;
   private Map<String, BossBar> capturePointBars;
-  public GameLobby_CapturePoint(Plugin plugin, MapManager mapManager, String lobbyName, GameMap gameMap, List<Player> playersInLobby) {
-    super(plugin, mapManager, lobbyName, GameMode.CAPTURE_POINT, gameMap, playersInLobby);
+
+  public GameLobby_CapturePoint(Plugin plugin, MapManager mapManager, String lobbyName, GameMap gameMap,
+      List<Player> playersInLobby, Map<Player, Team> player_teams) {
+    super(plugin, mapManager, lobbyName, GameMode.CAPTURE_POINT, gameMap, playersInLobby, player_teams);
 
     pointsCapturers = new Hashtable<>();
     capturePointsPointsByTeam = new Hashtable<>();
@@ -56,8 +58,9 @@ public class GameLobby_CapturePoint extends GameLobby {
   }
 
   private void handlePointCapture() {
-    new BukkitRunnable(){
+    new BukkitRunnable() {
       Integer counter = 0;
+
       @Override
       public void run() {
         if (!getScoreManager().isFrozen()) {
@@ -73,7 +76,8 @@ public class GameLobby_CapturePoint extends GameLobby {
                   capturePointsPointsByTeam.put(capturePointName, capturePointPointsByTeam);
                 }
 
-                Integer capturingTeamPoints = handleCaptureProgress(capturePointName, capturePointPointsByTeam, capturingTeam, pointCapturers.size());
+                Integer capturingTeamPoints = handleCaptureProgress(capturePointName, capturePointPointsByTeam,
+                    capturingTeam, pointCapturers.size());
                 if (capturingTeamPoints >= 20) {
                   if (counter % 20 == 0) {
                     getScoreManager().addScoreTeam(capturingTeam);
@@ -94,7 +98,7 @@ public class GameLobby_CapturePoint extends GameLobby {
               }
             }
           }
-          counter ++;
+          counter++;
         } else {
           cancel();
         }
@@ -102,7 +106,8 @@ public class GameLobby_CapturePoint extends GameLobby {
     }.runTaskTimer(this.plugin, 0, (long) 1 * 20);
   }
 
-  private Integer handleCaptureProgress(String capturePointName, Map<Team, Integer> capturePointPointsByTeam, Team capturingTeam, Integer numberOfPlayers) {
+  private Integer handleCaptureProgress(String capturePointName, Map<Team, Integer> capturePointPointsByTeam,
+      Team capturingTeam, Integer numberOfPlayers) {
     Boolean otherTeamHasProgress = false;
     for (Team team : capturePointPointsByTeam.keySet()) {
       if (!team.equals(capturingTeam)) {
@@ -111,7 +116,7 @@ public class GameLobby_CapturePoint extends GameLobby {
           otherTeamHasProgress = true;
           otherTeamPoints -= numberOfPlayers;
           capturePointPointsByTeam.put(team, --otherTeamPoints);
-          capturePointBars.get(capturePointName).setProgress((1.0f/20) * otherTeamPoints);
+          capturePointBars.get(capturePointName).setProgress((1.0f / 20) * otherTeamPoints);
         }
       }
     }
@@ -122,22 +127,25 @@ public class GameLobby_CapturePoint extends GameLobby {
         capturingTeamPoints += numberOfPlayers;
         capturePointPointsByTeam.put(capturingTeam, capturingTeamPoints);
         capturePointBars.get(capturePointName).setColor(BarColor.valueOf(capturingTeam.getColor().name()));
-        capturePointBars.get(capturePointName).setProgress((1.0f/20) * capturingTeamPoints);
+        capturePointBars.get(capturePointName).setProgress((1.0f / 20) * capturingTeamPoints);
         if (capturingTeamPoints >= 20) {
-          broadcastMessage(capturingTeam.getDisplayName() + ChatColor.RESET + " has captured point " + ChatColor.GREEN + capturePointName);
+          broadcastMessage(capturingTeam.getDisplayName() + ChatColor.RESET + " has captured point " + ChatColor.GREEN
+              + capturePointName);
         } else if (capturingTeamPoints == 1) {
-          broadcastMessage(capturingTeam.getDisplayName() + ChatColor.RESET + " is capturing point " + ChatColor.GREEN + capturePointName);
+          broadcastMessage(capturingTeam.getDisplayName() + ChatColor.RESET + " is capturing point " + ChatColor.GREEN
+              + capturePointName);
         }
-      } else if (capturingTeamPoints == null){
+      } else if (capturingTeamPoints == null) {
         capturePointPointsByTeam.put(capturingTeam, 1);
         capturePointBars.get(capturePointName).setColor(BarColor.valueOf(capturingTeam.getColor().name()));
-        broadcastMessage(capturingTeam.getDisplayName() + ChatColor.RESET + " is capturing point " + ChatColor.GREEN + capturePointName);
-        capturePointBars.get(capturePointName).setProgress((1.0f/20) * 1);
+        broadcastMessage(capturingTeam.getDisplayName() + ChatColor.RESET + " is capturing point " + ChatColor.GREEN
+            + capturePointName);
+        capturePointBars.get(capturePointName).setProgress((1.0f / 20) * 1);
       }
     }
 
     if (capturingTeamPoints != null) {
-      return capturingTeamPoints; 
+      return capturingTeamPoints;
     }
     return 0;
   }
