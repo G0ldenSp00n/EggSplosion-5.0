@@ -5,23 +5,30 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.Tag;
 import org.bukkit.ExplosionResult;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Bisected.Half;
+import org.bukkit.block.data.type.Door;
 import org.bukkit.block.data.type.Stairs;
+import org.bukkit.entity.EntityType;
 import org.bukkit.block.Chest;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.scheduler.BukkitRunnable;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Collections;
-
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class ExplosionRegen implements Listener {
 
@@ -52,66 +59,95 @@ public class ExplosionRegen implements Listener {
     }
 
     public void update() {
-      if (material != Material.AIR) {
-        if (material.hasGravity()) {
-          Block blockBelow = location.clone().add(0, -1, 0).getBlock();
-          if (!blockBelow.getType().isSolid()) {
-            blockBelow.setType(Material.SANDSTONE);
-          }
-        }
-        Block block = location.getBlock();
-        block.setType(material);
-        block.setBlockData(blockData);
-        try {
-          if (material != Material.OAK_TRAPDOOR) {
-            Block blockBelow = location.clone().add(0, -1, 0).getBlock();
-            if (blockBelow.getType() != material) {
-              Bisected testBisected = (Bisected) blockData;
-              Stairs testStair = null;
-              try {
-                testStair = (Stairs) blockData;
-              } catch (ClassCastException e) {
-              }
-              if (testBisected.getHalf() != null && testStair == null) {
-                if (!blockBelow.getType().isSolid()) {
-                  blockBelow.setType(Material.GRASS_BLOCK);
-                }
+        if (material == Material.AIR) return;
 
-                // Upper Block
+        if (material.hasGravity()) {
+            Block blockBelow = location.clone().add(0, -1, 0).getBlock();
+            if (!blockBelow.getType().isSolid()) {
+                blockBelow.setType(Material.SANDSTONE);
+            }
+        }
+
+        Block block = location.getBlock();
+        
+        block.setType(material, false);
+        block.setBlockData(blockData, false);
+
+        if (Tag.DOORS.isTagged(material) && blockData instanceof Door) {
+            Door sourceDoor = (Door) blockData;
+
+            if (sourceDoor.getHalf() == Bisected.Half.BOTTOM) {
                 Block upperBlock = location.clone().add(0, 1, 0).getBlock();
                 upperBlock.setType(material, false);
 
-                //Lower Block
-                BlockData lowerBlockData = block.getBlockData();
-                ((Bisected) lowerBlockData).setHalf(Bisected.Half.BOTTOM);
-                block.setBlockData(lowerBlockData);
+                Door upperDoor = (Door) upperBlock.getBlockData();
+                upperDoor.setHalf(Bisected.Half.TOP);
+                upperDoor.setHinge(sourceDoor.getHinge());
+                upperDoor.setFacing(sourceDoor.getFacing());
+                upperDoor.setOpen(sourceDoor.isOpen());
+                upperDoor.setPowered(sourceDoor.isPowered());
+                
+                upperBlock.setBlockData(upperDoor, false);
 
-                //Upper Block
-                Bisected upperBlockData = (Bisected) upperBlock.getBlockData();
-                upperBlockData.setHalf(Bisected.Half.TOP);
-                upperBlock.setBlockData((BlockData) upperBlockData);
-              }
+            } else {
+                Block lowerBlock = location.clone().add(0, -1, 0).getBlock();
+                lowerBlock.setType(material, false);
+
+                Door lowerDoor = (Door) lowerBlock.getBlockData();
+                lowerDoor.setHalf(Bisected.Half.BOTTOM);
+                lowerDoor.setHinge(sourceDoor.getHinge());
+                lowerDoor.setFacing(sourceDoor.getFacing());
+                lowerDoor.setOpen(sourceDoor.isOpen());
+                lowerDoor.setPowered(sourceDoor.isPowered());
+
+                lowerBlock.setBlockData(lowerDoor, false);
             }
-          }
-        } catch (ClassCastException e) {
-          // Do Nothing not a Bisected Block
+        } 
+        else if (blockData instanceof Bisected && !Tag.TRAPDOORS.isTagged(material) && !Tag.STAIRS.isTagged(material)) {
+            Bisected sourceBisected = (Bisected) blockData;
+
+            if (sourceBisected.getHalf() == Bisected.Half.BOTTOM) {
+                Block upperBlock = location.clone().add(0, 1, 0).getBlock();
+                upperBlock.setType(material, false);
+                
+                Bisected upperData = (Bisected) upperBlock.getBlockData();
+                upperData.setHalf(Bisected.Half.TOP);
+                upperBlock.setBlockData(upperData, false);
+                
+            } else {
+                Block lowerBlock = location.clone().add(0, -1, 0).getBlock();
+                lowerBlock.setType(material, false);
+                
+                Bisected lowerData = (Bisected) lowerBlock.getBlockData();
+                lowerData.setHalf(Bisected.Half.BOTTOM);
+                lowerBlock.setBlockData(lowerData, false);
+            }
         }
-        if (location.getBlock().getType().equals(Material.CHEST)) {
-            Chest chest = (Chest) location.getBlock().getState();
-            chest.getInventory().setContents(inventory.getContents());
+
+        if (block.getType() == Material.CHEST && block.getState() instanceof Chest) {
+            Chest chest = (Chest) block.getState();
+            // Ensure inventory isn't null before setting
+            if (this.inventory != null) {
+                chest.getInventory().setContents(this.inventory.getContents());
+            }
         }
-      }
     }
 
     @EventHandler
     public void explosionRegeneration(EntityExplodeEvent event) {
     ExplosionResult result = event.getExplosionResult();
+    if (result == ExplosionResult.TRIGGER_BLOCK) {
+      event.blockList().clear();
+      return;
+    }
+
     if (result == ExplosionResult.DESTROY || result == ExplosionResult.DESTROY_WITH_DECAY) {
       event.setCancelled(true);
 
       final int delay = 20 * 10;
-      List<ExplosionRegen> blockInfo = new ArrayList<>();
-      List<ExplosionRegen> transparentBlocks = new ArrayList<>();
+      Set<ExplosionRegen> blockInfo = new HashSet<>();
+      Set<ExplosionRegen> transparentBlocks = new HashSet<>();
+      Set<Block> block_set = new HashSet<>();
       List<Block> blocks = event.blockList();
       Collections.sort(blocks, new Comparator<Block>() {
         @Override
@@ -125,6 +161,7 @@ public class ExplosionRegen implements Listener {
 
 
       blocks.forEach(block -> {
+        block_set.add(block);
         // Handle Gravity Blocks
         Block blockAbove = block.getLocation().add(0, 1, 0).getBlock();
         if (blockAbove.getType().hasGravity()) {
@@ -161,16 +198,20 @@ public class ExplosionRegen implements Listener {
               }
         // Handle Non-Solid Blocks
           } else {
-            Bisected bisectedBlock = null;
-            try {
-              bisectedBlock = (Bisected) block.getBlockData();
-            } catch (ClassCastException exception) {
-              // Do Nothing - Not Bisected
-            }
-            if (bisectedBlock != null) {
-              Block blockBelow = block.getLocation().add(0, -1, 0).getBlock();
-              transparentBlocks.add(new ExplosionRegen(blockBelow));
-              blockBelow.setType(Material.AIR, false);
+            BlockData data = block.getBlockData();
+            if (data instanceof Bisected) {
+              Bisected bisected = (Bisected) data;
+              if (bisected.getHalf() == Bisected.Half.TOP) {
+                  Block blockBelow = block.getLocation().add(0, -1, 0).getBlock();
+                  if (!block_set.contains(blockBelow)) {
+                      transparentBlocks.add(new ExplosionRegen(blockBelow));
+                      blockBelow.setType(Material.AIR, false);
+                  }
+              } else {
+                  if (!block_set.contains(blockAbove)) {
+                    transparentBlocks.add(new ExplosionRegen(block));
+                  }
+              }
             } else {
               transparentBlocks.add(new ExplosionRegen(block));
             }
@@ -180,7 +221,8 @@ public class ExplosionRegen implements Listener {
 
       // Add to Cleanup Queue
       blockQueue.addAll(blockInfo);
-      Collections.sort(blockInfo, new Comparator<ExplosionRegen>() {
+      List<ExplosionRegen> blockList = new ArrayList<>(blockInfo);
+      Collections.sort(blockList, new Comparator<>() {
         @Override
         public int compare(ExplosionRegen blockA, ExplosionRegen blockB) {
           if ((int) blockA.location.getY() == blockB.location.getY()) {
@@ -190,7 +232,8 @@ public class ExplosionRegen implements Listener {
         }
       });
       transparentQueue.addAll(transparentBlocks);
-      Collections.sort(transparentBlocks, new Comparator<ExplosionRegen>() {
+      List<ExplosionRegen> transparentBlockList = new ArrayList<ExplosionRegen>(transparentBlocks);
+      Collections.sort(transparentBlockList, new Comparator<ExplosionRegen>() {
         @Override
         public int compare(ExplosionRegen blockA, ExplosionRegen blockB) {
           if ((int) blockA.location.getY() == blockB.location.getY()) {
@@ -201,8 +244,8 @@ public class ExplosionRegen implements Listener {
       });
 
       // Combine Solid and Non-Solid to a single list
-      List<ExplosionRegen> allBlocks = new ArrayList<>(blockInfo);
-      allBlocks.addAll(transparentBlocks);
+      List<ExplosionRegen> allBlocks = new ArrayList<>(blockList);
+      allBlocks.addAll(transparentBlockList);
 
       // Runnable to Delay Regen
       new BukkitRunnable() {
@@ -227,18 +270,18 @@ public class ExplosionRegen implements Listener {
     }
   }
 
-    public void repairAll() {
-        Iterator<ExplosionRegen> blocksQueue = blockQueue.iterator();
-        while (blocksQueue.hasNext()) {
-            ExplosionRegen explosionRegenBlock = blocksQueue.next();
-            explosionRegenBlock.update();
-            blocksQueue.remove();
-        }
-        Iterator<ExplosionRegen> transparentsQueue = transparentQueue.iterator();
-        while (blocksQueue.hasNext()) {
-            ExplosionRegen explosionRegenTrans = transparentsQueue.next();
-            explosionRegenTrans.update();
-            transparentsQueue.remove();
-        }
-    }
+  public void repairAll() {
+      Iterator<ExplosionRegen> blocksQueue = blockQueue.iterator();
+      while (blocksQueue.hasNext()) {
+          ExplosionRegen explosionRegenBlock = blocksQueue.next();
+          explosionRegenBlock.update();
+          blocksQueue.remove();
+      }
+      Iterator<ExplosionRegen> transparentsQueue = transparentQueue.iterator();
+      while (blocksQueue.hasNext()) {
+          ExplosionRegen explosionRegenTrans = transparentsQueue.next();
+          explosionRegenTrans.update();
+          transparentsQueue.remove();
+      }
+  }
 }
