@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameMode;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.Lobby;
@@ -12,10 +13,12 @@ import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.GameModeLobb
 
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
+import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.plugin.Plugin;
 
@@ -35,33 +38,34 @@ public class DeathMessages implements Listener {
   }
 
   @EventHandler
-  public void playerTakeDamage(EntityDamageByEntityEvent entityDamageEvent) {
-    if (entityDamageEvent.getEntity() instanceof Player && entityDamageEvent.getDamager() instanceof Player) {
-      Player player = (Player) entityDamageEvent.getEntity(); 
-      Player damager = (Player) entityDamageEvent.getDamager();
+  public void playerDeathEvent(PlayerDeathEvent entityDamageEvent) {
+    if (entityDamageEvent.getEntity() instanceof Player
+        && entityDamageEvent.getDamageSource().getCausingEntity() instanceof Player) {
+
+      Player player = (Player) entityDamageEvent.getEntity();
+      Player damager = (Player) entityDamageEvent.getDamageSource().getCausingEntity();
 
       if (!lobbyManager.canPlayerAttackPlayer(player, damager)) {
-        entityDamageEvent.setCancelled(true);
         return;
       }
 
       if (damager != null && player != null) {
-        if(entityDamageEvent.getCause() == DamageCause.ENTITY_EXPLOSION) {
-          if ((player.getHealth() - entityDamageEvent.getFinalDamage()) <= 0) {
-            damager.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
-            Lobby damagerLobby = lobbyManager.getPlayersLobby(damager);
-            if (damagerLobby instanceof GameLobby_DeathMatch || damagerLobby instanceof GameLobby_TeamDeathMatch) {
-              damagerLobby.getScoreManager().addScorePlayer(damager);
-            }
+        Lobby damagerLobby = lobbyManager.getPlayersLobby(damager);
+        if (damagerLobby instanceof GameLobby_DeathMatch || damagerLobby instanceof GameLobby_TeamDeathMatch) {
+          damagerLobby.getScoreManager().addScorePlayer(damager);
+        }
 
-            Random random = new Random();
-            String deathMessage = deathMessagesPlayerOnPlayer.get(random.nextInt(deathMessagesPlayerOnPlayer.size()));
-            if (damagerLobby != null) {
-              damagerLobby.broadcastMessage(damagerLobby.getScoreManager().getPlayerDisplayName(player) + " " + deathMessage + " " + damagerLobby.getScoreManager().getPlayerDisplayName(damager));
-            }
-          } else {
-            damager.playSound(damager.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1, 1);
+        if (entityDamageEvent.getDamageSource().getDamageType() == DamageType.PLAYER_EXPLOSION) {
+          damager.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
+
+          Random random = new Random();
+          String deathMessage = deathMessagesPlayerOnPlayer.get(random.nextInt(deathMessagesPlayerOnPlayer.size()));
+          if (damagerLobby != null) {
+            damagerLobby.broadcastMessage(damagerLobby.getScoreManager().getPlayerDisplayName(player) + " "
+                + deathMessage + " " + damagerLobby.getScoreManager().getPlayerDisplayName(damager));
           }
+        } else {
+          damagerLobby.broadcastMessage(entityDamageEvent.getDeathMessage());
         }
       }
     }

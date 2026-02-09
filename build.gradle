@@ -4,6 +4,8 @@ plugins {
     id "xyz.jpenilla.run-paper" version "2.3.0"
 }
 
+import xyz.jpenilla.runpaper.task.RunServer
+
 group = 'com.g0ldensp00n.eggsplosion'
 version = '5.0'
 
@@ -25,7 +27,6 @@ dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.11-R0.1-SNAPSHOT")
 }
 
-// This task ensures the "version" in your plugin.yml is updated automatically
 processResources {
     def props = [version: version]
     inputs.properties props
@@ -35,49 +36,31 @@ processResources {
     }
 }
 
-// Configure the run task
 tasks {
     runServer {
-        // Set the Minecraft version you want to test on
         minecraftVersion("1.21.11") 
         jvmArgs(
-            "-XX:+AllowEnhancedClassRedefinition",
-            "-XX:HotswapAgent=fatjar",
-            "-javaagent:${project.rootDir}/hotswap-agent-2.0.1.jar=disablePlugin=Log4j2,disablePlugin=Proxy,autoHotswap=true",
-            "-DextraClasspath=${project.buildDir}/classes/java/main",
             "--add-opens=java.base/java.net=ALL-UNNAMED",
             "--add-opens=java.base/java.lang=ALL-UNNAMED",
             "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
             "--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED"
         )
-
     }
 }
 
-// plugins {
-//     id("ru.endlesscode.bukkitgradle") version "1.0.0"
-// }
-//
-// // Project information
-// group "com.g0ldensp00n.eggsplosion"
-// description "EggSplosion 5.0 - Remastered"
-// version "5.0"
-//
-// // Override default configurations
-// bukkit {
-//     // Version of API (if you will not set this property, will be used latest available)
-//     apiVersion = "1.21.11"
-//
-//     // Attributes for plugin.yml
-// }
-//
-// repositories {
-//     spigot() // Adds spigot repo
-//     mavenCentral()
-// }
-//
-// // Let's add needed API to project
-// dependencies {
-//     compileOnly(spigotApi)
-//     // see section 'Dependencies' for more info
-// }
+tasks.register("runServerHR", RunServer) {
+    minecraftVersion("1.21.11") 
+    
+    def classesDir = layout.buildDirectory.dir("classes/java/main").get().asFile.absolutePath
+    
+    jvmArgs(
+        "-XX:+AllowEnhancedClassRedefinition",
+        "-XX:HotswapAgent=fatjar",
+        "-javaagent:${project.rootDir}/hotswap-agent-2.0.1.jar=disablePlugin=Log4j2,disablePlugin=Proxy,autoHotswap=true",
+        "-DextraClasspath=${classesDir}",
+        "--add-opens=java.base/java.net=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED"
+    )
+}

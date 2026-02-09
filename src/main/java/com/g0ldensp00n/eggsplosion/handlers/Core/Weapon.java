@@ -36,8 +36,8 @@ public class Weapon implements Listener {
       if ((playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_AIR)
           || playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
         Player player = playerInteractEvent.getPlayer();
-        if (!player.hasPotionEffect(PotionEffectType.INVISIBILITY)
-            && !player.hasPotionEffect(PotionEffectType.REGENERATION)) {
+        if (!(player.hasPotionEffect(PotionEffectType.INVISIBILITY)
+            && player.hasPotionEffect(PotionEffectType.REGENERATION))) {
           switch (playerInteractEvent.getItem().getType()) {
             case NETHERITE_HOE:
               playerInteractEvent.setCancelled(true);

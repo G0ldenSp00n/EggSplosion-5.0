@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -32,57 +33,103 @@ public class RespawnHandler implements Listener {
   List<Location> spawnPoints = new ArrayList<>();
 
   @EventHandler
-  public void playerTakeDamage(EntityDamageEvent entityDamageEvent) {
-    if (entityDamageEvent instanceof EntityDamageByEntityEvent) {
-      EntityDamageByEntityEvent entityDamageByEntityEvent = (EntityDamageByEntityEvent) entityDamageEvent;
+  void playerDeathEvent(PlayerDeathEvent playerDeathEvent) {
+    Player player = playerDeathEvent.getEntity();
+    // if ((player.getHealth() - entityDamageEvent.getFinalDamage()) <= 0) {
+    Lobby playersLobby = lobbyManager.getPlayersLobby(player);
+    Location spawnPoint = null;
+    if (playersLobby != null && playersLobby.getScoreManager() != null
+        && playersLobby.getScoreManager().getScoreType() == ScoreType.TEAM) {
+      if (playersLobby instanceof GameLobby_CaptureTheFlag) {
+        GameLobby_CaptureTheFlag gameLobby = (GameLobby_CaptureTheFlag) playersLobby;
+        gameLobby.resetPlayerFlag(player, "has dropped the");
+      }
 
-      if (entityDamageByEntityEvent.getEntity() instanceof Player
-          && entityDamageByEntityEvent.getDamager() instanceof Player) {
-        Player player = (Player) entityDamageByEntityEvent.getEntity();
-        Player damager = (Player) entityDamageByEntityEvent.getDamager();
-
-        if (!lobbyManager.canPlayerAttackPlayer(player, damager)) {
-          entityDamageEvent.setCancelled(true);
-          return;
-        }
+      ScoreManager scoreboardManager = playersLobby.getScoreManager();
+      if (scoreboardManager.getPlayerTeam(player).equals(scoreboardManager.getTeamA())) {
+        spawnPoint = playersLobby.getMap().getSpawnPoint(scoreboardManager.getTeamA());
+      } else if (scoreboardManager.getPlayerTeam(player).equals(scoreboardManager.getTeamB())) {
+        spawnPoint = playersLobby.getMap().getSpawnPoint(scoreboardManager.getTeamB());
+      }
+    } else {
+      if (playersLobby != null && playersLobby.getMap() != null) {
+        spawnPoint = playersLobby.getMap().getSpawnPoint();
       }
     }
-    if (entityDamageEvent.getEntity().getType().equals(EntityType.PLAYER)) {
-      Player player = (Player) entityDamageEvent.getEntity();
-      if ((player.getHealth() - entityDamageEvent.getFinalDamage()) <= 0) {
-        entityDamageEvent.setCancelled(true);
-        player.setHealth(20);
-        Lobby playersLobby = lobbyManager.getPlayersLobby(player);
-        Location spawnPoint = null;
-        if (playersLobby != null && playersLobby.getScoreManager() != null
-            && playersLobby.getScoreManager().getScoreType() == ScoreType.TEAM) {
-          if (playersLobby instanceof GameLobby_CaptureTheFlag) {
-            GameLobby_CaptureTheFlag gameLobby = (GameLobby_CaptureTheFlag) playersLobby;
-            gameLobby.resetPlayerFlag(player, "has dropped the");
-          }
 
-          ScoreManager scoreboardManager = playersLobby.getScoreManager();
-          if (scoreboardManager.getPlayerTeam(player).equals(scoreboardManager.getTeamA())) {
-            spawnPoint = playersLobby.getMap().getSpawnPoint(scoreboardManager.getTeamA());
-          } else if (scoreboardManager.getPlayerTeam(player).equals(scoreboardManager.getTeamB())) {
-            spawnPoint = playersLobby.getMap().getSpawnPoint(scoreboardManager.getTeamB());
-          }
-        } else {
-          if (playersLobby != null && playersLobby.getMap() != null) {
-            spawnPoint = playersLobby.getMap().getSpawnPoint();
-          }
-        }
-
-        player.playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 1, 1);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 80, 1));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 80, 10));
-        if (spawnPoint != null) {
-          player.teleport(spawnPoint);
-        } else {
-          player.teleport(player.getWorld().getSpawnLocation());
-        }
-        player.playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 1, 1);
-      }
+    player.playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 1, 1);
+    player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 80, 1));
+    player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 80, 10));
+    if (spawnPoint != null) {
+      player.teleport(spawnPoint);
+    } else {
+      player.teleport(player.getWorld().getSpawnLocation());
     }
+    player.playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 1, 1);
+    // }
   }
+
+  // @EventHandler
+  // public void playerTakeDamage(EntityDamageEvent entityDamageEvent) {
+  // if (entityDamageEvent instanceof EntityDamageByEntityEvent) {
+  // EntityDamageByEntityEvent entityDamageByEntityEvent =
+  // (EntityDamageByEntityEvent) entityDamageEvent;
+  //
+  // if (entityDamageByEntityEvent.getEntity() instanceof Player
+  // && entityDamageByEntityEvent.getDamager() instanceof Player) {
+  // Player player = (Player) entityDamageByEntityEvent.getEntity();
+  // Player damager = (Player) entityDamageByEntityEvent.getDamager();
+  //
+  // if (!lobbyManager.canPlayerAttackPlayer(player, damager)) {
+  // entityDamageEvent.setCancelled(true);
+  // return;
+  // }
+  // }
+  // }
+  // if (entityDamageEvent.getEntity().getType().equals(EntityType.PLAYER)) {
+  // Player player = (Player) entityDamageEvent.getEntity();
+  // if ((player.getHealth() - entityDamageEvent.getFinalDamage()) <= 0) {
+  // entityDamageEvent.setCancelled(true);
+  // player.setHealth(20);
+  // Lobby playersLobby = lobbyManager.getPlayersLobby(player);
+  // Location spawnPoint = null;
+  // if (playersLobby != null && playersLobby.getScoreManager() != null
+  // && playersLobby.getScoreManager().getScoreType() == ScoreType.TEAM) {
+  // if (playersLobby instanceof GameLobby_CaptureTheFlag) {
+  // GameLobby_CaptureTheFlag gameLobby = (GameLobby_CaptureTheFlag) playersLobby;
+  // gameLobby.resetPlayerFlag(player, "has dropped the");
+  // }
+  //
+  // ScoreManager scoreboardManager = playersLobby.getScoreManager();
+  // if
+  // (scoreboardManager.getPlayerTeam(player).equals(scoreboardManager.getTeamA()))
+  // {
+  // spawnPoint =
+  // playersLobby.getMap().getSpawnPoint(scoreboardManager.getTeamA());
+  // } else if
+  // (scoreboardManager.getPlayerTeam(player).equals(scoreboardManager.getTeamB()))
+  // {
+  // spawnPoint =
+  // playersLobby.getMap().getSpawnPoint(scoreboardManager.getTeamB());
+  // }
+  // } else {
+  // if (playersLobby != null && playersLobby.getMap() != null) {
+  // spawnPoint = playersLobby.getMap().getSpawnPoint();
+  // }
+  // }
+  //
+  // player.playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 1, 1);
+  // player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 80,
+  // 1));
+  // player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 80,
+  // 10));
+  // if (spawnPoint != null) {
+  // player.teleport(spawnPoint);
+  // } else {
+  // player.teleport(player.getWorld().getSpawnLocation());
+  // }
+  // player.playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 1, 1);
+  // }
+  // }
+  // }
 }

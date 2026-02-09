@@ -516,6 +516,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                 }
               }
             }
+            break;
           case "tools":
             if (args.length > 1) {
               if (sender instanceof Player && gameMaps.get(args[1]) != null) {

@@ -19,7 +19,7 @@ import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerLoginEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 
@@ -85,7 +85,7 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
   }
 
   @EventHandler
-  public void PlayerLogin(PlayerLoginEvent playerLoginEvent) {
+  public void playerJoin(PlayerJoinEvent playerLoginEvent) {
     Player player = playerLoginEvent.getPlayer();
     if (getPlayersLobby(player) == null) {
       getMainLobby().addPlayer(player);

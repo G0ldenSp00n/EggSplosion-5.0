@@ -13,6 +13,7 @@ import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyMenuSystem;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class EggSplosion extends JavaPlugin {
@@ -24,6 +25,10 @@ public class EggSplosion extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        Bukkit.getWorlds().forEach(world -> {
+            // world.setGameRule(GameRule.IMMEDIATE_RESPAWN, true);
+            // world.setGameRule(GameRule.KEEP_INVENTORY, true);
+        });
         versionNumber = Bukkit.getServer().getPluginManager().getPlugin("EggSplosion").getDescription().getVersion();
         getLogger().info("Enabled EggSplosion v" + versionNumber);
         explosionRegen = new ExplosionRegen(this);
