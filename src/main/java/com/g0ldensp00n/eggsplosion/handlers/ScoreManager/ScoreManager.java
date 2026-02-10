@@ -6,6 +6,11 @@ import java.util.List;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.Lobby;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.GameModeLobbyTypes.GameLobby;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -29,7 +34,8 @@ public class ScoreManager {
   private Team teamA;
   private Team teamB;
 
-  public ScoreManager(Integer scoreToWin, ScoreType type, Lobby lobby, ChatColor teamAColor, ChatColor teamBColor, Boolean hideTeamNameTags) {
+  public ScoreManager(Integer scoreToWin, ScoreType type, Lobby lobby, ChatColor teamAColor, ChatColor teamBColor,
+      Boolean hideTeamNameTags) {
     this(scoreToWin, type, lobby);
 
     String teamAName = teamAColor.name().substring(0, 1) + teamAColor.name().toLowerCase().substring(1);
@@ -51,7 +57,8 @@ public class ScoreManager {
     }
   }
 
-  public ScoreManager(ScoreType type, Lobby lobby, ChatColor teamAColor, ChatColor teamBColor, Boolean hideTeamNameTags) {
+  public ScoreManager(ScoreType type, Lobby lobby, ChatColor teamAColor, ChatColor teamBColor,
+      Boolean hideTeamNameTags) {
     this(-1, type, lobby, teamAColor, teamBColor, hideTeamNameTags);
   }
 
@@ -112,28 +119,58 @@ public class ScoreManager {
   }
 
   public void setPlayerScoreboard(Player player) {
-      Scoreboard gameScoreboard = getScoreboard();
-      player.setScoreboard(gameScoreboard);
+    Scoreboard gameScoreboard = getScoreboard();
+    player.setScoreboard(gameScoreboard);
   }
 
-  public void scoreFreeze () {
+  public void scoreFreeze() {
     scoreFrozen = true;
   }
 
   public String getPlayerDisplayName(Player player) {
     if (getPlayerTeam(player) != null && getPlayerTeam(player).equals(teamA)) {
       return teamA.getPrefix() + player.getName() + ChatColor.RESET;
-    } else if (getPlayerTeam(player) != null && getPlayerTeam(player).equals(teamB)) {
+    } else if (getPlayerTeam(player) != null &&
+        getPlayerTeam(player).equals(teamB)) {
       return teamB.getPrefix() + player.getName() + ChatColor.RESET;
     } else {
       return player.getName();
     }
   }
 
+  public String getPlayerDisplayNameComponent(Player player) {
+    Component prefixComponent;
+    String rawName = player.getName();
+
+    // 1. Determine the prefix Component based on the team
+    if (getPlayerTeam(player) != null && getPlayerTeam(player).equals(teamA)) {
+      // If getPrefix() is a String (e.g. "§c"), we deserialize it.
+      // If getPrefix() is ALREADY a Component, we just use it.
+      // I will assume it is a String here (standard Bukkit), but this handles both:
+      String prefixStr = String.valueOf(teamA.getPrefix());
+      prefixComponent = LegacyComponentSerializer.legacySection().deserialize(prefixStr);
+
+    } else if (getPlayerTeam(player) != null && getPlayerTeam(player).equals(teamB)) {
+      String prefixStr = String.valueOf(teamB.getPrefix());
+      prefixComponent = LegacyComponentSerializer.legacySection().deserialize(prefixStr);
+
+    } else {
+      // No team = No prefix (empty component)
+      prefixComponent = Component.empty();
+    }
+
+    // 2. Combine Prefix + Name into one Component
+    Component fullDisplayName = prefixComponent.append(Component.text(rawName));
+
+    // 3. CRITICAL STEP: Serialize the entire thing into a MiniMessage String
+    // This turns the Object into "<red>Steve" instead of "TextComponentImpl..."
+    return MiniMessage.miniMessage().serialize(fullDisplayName);
+  }
+
   public void addScorePlayer(Player player) {
     if (lobby.playerInLobby(player) && !scoreFrozen) {
       Integer newScore = 0;
-      switch(scoreType) {
+      switch (scoreType) {
         case SOLO:
           Score playerScore = scoreObjective.getScore(player.getName());
           newScore = playerScore.getScore() + 1;
@@ -167,7 +204,9 @@ public class ScoreManager {
       Score teamScore = scoreObjective.getScore(team.getDisplayName());
       Boolean shouldRotate = false;
 
-      if (teamScore.getScore() + 1 == (scoreToWin/2) && scoreObjective.getScore(getTeamA().getDisplayName()).getScore() < (scoreToWin/2) && scoreObjective.getScore(getTeamB().getDisplayName()).getScore() < (scoreToWin/2)) {
+      if (teamScore.getScore() + 1 == (scoreToWin / 2)
+          && scoreObjective.getScore(getTeamA().getDisplayName()).getScore() < (scoreToWin / 2)
+          && scoreObjective.getScore(getTeamB().getDisplayName()).getScore() < (scoreToWin / 2)) {
         shouldRotate = true;
       }
 
@@ -187,7 +226,7 @@ public class ScoreManager {
 
   public void initializeScorePlayer(Player player) {
     if (lobby.playerInLobby(player)) {
-      switch(scoreType) {
+      switch (scoreType) {
         case SOLO:
           Score playerScore = scoreObjective.getScore(player.getName());
           playerScore.setScore(0);

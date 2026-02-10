@@ -11,6 +11,7 @@ public class Food implements Listener {
   public Food(Plugin plugin) {
     Bukkit.getPluginManager().registerEvents(this, plugin);
   }
+
   @EventHandler
   public void playerGetHungery(FoodLevelChangeEvent event) {
     event.setCancelled(true);

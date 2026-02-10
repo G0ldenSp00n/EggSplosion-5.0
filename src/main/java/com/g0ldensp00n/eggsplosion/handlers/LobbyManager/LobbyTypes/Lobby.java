@@ -22,6 +22,10 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextReplacementConfig;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -312,6 +316,51 @@ public abstract class Lobby {
     player.getInventory().setBoots(setUnbreakable(boots));
   }
 
+  public void broadcastCustomDeathMessage(String customDeathMessage, Player victim, Player killer) {
+    String victimName, killerName;
+    if (this.getScoreManager() == null) {
+      victimName = victim.getName();
+      killerName = victim.getName();
+    } else {
+      victimName = this.getScoreManager().getPlayerDisplayNameComponent(victim);
+      killerName = this.getScoreManager().getPlayerDisplayNameComponent(killer);
+    }
+
+    Component finalMessage = MiniMessage.miniMessage().deserialize("<victim> " + customDeathMessage + " <killer>",
+        Placeholder.component("victim", MiniMessage.miniMessage().deserialize(victimName)),
+        Placeholder.component("killer",
+            MiniMessage.miniMessage().deserialize(killerName)));
+
+    this.broadcastMessage(finalMessage);
+  }
+
+  public void broadcastDefaultDeathMessage(Component deathMessage, Player victim, Player killer) {
+    if (this.getScoreManager() == null) {
+      this.broadcastMessage(deathMessage);
+    }
+
+    if (deathMessage != null) {
+      // 2. Replace the Victim's name with their colored DisplayName
+      String victimName = this.getScoreManager().getPlayerDisplayNameComponent(victim);
+      deathMessage = deathMessage.replaceText(TextReplacementConfig.builder()
+          .matchLiteral(victim.getName())
+          .replacement(MiniMessage.miniMessage().deserialize(victimName))
+          .build());
+
+      // 3. Replace the Killer's name (if one exists)
+      if (killer != null) {
+        String killerName = this.getScoreManager().getPlayerDisplayNameComponent(killer);
+        deathMessage = deathMessage.replaceText(TextReplacementConfig.builder()
+            .matchLiteral(killer.getName())
+            .replacement(MiniMessage.miniMessage().deserialize(killerName))
+            .build());
+      }
+
+      this.broadcastMessage(deathMessage);
+    }
+
+  }
+
   public void broadcastMessageTypeMessage(ChatMessageType chatMessageType, String message) {
     for (Player player : playersInLobby) {
       player.spigot().sendMessage(chatMessageType, new TextComponent(message));
@@ -331,6 +380,25 @@ public abstract class Lobby {
 
   public void broadcastMessage(String message) {
     broadcastMessageTypeMessage(ChatMessageType.CHAT, message);
+  }
+
+  public void broadcastActionBar(Component message, Boolean includeChatMessage) {
+    for (Player player : playersInLobby) {
+      player.sendActionBar(message);
+    }
+    if (includeChatMessage) {
+      broadcastMessage(message);
+    }
+  }
+
+  public void broadcastActionBar(Component message) {
+    broadcastActionBar(message, false);
+  }
+
+  public void broadcastMessage(Component message) {
+    for (Player player : playersInLobby) {
+      player.sendMessage(message);
+    }
   }
 
   public void broadcastTitle(String title, String subTitle, int fadeIn, int stay, int fadeOut) {

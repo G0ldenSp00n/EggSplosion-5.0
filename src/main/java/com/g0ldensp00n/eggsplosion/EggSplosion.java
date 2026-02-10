@@ -6,6 +6,7 @@ import com.g0ldensp00n.eggsplosion.handlers.Core.EggExplode;
 import com.g0ldensp00n.eggsplosion.handlers.Core.ExplosionRegen;
 import com.g0ldensp00n.eggsplosion.handlers.Core.Food;
 import com.g0ldensp00n.eggsplosion.handlers.Core.PickupDropHandler;
+import com.g0ldensp00n.eggsplosion.handlers.Core.PlayerLeaveHandler;
 import com.g0ldensp00n.eggsplosion.handlers.Core.RespawnHandler;
 import com.g0ldensp00n.eggsplosion.handlers.Core.Weapon;
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameModeListeners;
@@ -13,7 +14,7 @@ import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyMenuSystem;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import org.bukkit.Bukkit;
-import org.bukkit.GameRule;
+import org.bukkit.GameRules;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class EggSplosion extends JavaPlugin {
@@ -26,8 +27,9 @@ public class EggSplosion extends JavaPlugin {
     @Override
     public void onEnable() {
         Bukkit.getWorlds().forEach(world -> {
-            // world.setGameRule(GameRule.IMMEDIATE_RESPAWN, true);
-            // world.setGameRule(GameRule.KEEP_INVENTORY, true);
+            world.setGameRule(GameRules.IMMEDIATE_RESPAWN, true);
+            world.setGameRule(GameRules.KEEP_INVENTORY, true);
+            world.setGameRule(GameRules.SHOW_DEATH_MESSAGES, false);
         });
         versionNumber = Bukkit.getServer().getPluginManager().getPlugin("EggSplosion").getDescription().getVersion();
         getLogger().info("Enabled EggSplosion v" + versionNumber);
@@ -43,6 +45,7 @@ public class EggSplosion extends JavaPlugin {
         new RespawnHandler(this, lobbyManager);
         new LobbyMenuSystem(this, lobbyManager, mapManager);
         new Food(this);
+        new PlayerLeaveHandler(this, lobbyManager);
 
         this.getCommand("lobby").setExecutor(lobbyManager);
         this.getCommand("lobby").setTabCompleter(lobbyManager);

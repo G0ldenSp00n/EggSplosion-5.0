@@ -11,20 +11,13 @@ version = '5.0'
 
 repositories {
     mavenCentral()
-    // The official Spigot repository
-    maven {
-        url = uri("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
-    }
-    // (Optional) PaperMC repository if you ever want to switch to the Paper API
     maven {
         url = uri("https://repo.papermc.io/repository/maven-public/")
     }
 }
 
 dependencies {
-    // The Spigot API for 1.21.11
-    // "compileOnly" is used because the server provides the code at runtime
-    compileOnly("org.spigotmc:spigot-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
 }
 
 processResources {

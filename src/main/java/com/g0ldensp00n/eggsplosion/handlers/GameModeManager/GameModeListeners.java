@@ -21,9 +21,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
-
 public class GameModeListeners implements Listener {
   private LobbyManager lobbyManager;
 
@@ -44,25 +41,29 @@ public class GameModeListeners implements Listener {
         Block blockBelowClickedBlock = locationBelowClickedBlock.getBlock();
         ScoreManager scoreManager = playerLobby.getScoreManager();
         if (scoreManager.getPlayerTeam(player).equals(scoreManager.getTeamA())) {
-          if (clickedBlock.getType().equals(Material.BLUE_BANNER) || blockBelowClickedBlock.getType().equals(Material.BLUE_BANNER)) {
+          if (clickedBlock.getType().equals(Material.BLUE_BANNER)
+              || blockBelowClickedBlock.getType().equals(Material.BLUE_BANNER)) {
             playerInteractEvent.setCancelled(true);
             ItemStack blueFlag = new ItemStack(Material.BLUE_BANNER);
             player.getInventory().setHelmet(blueFlag);
             clickedBlock.setType(Material.AIR);
             if (playerLobby.getMap().getDoFlagMessages()) {
-              playerLobby.broadcastActionBar(scoreManager.getPlayerDisplayName(player) + " has picked up the " + ChatColor.BLUE + "Blue Team" + ChatColor.RESET + " Flag", true);
+              playerLobby.broadcastActionBar(scoreManager.getPlayerDisplayName(player) + " has picked up the "
+                  + ChatColor.BLUE + "Blue Team" + ChatColor.RESET + " Flag", true);
             }
           }
         }
 
         if (scoreManager.getPlayerTeam(player).equals(scoreManager.getTeamB())) {
-          if (clickedBlock.getType().equals(Material.RED_BANNER) || blockBelowClickedBlock.getType().equals(Material.RED_BANNER)) {
+          if (clickedBlock.getType().equals(Material.RED_BANNER)
+              || blockBelowClickedBlock.getType().equals(Material.RED_BANNER)) {
             playerInteractEvent.setCancelled(true);
             ItemStack redFlag = new ItemStack(Material.RED_BANNER);
             player.getInventory().setHelmet(redFlag);
             clickedBlock.setType(Material.AIR);
             if (playerLobby.getMap().getDoFlagMessages()) {
-              playerLobby.broadcastActionBar(scoreManager.getPlayerDisplayName(player) + " has picked up the " + ChatColor.RED + "Red Team" + ChatColor.RESET + " Flag", true);
+              playerLobby.broadcastActionBar(scoreManager.getPlayerDisplayName(player) + " has picked up the "
+                  + ChatColor.RED + "Red Team" + ChatColor.RESET + " Flag", true);
             }
           }
         }
@@ -74,7 +75,8 @@ public class GameModeListeners implements Listener {
     if (gameLobby instanceof GameLobby_CaptureTheFlag) {
       GameLobby_CaptureTheFlag ctfLobby = (GameLobby_CaptureTheFlag) gameLobby;
       if (player.getInventory().getHelmet() != null) {
-        Location playerFlagLocation = gameLobby.getMap().getSideFlagLocation(gameLobby.getMap().getTeamSide(gameLobby.getScoreManager().getPlayerTeam(player)));
+        Location playerFlagLocation = gameLobby.getMap()
+            .getSideFlagLocation(gameLobby.getMap().getTeamSide(gameLobby.getScoreManager().getPlayerTeam(player)));
         playerFlagLocation.add(0, 1, 0);
         if (player.getLocation().distance(playerFlagLocation) < 5) {
           ctfLobby.resetPlayerFlag(player, "has captured the", true);
@@ -88,7 +90,7 @@ public class GameModeListeners implements Listener {
       GameLobby_CapturePoint cpLobby = (GameLobby_CapturePoint) gameLobby;
       Location playerLocation = player.getLocation();
       for (String capturePointName : gameLobby.getMap().getAllCapturePointName()) {
-        if(gameLobby.getMap().getCapturePoint(capturePointName).distance(playerLocation) < 5) {
+        if (gameLobby.getMap().getCapturePoint(capturePointName).distance(playerLocation) < 5) {
           cpLobby.playerCapturingPoint(capturePointName, player);
         } else {
           cpLobby.playerStopCapturingPoint(capturePointName, player);
