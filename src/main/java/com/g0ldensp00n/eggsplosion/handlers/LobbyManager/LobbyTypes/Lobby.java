@@ -337,6 +337,7 @@ public abstract class Lobby {
   public void broadcastDefaultDeathMessage(Component deathMessage, Player victim, Player killer) {
     if (this.getScoreManager() == null) {
       this.broadcastMessage(deathMessage);
+      return;
     }
 
     if (deathMessage != null) {

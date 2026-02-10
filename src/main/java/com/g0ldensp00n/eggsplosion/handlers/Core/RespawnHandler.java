@@ -20,6 +20,7 @@ import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.Lobby;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.GameModeLobbyTypes.GameLobby_CaptureTheFlag;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreType;
 
@@ -44,6 +45,12 @@ public class RespawnHandler implements Listener {
         if (playersLobby instanceof GameLobby_CaptureTheFlag) {
           GameLobby_CaptureTheFlag gameLobby = (GameLobby_CaptureTheFlag) playersLobby;
           gameLobby.resetPlayerFlag(player, "has dropped the");
+        }
+
+        GameMap map = playersLobby.getMap();
+        if (map != null && map.getResetInventoryOnSpawn()) {
+          player.getInventory().clear();
+          playersLobby.equipPlayer(player);
         }
 
         ScoreManager scoreboardManager = playersLobby.getScoreManager();

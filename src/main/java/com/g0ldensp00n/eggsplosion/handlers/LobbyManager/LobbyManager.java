@@ -146,6 +146,11 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
       if (args.length >= 1) {
         switch (args[0]) {
           case "create":
+            if (args.length == 1) {
+              sender.sendMessage(
+                  "[EggSplosion] Must Specify the Name of the Lobby when creating");
+              return true;
+            }
             if (lobbies.get(args[1]) == null) {
               GameMap waiting_room = mapManager.getMapByName("WAITING_ROOM");
               if (waiting_room != null) {
@@ -171,12 +176,17 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
           case "join":
             if (sender instanceof Player) {
               Player playerCmdSender = (Player) sender;
+              if (args.length == 1) {
+                joinLobby(lobbies.elements().nextElement(), playerCmdSender);
+                return true;
+              }
               Lobby lobby = lobbies.get(args[1]);
               if (lobby != null) {
                 joinLobby(lobby, playerCmdSender);
                 return true;
               } else {
                 playerCmdSender.sendMessage("[EggSplosion] Lobby " + args[0] + " does not exist");
+                return true;
               }
             }
             break;

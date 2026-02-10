@@ -48,6 +48,7 @@ public class GameMap {
   private Boolean allowChestplateRemoval = false;
   private Boolean allowLeggingRemoval = false;
   private Boolean allowBootRemoval = false;
+  private Boolean resetInventoryOnSpawn = false;
   private Integer pointsToWinCTF = 4;
   private Integer pointsToWinTDM = 15;
   private Integer pointsToWinDM = 15;
@@ -69,6 +70,30 @@ public class GameMap {
 
     supportedGameModes = new ArrayList<GameMode>();
     mapEffects = new ArrayList<PotionEffect>();
+  }
+
+  public String mapSupportsGameMode(GameMode mode) {
+    if (mode == GameMode.DEATH_MATCH) {
+      if (this.soloSpawnLocations.size() == 0) {
+        return "Selected Map has no Solo Spawns";
+      }
+    } else if (mode == GameMode.CAPTURE_POINT) {
+      if (this.capturePointLocations.size() == 0) {
+        return "Selected Map has no Capture Points";
+      }
+    } else {
+      if (this.sideSpawnLocations.get(0).size() == 0 || this.sideSpawnLocations.get(0).size() == 0) {
+        return "Selected Map has no Team Spawns";
+      }
+    }
+
+    if (mode == GameMode.CAPTURE_THE_FLAG) {
+      if (this.sideFlagLocation.get(0) == null || this.sideSpawnLocations.get(1) == null) {
+        return "Selected Map has no Flag Spawns";
+      }
+    }
+
+    return null;
   }
 
   public Material getMapIcon() {
@@ -109,7 +134,7 @@ public class GameMap {
 
   public List<String> getAllCapturePointName() {
     List<String> capturePointNames = new ArrayList<>();
-    for(String capturePointName : capturePointLocations.keySet()) {
+    for (String capturePointName : capturePointLocations.keySet()) {
       capturePointNames.add(capturePointName);
     }
 
@@ -123,7 +148,7 @@ public class GameMap {
     return null;
   }
 
-  public void setLoadoutContents (ItemStack[] playerLoadoutContents) {
+  public void setLoadoutContents(ItemStack[] playerLoadoutContents) {
     this.playerLoadout.setContents(playerLoadoutContents);
   }
 
@@ -195,6 +220,14 @@ public class GameMap {
     this.allowLeggingRemoval = allowLeggingRemoval;
   }
 
+  public Boolean getResetInventoryOnSpawn() {
+    return resetInventoryOnSpawn;
+  }
+
+  public void setResetInventoryOnSpawn(Boolean resetInventoryOnSpawn) {
+    this.resetInventoryOnSpawn = resetInventoryOnSpawn;
+  }
+
   public Boolean getAllowBootRemoval() {
     return allowBootRemoval;
   }
@@ -234,7 +267,7 @@ public class GameMap {
   public void setPointsToWinDM(Integer pointToWinDM) {
     this.pointsToWinDM = pointsToWinDM;
   }
-  
+
   public ItemStack getHelmet() {
     if (helmet != null) {
       return helmet.clone();
@@ -270,7 +303,7 @@ public class GameMap {
       setChestplate(item);
     } else if (slot == 2) {
       setLeggings(item);
-    } else if (slot == 3){
+    } else if (slot == 3) {
       setBoots(item);
     }
   }
@@ -308,7 +341,7 @@ public class GameMap {
   }
 
   public Team getSideTeam(Integer side) {
-    for(Entry<Team, Integer> entry : teamSide.entrySet()) {
+    for (Entry<Team, Integer> entry : teamSide.entrySet()) {
       if (entry.getValue() == side) {
         return entry.getKey();
       }
@@ -323,7 +356,7 @@ public class GameMap {
       Random random = new Random();
       List<Team> teamsToAdd = new ArrayList<>(teams);
       Integer side = 0;
-      while(teamsToAdd.size() > 0) {
+      while (teamsToAdd.size() > 0) {
         Integer nextTeam = random.nextInt(teamsToAdd.size());
         Team team = teamsToAdd.get(nextTeam);
         teamSide.put(team, side);
@@ -333,7 +366,7 @@ public class GameMap {
       }
     } else {
       Integer side = 0;
-      for (Team team: teams) {
+      for (Team team : teams) {
         teamSide.put(team, side++);
       }
     }
@@ -342,7 +375,7 @@ public class GameMap {
   public void switchTeamSides() {
     Map<Team, Integer> newTeamSide = new Hashtable<Team, Integer>();
     if (doSideSwitch) {
-      newTeamSide.put(getSideTeam(0), teamSide.size()-1);
+      newTeamSide.put(getSideTeam(0), teamSide.size() - 1);
       for (Integer side = 1; side < teamSide.size(); side++) {
         newTeamSide.put(getSideTeam(side), side - 1);
       }
@@ -364,7 +397,7 @@ public class GameMap {
 
   public void spawnFlag(Integer side) {
     Team team = getSideTeam(side);
-    String bannerType  = team.getColor().name() + "_BANNER";
+    String bannerType = team.getColor().name() + "_BANNER";
     Location flagLocation = getSideFlagLocation(side).clone();
     Material flagType = Material.getMaterial(bannerType);
 
@@ -437,7 +470,8 @@ public class GameMap {
     return getSideFlagLocation(1);
   }
 
-  public void loadMapFromFile(List<Location> soloSpawnLocations, List<Location> sideASpawnLocations, List<Location> sideBSpawnLocations, Location sideAFlagLocation, Location sideBFlagLocation) {
+  public void loadMapFromFile(List<Location> soloSpawnLocations, List<Location> sideASpawnLocations,
+      List<Location> sideBSpawnLocations, Location sideAFlagLocation, Location sideBFlagLocation) {
     this.soloSpawnLocations = soloSpawnLocations;
     this.sideSpawnLocations.put(0, sideASpawnLocations);
     this.sideSpawnLocations.put(1, sideBSpawnLocations);
@@ -452,19 +486,19 @@ public class GameMap {
 
   public boolean locationInMap(Location location) {
     double[] dim = new double[2];
- 
+
     dim[0] = cornerA.getX();
     dim[1] = cornerB.getX();
     Arrays.sort(dim);
-    if(location.getX() > dim[1] || location.getX() < dim[0])
-        return false;
- 
+    if (location.getX() > dim[1] || location.getX() < dim[0])
+      return false;
+
     dim[0] = cornerA.getZ();
     dim[1] = cornerB.getZ();
     Arrays.sort(dim);
-    if(location.getZ() > dim[1] || location.getZ() < dim[0])
-        return false;
- 
+    if (location.getZ() > dim[1] || location.getZ() < dim[0])
+      return false;
+
     return true;
   }
 

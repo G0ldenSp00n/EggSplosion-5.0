@@ -118,6 +118,7 @@ public class Weapon implements Listener {
     player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_EGG, 0.2f, 1f);
     Egg egg = player.launchProjectile(Egg.class);
     egg.setCustomName(player.getUniqueId() + " / " + explosionSize);
+    egg.setVelocity(egg.getVelocity().subtract(player.getVelocity()));
     egg.setVelocity(egg.getVelocity().multiply(velocityMultiplier));
     egg.setMetadata("rocket_jump_power",
         new FixedMetadataValue(Bukkit.getServer().getPluginManager().getPlugin("EggSplosion"), rocket_jump_power));

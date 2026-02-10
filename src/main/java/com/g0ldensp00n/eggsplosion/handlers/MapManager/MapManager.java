@@ -111,6 +111,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         map.setAllowChestplateRemoval(mapConfigFile.getBoolean("allowChestplateRemoval"));
         map.setAllowLeggingRemoval(mapConfigFile.getBoolean("allowLeggingRemoval"));
         map.setAllowBootRemoval(mapConfigFile.getBoolean("allowBootRemoval"));
+        map.setResetInventoryOnSpawn(mapConfigFile.getBoolean("resetInventoryOnSpawn"));
         if (mapConfigFile.getInt("pointsToWinCTF") != 0) {
           map.setPointsToWinCTF(mapConfigFile.getInt("pointsToWinCTF"));
         }
@@ -242,6 +243,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         mapConfigFile.set("allowChestplateRemoval", map.getAllowChestplateRemoval());
         mapConfigFile.set("allowLeggingRemoval", map.getAllowLeggingRemoval());
         mapConfigFile.set("allowBootRemoval", map.getAllowBootRemoval());
+        mapConfigFile.set("resetInventoryOnSpawn", map.getResetInventoryOnSpawn());
 
         if (map.getSideAFlagLocation() != null) {
           mapConfigFile.set("teamAFlagLocation", map.getSideAFlagLocation());
@@ -514,6 +516,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                   to_teleport = gameMaps.get(args[1]).getCornerA();
                   player.teleport(to_teleport);
                 }
+                return true;
               }
             }
             break;
@@ -664,6 +667,11 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                       sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
                           + " Gamerule flagSpawnDelay is currently set to: " + map.getFlagSpawnDelay());
                       break;
+                    case "resetInventoryOnSpawn":
+                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                          + " Gamerule resetInventoryOnSpawn is currently set to: " + map.getResetInventoryOnSpawn());
+                      break;
+
                     default:
                       return false;
                   }
@@ -774,6 +782,20 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                         return true;
                       }
                       break;
+                    case "resetInventoryOnSpawn":
+                      if (args[3].equalsIgnoreCase("true")) {
+                        map.setResetInventoryOnSpawn(true);
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule resetInventoryOnSpawn is now set to: true");
+                        return true;
+                      } else if (args[3].equalsIgnoreCase("false")) {
+                        map.setResetInventoryOnSpawn(false);
+                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
+                            + " Gamerule resetInventoryOnSpawn is now set to: false");
+                        return true;
+                      }
+                      break;
+
                     case "pointsToWinCTF":
                       Integer pointsToWin;
                       try {
@@ -1003,6 +1025,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               gameRules.add("allowChestplateRemoval");
               gameRules.add("allowLeggingRemoval");
               gameRules.add("allowBootRemoval");
+              gameRules.add("resetInventoryOnSpawn");
               gameRules.add("flagSpawnDelay");
               return Utils.FilterTabComplete(args[2], gameRules);
             case "effect":
@@ -1026,6 +1049,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                 case "allowChestplateRemoval":
                 case "allowLeggingRemoval":
                 case "allowBootRemoval":
+                case "resetInventoryOnSpawn":
                   List<String> trueFalse = new ArrayList<>();
                   trueFalse.add("true");
                   trueFalse.add("false");

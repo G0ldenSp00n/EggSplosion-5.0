@@ -151,6 +151,12 @@ public class WaitingLobby extends Lobby {
               GameMode gameMode = tallyGameModeVote();
               String mapName = tallyGameMapVote();
               GameMap gameMap = mapManager.getMapByName(mapName);
+              String invalidMapMessage = gameMap.mapSupportsGameMode(gameMode);
+              if (invalidMapMessage != null) {
+                broadcastTitle(ChatColor.RED + "Failed", invalidMapMessage, 0, 60,
+                    0);
+                return;
+              }
               broadcastTitle(gameModeToString(gameMode), "Map - " + mapName, 10, 60, 10);
 
               // Setup Game Mode Lobby
