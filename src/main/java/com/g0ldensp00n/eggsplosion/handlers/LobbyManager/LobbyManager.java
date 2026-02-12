@@ -120,9 +120,9 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
     lobbies = new Hashtable<>();
   }
 
-  public Boolean canPlayerAttackPlayer(Player playerA, Player playerB) {
-    Lobby playerLobby = lobbyManager.getPlayersLobby(playerA);
-    Lobby damagerLobby = lobbyManager.getPlayersLobby(playerB);
+  public Boolean canPlayerAttackPlayer(Player victim, Player attacker) {
+    Lobby playerLobby = lobbyManager.getPlayersLobby(victim);
+    Lobby damagerLobby = lobbyManager.getPlayersLobby(attacker);
     return playerLobby == damagerLobby;
   }
 

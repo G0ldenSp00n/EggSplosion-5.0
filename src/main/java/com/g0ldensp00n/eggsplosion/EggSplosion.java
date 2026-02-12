@@ -23,6 +23,7 @@ public class EggSplosion extends JavaPlugin {
     private MapManager mapManager;
     private LobbyManager lobbyManager;
     public String pluginFolder = getDataFolder().getAbsolutePath();
+    private static EggSplosion plugin;
 
     @Override
     public void onEnable() {
@@ -31,6 +32,7 @@ public class EggSplosion extends JavaPlugin {
             world.setGameRule(GameRules.KEEP_INVENTORY, true);
             world.setGameRule(GameRules.SHOW_DEATH_MESSAGES, false);
         });
+        plugin = this;
         versionNumber = Bukkit.getServer().getPluginManager().getPlugin("EggSplosion").getDescription().getVersion();
         getLogger().info("Enabled EggSplosion v" + versionNumber);
         explosionRegen = new ExplosionRegen(this);
@@ -51,6 +53,18 @@ public class EggSplosion extends JavaPlugin {
         this.getCommand("lobby").setTabCompleter(lobbyManager);
         this.getCommand("map").setExecutor(mapManager);
         this.getCommand("map").setTabCompleter(mapManager);
+    }
+
+    public static EggSplosion getInstance() {
+        return plugin;
+    }
+
+    public LobbyManager getLobbyManager() {
+        return lobbyManager;
+    }
+
+    public MapManager getMapManager() {
+        return mapManager;
     }
 
     @Override
