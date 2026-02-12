@@ -35,7 +35,6 @@ public class Weapon implements Listener {
   @EventHandler
   public void playerInteractEvent(PlayerInteractEvent playerInteractEvent) {
     if (playerInteractEvent.getItem() != null) {
-      // Possible Explosion Caluculation -5.3x+(3.7x^2)
       if ((playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_AIR)
           || playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
         Player player = playerInteractEvent.getPlayer();
@@ -139,8 +138,7 @@ public class Weapon implements Listener {
       }
     }
     egg.setCustomName(player.getUniqueId() + " / " + explosionSize);
-    egg.setVelocity(egg.getVelocity().subtract(player.getVelocity()));
-    egg.setVelocity(egg.getVelocity().multiply(velocityMultiplier));
+    egg.setVelocity(player.getLocation().getDirection().multiply(velocityMultiplier));
     egg.setMetadata("rocket_jump_power",
         new FixedMetadataValue(Bukkit.getServer().getPluginManager().getPlugin("EggSplosion"), rocket_jump_power));
   }
