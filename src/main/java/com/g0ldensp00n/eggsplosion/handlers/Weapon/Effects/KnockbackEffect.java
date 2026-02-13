@@ -10,7 +10,7 @@ import org.bukkit.util.Vector;
 import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponEffect;
 
-class KnockbackEffect extends WeaponEffect {
+public class KnockbackEffect extends WeaponEffect {
   float knockbackPower;
   double knockbackRadius = 4.0;
 
@@ -45,11 +45,12 @@ class KnockbackEffect extends WeaponEffect {
       direction.multiply(knockbackPower * intensity);
 
       entity.setVelocity(entity.getVelocity().add(direction));
+      // TODO: Prevent Team Damage?
       if (entity.equals(shooter)) {
         shooter.setFallDistance(0);
 
         NamespacedKey windChargeAnchorKey = new NamespacedKey(EggSplosion.getInstance(),
-            "windChargeAnchor");
+            "wind_charge_anchor");
         shooter.getPersistentDataContainer().set(windChargeAnchorKey,
             PersistentDataType.DOUBLE,
             location.getY());

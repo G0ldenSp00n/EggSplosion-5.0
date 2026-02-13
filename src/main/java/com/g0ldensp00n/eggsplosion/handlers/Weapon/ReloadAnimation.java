@@ -38,23 +38,23 @@ class ReloadAnimation implements Listener {
 
               NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(),
                   "weapon_id");
-              NamespacedKey primaryFireReloadKey = new NamespacedKey(EggSplosion.getInstance(),
-                  "primary_fire_reloaded_after");
+              NamespacedKey secondaryFireReloadKey = new NamespacedKey(EggSplosion.getInstance(),
+                  "secondary_fire_reloaded_after");
 
               if (heldWeapon.hasItemMeta() && heldWeapon.getItemMeta().getPersistentDataContainer().has(weaponIDKey)
-                  && heldWeapon.getItemMeta().getPersistentDataContainer().has(primaryFireReloadKey)) {
+                  && heldWeapon.getItemMeta().getPersistentDataContainer().has(secondaryFireReloadKey)) {
                 NamespacedKey weaponID = NamespacedKey.fromString(
                     heldWeapon.getItemMeta().getPersistentDataContainer().get(weaponIDKey, PersistentDataType.STRING));
                 Weapon weapon = WeaponRegistry.getInstance().getWeaponByID(weaponID);
 
-                int primaryFireReloadedAfter = heldWeapon.getItemMeta().getPersistentDataContainer().get(
-                    primaryFireReloadKey,
+                int secondaryFireReloadedAfter = heldWeapon.getItemMeta().getPersistentDataContainer().get(
+                    secondaryFireReloadKey,
                     PersistentDataType.INTEGER);
                 int currentTick = Bukkit.getCurrentTick();
 
                 if (weapon != null) {
-                  float percentageReloaded = (float) (primaryFireReloadedAfter - currentTick)
-                      / (float) weapon.primaryFireReloadTicks;
+                  float percentageReloaded = (float) (secondaryFireReloadedAfter - currentTick)
+                      / (float) weapon.secondaryAction.fireReloadTicks;
                   if (percentageReloaded >= 0 && percentageReloaded <= 1) {
                     player.setExp(percentageReloaded);
                     return;

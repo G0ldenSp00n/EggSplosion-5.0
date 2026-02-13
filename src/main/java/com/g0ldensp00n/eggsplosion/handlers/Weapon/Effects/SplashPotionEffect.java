@@ -10,7 +10,7 @@ import org.bukkit.potion.PotionEffect;
 import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponEffect;
 
-class SplashPotionEffect extends WeaponEffect {
+public class SplashPotionEffect extends WeaponEffect {
   Collection<PotionEffect> potionEffects;
   double potionRadius = 4.0;
 

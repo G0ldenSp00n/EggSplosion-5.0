@@ -10,10 +10,10 @@ import org.bukkit.entity.Player;
 
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponEffect;
 
-class ExplosionEffect extends WeaponEffect {
+public class ExplosionEffect extends WeaponEffect {
   float explosionPower;
   Sound explosionSound = Sound.ENTITY_GENERIC_EXPLODE;
-  Particle explosionParticle = Particle.EXPLOSION;
+  Particle explosionParticle = Particle.EXPLOSION_EMITTER;
 
   public ExplosionEffect(float explosionPower) {
     this.explosionPower = explosionPower;

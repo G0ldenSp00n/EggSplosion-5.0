@@ -57,18 +57,18 @@ public class Weapon implements Listener {
               playerInteractEvent.setCancelled(true);
               launchWeapon(player, 4.8f, 2.6f, 0.7f, 1, Material.EGG);
               break;
-            case COPPER_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 4.2f, 2.5f, 0.6f, 1, Material.EGG);
-              break;
-            case STONE_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 1.5f, 2.4f, 2.5f, 2, Material.EGG);
-              break;
+            // case COPPER_HOE:
+            // playerInteractEvent.setCancelled(true);
+            // launchWeapon(player, 4.2f, 2.5f, 0.6f, 1, Material.EGG);
+            // break;
+            // case STONE_HOE:
+            // playerInteractEvent.setCancelled(true);
+            // launchWeapon(player, 1.5f, 2.4f, 2.5f, 2, Material.EGG);
+            // break;
             // case WOODEN_HOE:
-            //   playerInteractEvent.setCancelled(true);
-            //   launchWeapon(player, 2.75f, 1.25f, 0.15f, 0, Material.EGG);
-            //   break;
+            // playerInteractEvent.setCancelled(true);
+            // launchWeapon(player, 2.75f, 1.25f, 0.15f, 0, Material.EGG);
+            // break;
             default:
               break;
           }

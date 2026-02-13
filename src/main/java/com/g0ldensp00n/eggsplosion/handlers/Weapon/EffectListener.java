@@ -29,7 +29,8 @@ class EffectListener implements Listener {
         NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(), "weapon_id");
 
         if (egg.getPersistentDataContainer().has(weaponIDKey)) {
-          NamespacedKey weaponID = NamespacedKey.fromString(egg.getPersistentDataContainer().get(weaponIDKey, PersistentDataType.STRING))
+          NamespacedKey weaponID = NamespacedKey
+              .fromString(egg.getPersistentDataContainer().get(weaponIDKey, PersistentDataType.STRING));
           Weapon weapon = WeaponRegistry.getInstance().getWeaponByID(weaponID);
           NamespacedKey isWeaponPrimaryFireKey = new NamespacedKey(EggSplosion.getInstance(),
               "is_weapon_primary_fire");
@@ -37,12 +38,12 @@ class EffectListener implements Listener {
           if (egg.getPersistentDataContainer().has(isWeaponPrimaryFireKey)) {
             boolean isWeaponPrimaryFire = egg.getPersistentDataContainer().get(isWeaponPrimaryFireKey,
                 PersistentDataType.BOOLEAN);
-            if (isWeaponPrimaryFire && !weapon.primaryFireEffects.isEmpty()) {
-              for (WeaponEffect effect : weapon.primaryFireEffects) {
+            if (isWeaponPrimaryFire) {
+              for (WeaponEffect effect : weapon.primaryAction.fireEffects) {
                 effect.activateEffect(egg.getLocation(), shooter);
               }
-            } else if (!weapon.secondaryFireEffects.isEmpty()) {
-              for (WeaponEffect effect : weapon.secondaryFireEffects) {
+            } else if (!isWeaponPrimaryFire) {
+              for (WeaponEffect effect : weapon.secondaryAction.fireEffects) {
                 effect.activateEffect(egg.getLocation(), shooter);
               }
             }

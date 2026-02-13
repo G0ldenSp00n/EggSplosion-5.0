@@ -5,14 +5,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameMode;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponRegistry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -203,9 +206,14 @@ public abstract class Lobby {
   }
 
   protected void equipDefaultInventory(Player player) {
-    ItemStack woodenHoe = new ItemStack(Material.WOODEN_HOE);
-    ItemStack stoneHoe = new ItemStack(Material.STONE_HOE);
-    ItemStack copperHoe = new ItemStack(Material.COPPER_HOE);
+    WeaponRegistry registry = WeaponRegistry.getInstance();
+    ItemStack woodenHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "wooden_hoe")).getItem();
+    ItemStack stoneHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "stone_hoe")).getItem();
+    ItemStack copperHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "copper_hoe")).getItem();
+
     ItemStack ironHoe = new ItemStack(Material.IRON_HOE);
     ItemStack goldenHoe = new ItemStack(Material.GOLDEN_HOE);
     ItemStack diamondHoe = new ItemStack(Material.DIAMOND_HOE);
