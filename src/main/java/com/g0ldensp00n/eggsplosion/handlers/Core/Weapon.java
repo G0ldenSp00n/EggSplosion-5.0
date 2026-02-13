@@ -35,7 +35,6 @@ public class Weapon implements Listener {
   @EventHandler
   public void playerInteractEvent(PlayerInteractEvent playerInteractEvent) {
     if (playerInteractEvent.getItem() != null) {
-      // Possible Explosion Caluculation -5.3x+(3.7x^2)
       if ((playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_AIR)
           || playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
         Player player = playerInteractEvent.getPlayer();
@@ -52,15 +51,15 @@ public class Weapon implements Listener {
               break;
             case GOLDEN_HOE:
               playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 4.5f, 1.25f, 0.8875f, 1, Material.EGG);
+              launchWeapon(player, 15.5f, 1.25f, 0.8875f, 1, Material.EGG);
               break;
             case IRON_HOE:
               playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 1.8f, 2.6f, 0.7f, 1, Material.EGG);
+              launchWeapon(player, 4.8f, 2.6f, 0.7f, 1, Material.EGG);
               break;
             case COPPER_HOE:
               playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 2f, 2.5f, 0.6f, 1, Material.EGG);
+              launchWeapon(player, 4.2f, 2.5f, 0.6f, 1, Material.EGG);
               break;
             case STONE_HOE:
               playerInteractEvent.setCancelled(true);
@@ -68,7 +67,7 @@ public class Weapon implements Listener {
               break;
             case WOODEN_HOE:
               playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 1.75f, 1.25f, 0.15f, 0, Material.EGG);
+              launchWeapon(player, 2.75f, 1.25f, 0.15f, 0, Material.EGG);
               break;
             default:
               break;
@@ -139,8 +138,7 @@ public class Weapon implements Listener {
       }
     }
     egg.setCustomName(player.getUniqueId() + " / " + explosionSize);
-    egg.setVelocity(egg.getVelocity().subtract(player.getVelocity()));
-    egg.setVelocity(egg.getVelocity().multiply(velocityMultiplier));
+    egg.setVelocity(player.getLocation().getDirection().multiply(velocityMultiplier));
     egg.setMetadata("rocket_jump_power",
         new FixedMetadataValue(Bukkit.getServer().getPluginManager().getPlugin("EggSplosion"), rocket_jump_power));
   }

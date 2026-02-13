@@ -64,6 +64,7 @@ public class RespawnHandler implements Listener {
           spawnPoint = playersLobby.getMap().getSpawnPoint();
         }
       }
+      player.spigot().respawn();
 
       player.playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 1, 1);
       player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 80, 1));
