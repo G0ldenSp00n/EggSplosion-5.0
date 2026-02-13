@@ -13,6 +13,8 @@ import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameModeListeners;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyMenuSystem;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponRegistry;
+
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -49,10 +51,13 @@ public class EggSplosion extends JavaPlugin {
         new Food(this);
         new PlayerLeaveHandler(this, lobbyManager);
 
+        WeaponRegistry registry = new WeaponRegistry();
+
         this.getCommand("lobby").setExecutor(lobbyManager);
         this.getCommand("lobby").setTabCompleter(lobbyManager);
         this.getCommand("map").setExecutor(mapManager);
         this.getCommand("map").setTabCompleter(mapManager);
+        this.getCommand("weapon").setExecutor(registry);
     }
 
     public static EggSplosion getInstance() {

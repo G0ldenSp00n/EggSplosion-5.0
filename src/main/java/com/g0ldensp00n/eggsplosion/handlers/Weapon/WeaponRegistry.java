@@ -1,40 +1,63 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFactory;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.NotNull;
 
 import com.g0ldensp00n.eggsplosion.EggSplosion;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.EffectListeners.KnockbackEffectListener;
 
-class WeaponRegistry {
+public class WeaponRegistry implements CommandExecutor {
   private static WeaponRegistry instance;
 
-  private HashMap<UUID, Weapon> weapons;
-  private UUID defaultWeaponUUID;
+  private HashMap<NamespacedKey, Weapon> weapons;
 
   public WeaponRegistry() {
     instance = this;
 
+    new EffectListener();
+    new ReloadAnimation();
+    new UseWeaponListener();
+    new KnockbackEffectListener();
+
     weapons = new HashMap<>();
-    defaultWeaponUUID = UUID.randomUUID();
-    weapons.put(defaultWeaponUUID, new Weapon(defaultWeaponUUID, new WeaponEffect(), new WeaponEffect()));
+  }
+
+  protected void registerWeapons() {
+    NamespacedKey woodenHoeID = new NamespacedKey(EggSplosion.getInstance(), "wooden_hoe");
+    Weapon woodenHoe = new Weapon(woodenHoeID, new ArrayList<>(), new ArrayList<>());
   }
 
   public static WeaponRegistry getInstance() {
     return instance;
   }
 
-  public void createWeapon(WeaponEffect primaryFire, WeaponEffect secondaryFire) {
-    UUID weaponUUID = UUID.randomUUID();
-    weapons.put(weaponUUID, new Weapon(weaponUUID, primaryFire, secondaryFire));
+  public void register(Weapon weapon) {
+    this.weapons.put(weapon.weaponID, weapon);
   }
 
-  public Weapon getDefaultWeapon() {
-    return weapons.get(defaultWeaponUUID);
+  public Weapon getWeaponByID(NamespacedKey key) {
+    return weapons.get(key);
   }
 
-  public Weapon getWeaponByUUID(UUID key) {
-    return weapons.getOrDefault(key, getDefaultWeapon());
+  @Override
+  public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String commandLabel,
+      @NotNull String @NotNull [] args) {
+    if (commandLabel.equalsIgnoreCase("weapon")) {
+    }
+    return true;
   }
 }
