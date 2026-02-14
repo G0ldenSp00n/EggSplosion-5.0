@@ -39,6 +39,18 @@ public class Weapon implements Listener {
     Bukkit.getPluginManager().registerEvents(this, EggSplosion.getInstance());
   }
 
+  protected Weapon(NamespacedKey weaponID, Material item, WeaponAction primaryAction,
+      WeaponAction secondaryAction, Material projectile) {
+    this.weaponID = weaponID;
+    this.primaryAction = primaryAction;
+    this.secondaryAction = secondaryAction;
+    this.item = item;
+    this.projectile = projectile;
+
+
+    Bukkit.getPluginManager().registerEvents(this, EggSplosion.getInstance());
+  }
+
   public ItemStack getItem() {
     ItemStack weapon = new ItemStack(item);
     NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(),
@@ -53,6 +65,7 @@ public class Weapon implements Listener {
     return weapon;
   }
 
+  //TODO: Move Reloading to cast action
   private void fire(Player player, ItemStack weaponItem, WeaponAction action, boolean isPrimaryAction) {
     NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(), "weapon_id");
     NamespacedKey fireReloadKey;
@@ -62,7 +75,6 @@ public class Weapon implements Listener {
 
       fireReloadKey = new NamespacedKey(EggSplosion.getInstance(),
           "secondary_fire_reloaded_after");
-
     }
 
     Egg egg = player.launchProjectile(Egg.class);
@@ -90,6 +102,19 @@ public class Weapon implements Listener {
   public void fireSecondary(Player player, ItemStack weaponItem) {
     fire(player, weaponItem, secondaryAction, false);
   }
+
+  private void activateCastAction(Player player, ItemStack weaponItem, WeaponAction primaryCastAction) {
+
+  }
+
+  public void activatePrimaryCastAction(Player player, ItemStack weaponItem) {
+    activateCastAction(player, weaponItem, primaryCastAction);
+  }
+
+  public void activateSecondaryCastAction(Player player, ItemStack weaponItem) {
+    activateCastAction(player, weaponItem, primaryCastAction);
+  }
+
 
   public boolean hasPrimaryEffect() {
     return !primaryAction.fireEffects.isEmpty();

@@ -7,9 +7,11 @@ import org.bukkit.Sound;
 
 public class WeaponAction {
   Collection<WeaponEffect> fireEffects;
+  Collection<WeaponEffect> castEffects;
   int fireReloadTicks;
   float fireVelocityMultiplier;
   Sound fireSound;
+  Particle trailParticle;
 
   public WeaponAction(Collection<WeaponEffect> fireEffects) {
     this(fireEffects, 10, 1.0f, Sound.ENTITY_CHICKEN_EGG);

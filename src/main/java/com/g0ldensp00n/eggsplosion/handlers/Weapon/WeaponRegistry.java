@@ -36,13 +36,14 @@ public class WeaponRegistry implements CommandExecutor {
   }
 
   protected void registerLegacyWeapons() {
-    NamespacedKey woodenHoeID = new NamespacedKey(EggSplosion.getInstance(), "wooden_hoe");
-    ArrayList<WeaponEffect> woodSecondaryFireEffects = new ArrayList<>();
-    woodSecondaryFireEffects.add(
-        new ExplosionEffect(1.25f, Particle.EXPLOSION));
-    WeaponAction woodSecondaryAction = new WeaponAction(woodSecondaryFireEffects, 3, 2.75f, Sound.ENTITY_CHICKEN_EGG);
-    Weapon woodenHoe = new Weapon(woodenHoeID, Material.WOODEN_HOE, WeaponAction.empty(), woodSecondaryAction);
-    register(woodenHoe);
+    // NamespacedKey woodenHoeID = new NamespacedKey(EggSplosion.getInstance(), "wooden_hoe");
+    // ArrayList<WeaponEffect> woodSecondaryFireEffects = new ArrayList<>();
+    // woodSecondaryFireEffects.add(
+    //     new ExplosionEffect(1.25f, Particle.EXPLOSION));
+    // WeaponAction woodSecondaryAction = new WeaponAction(woodSecondaryFireEffects, 3, 2.75f, Sound.ENTITY_CHICKEN_EGG);
+    // Weapon woodenHoe = new Weapon(woodenHoeID, Material.WOODEN_HOE, WeaponAction.empty(), woodSecondaryAction);
+    // register(woodenHoe);
+    register(WeaponBuilder.builder("wooden_hoe").withWeaponItemMaterial(Material.WOODEN_HOE).withSecondaryAction(WeaponActionBuilder.builder().withReloadTime(3).withVelocityMultiplier(2.75f).addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION)).build()).build());
 
     NamespacedKey stoneHoeID = new NamespacedKey(EggSplosion.getInstance(),
         "stone_hoe");
