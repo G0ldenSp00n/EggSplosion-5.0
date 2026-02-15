@@ -14,6 +14,8 @@ public class ExplosionEffect extends WeaponEffect {
   float explosionPower;
   Sound explosionSound = Sound.ENTITY_GENERIC_EXPLODE;
   Particle explosionParticle = Particle.EXPLOSION_EMITTER;
+  float pitch = 1;;
+  float volume = 1;
 
   public ExplosionEffect(float explosionPower) {
     this.explosionPower = explosionPower;
@@ -35,13 +37,25 @@ public class ExplosionEffect extends WeaponEffect {
     this.explosionParticle = explosionParticle;
   }
 
+  public ExplosionEffect withPitch(float pitch) {
+    this.pitch = pitch;
+    return this;
+  }
+
+  public ExplosionEffect withVolume(float volume) {
+    this.volume = volume;
+    return this;
+  }
+
   @Override
   public void activateEffect(Location location, Player shooter) {
     World world = location.getWorld();
 
     world.createExplosion(location, explosionPower, false, true, (Entity) shooter);
     world.spawnParticle(explosionParticle, location, 0);
-    world.playSound(location, explosionSound,
-        SoundCategory.HOSTILE, 2, 1);
+    if (explosionSound != null) {
+      world.playSound(location, explosionSound,
+          SoundCategory.HOSTILE, volume, pitch);
+    }
   }
 }

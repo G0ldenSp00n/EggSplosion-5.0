@@ -213,17 +213,19 @@ public abstract class Lobby {
         .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "stone_hoe")).getItem();
     ItemStack copperHoe = registry
         .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "copper_hoe")).getItem();
+    ItemStack ironHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "iron_hoe")).getItem();
+    ItemStack goldenHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "golden_hoe")).getItem();
+    ItemStack diamondHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "diamond_hoe")).getItem();
 
-    ItemStack ironHoe = new ItemStack(Material.IRON_HOE);
-    ItemStack goldenHoe = new ItemStack(Material.GOLDEN_HOE);
-    ItemStack diamondHoe = new ItemStack(Material.DIAMOND_HOE);
-
-    player.getInventory().setItem(0, setUnbreakable(woodenHoe));
-    player.getInventory().setItem(1, setUnbreakable(stoneHoe));
-    player.getInventory().setItem(2, setUnbreakable(copperHoe));
-    player.getInventory().setItem(3, setUnbreakable(ironHoe));
-    player.getInventory().setItem(4, setUnbreakable(goldenHoe));
-    player.getInventory().setItem(5, setUnbreakable(diamondHoe));
+    player.getInventory().setItem(0, woodenHoe);
+    player.getInventory().setItem(1, stoneHoe);
+    player.getInventory().setItem(2, copperHoe);
+    player.getInventory().setItem(3, ironHoe);
+    player.getInventory().setItem(4, goldenHoe);
+    player.getInventory().setItem(5, diamondHoe);
   }
 
   protected void equipLobbyMenuSelector(Player player) {

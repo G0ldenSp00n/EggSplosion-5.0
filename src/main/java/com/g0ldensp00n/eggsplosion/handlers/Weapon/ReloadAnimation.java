@@ -36,19 +36,16 @@ class ReloadAnimation implements Listener {
             public void run() {
               ItemStack heldWeapon = player.getInventory().getItemInMainHand();
 
-              NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(),
-                  "weapon_id");
-              NamespacedKey secondaryFireReloadKey = new NamespacedKey(EggSplosion.getInstance(),
-                  "secondary_fire_reloaded_after");
-
-              if (heldWeapon.hasItemMeta() && heldWeapon.getItemMeta().getPersistentDataContainer().has(weaponIDKey)
-                  && heldWeapon.getItemMeta().getPersistentDataContainer().has(secondaryFireReloadKey)) {
+              if (heldWeapon.hasItemMeta()
+                  && heldWeapon.getPersistentDataContainer().has(WeaponRegistry.getWeaponIDKey())
+                  && heldWeapon.getPersistentDataContainer().has(WeaponRegistry.getSecondaryFireReloadAfterKey())) {
                 NamespacedKey weaponID = NamespacedKey.fromString(
-                    heldWeapon.getItemMeta().getPersistentDataContainer().get(weaponIDKey, PersistentDataType.STRING));
+                    heldWeapon.getPersistentDataContainer().get(WeaponRegistry.getWeaponIDKey(),
+                        PersistentDataType.STRING));
                 Weapon weapon = WeaponRegistry.getInstance().getWeaponByID(weaponID);
 
-                int secondaryFireReloadedAfter = heldWeapon.getItemMeta().getPersistentDataContainer().get(
-                    secondaryFireReloadKey,
+                int secondaryFireReloadedAfter = heldWeapon.getPersistentDataContainer().get(
+                    WeaponRegistry.getSecondaryFireReloadAfterKey(),
                     PersistentDataType.INTEGER);
                 int currentTick = Bukkit.getCurrentTick();
 

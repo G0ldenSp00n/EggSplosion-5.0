@@ -2,6 +2,7 @@ package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -10,97 +11,326 @@ import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
+import org.bukkit.entity.EnderPearl;
+import org.bukkit.entity.LlamaSpit;
 import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
 import com.g0ldensp00n.eggsplosion.EggSplosion;
+import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DamageEffect;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DashEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.ExplosionEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.KnockbackEffect;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.SonicBoomEffect;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.SplashPotionEffect;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.TeleportEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.EffectListeners.KnockbackEffectListener;
 
-public class WeaponRegistry implements CommandExecutor {
-  private static WeaponRegistry instance;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
-  private HashMap<NamespacedKey, Weapon> weapons;
+public class WeaponRegistry implements CommandExecutor, TabCompleter {
+        private static WeaponRegistry instance;
+        private static NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(), "weapon_id");
+        private static NamespacedKey isWeaponPrimaryFireKey = new NamespacedKey(EggSplosion.getInstance(),
+                        "is_weapon_primary_fire");
+        private static NamespacedKey primaryFireReloadAfterKey = new NamespacedKey(EggSplosion.getInstance(),
+                        "primary_fire_reloaded_after");
+        private static NamespacedKey secondaryFireReloadAfterKey = new NamespacedKey(EggSplosion.getInstance(),
+                        "secondary_fire_reloaded_after");
+        private static NamespacedKey sneakActionReloadAfterKey = new NamespacedKey(EggSplosion.getInstance(),
+                        "sneak_action_reload_after_key");
 
-  public WeaponRegistry() {
-    instance = this;
+        private HashMap<NamespacedKey, Weapon> weapons;
+        private Weapon defaultWeapon;
 
-    new EffectListener();
-    new ReloadAnimation();
-    new UseWeaponListener();
-    new KnockbackEffectListener();
+        public WeaponRegistry() {
+                instance = this;
 
-    weapons = new HashMap<>();
-    registerLegacyWeapons();
-  }
+                new EffectListener();
+                new ReloadAnimation();
+                new UseWeaponListener();
+                new KnockbackEffectListener();
 
-  protected void registerLegacyWeapons() {
-    // NamespacedKey woodenHoeID = new NamespacedKey(EggSplosion.getInstance(), "wooden_hoe");
-    // ArrayList<WeaponEffect> woodSecondaryFireEffects = new ArrayList<>();
-    // woodSecondaryFireEffects.add(
-    //     new ExplosionEffect(1.25f, Particle.EXPLOSION));
-    // WeaponAction woodSecondaryAction = new WeaponAction(woodSecondaryFireEffects, 3, 2.75f, Sound.ENTITY_CHICKEN_EGG);
-    // Weapon woodenHoe = new Weapon(woodenHoeID, Material.WOODEN_HOE, WeaponAction.empty(), woodSecondaryAction);
-    // register(woodenHoe);
-    register(WeaponBuilder.builder("wooden_hoe").withWeaponItemMaterial(Material.WOODEN_HOE).withSecondaryAction(WeaponActionBuilder.builder().withReloadTime(3).withVelocityMultiplier(2.75f).addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION)).build()).build());
+                weapons = new HashMap<>();
+                registerLegacyWeapons();
+                registerWeapons();
+        }
 
-    NamespacedKey stoneHoeID = new NamespacedKey(EggSplosion.getInstance(),
-        "stone_hoe");
-    ArrayList<WeaponEffect> stoneSecondaryFireEffects = new ArrayList<>();
-    stoneSecondaryFireEffects.add(
-        new ExplosionEffect(2.4f, Particle.EXPLOSION));
-    stoneSecondaryFireEffects.add(
-        new KnockbackEffect(2));
-    WeaponAction stoneSecondaryAction = new WeaponAction(stoneSecondaryFireEffects, 50, 1.5f,
-        Sound.ENTITY_CHICKEN_EGG);
-    Weapon stoneHoe = new Weapon(stoneHoeID, Material.STONE_HOE,
-        WeaponAction.empty(), stoneSecondaryAction);
-    register(stoneHoe);
+        protected void registerLegacyWeapons() {
+                Weapon woodenHoe = Weapon.builder("wooden_hoe").withWeaponItemMaterial(Material.WOODEN_HOE)
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(3)
+                                                .withVelocityMultiplier(2.75f)
+                                                .addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION))
+                                                .withProjectileMaterial(Material.BLUE_EGG)
+                                                .build())
+                                .build();
+                register(woodenHoe);
+                defaultWeapon = woodenHoe;
 
-    NamespacedKey copperHoeID = new NamespacedKey(EggSplosion.getInstance(), "copper_hoe");
-    ArrayList<WeaponEffect> copperSecondaryFireEffects = new ArrayList<>();
-    copperSecondaryFireEffects.add(
-        new ExplosionEffect(2.5f, Particle.EXPLOSION));
-    copperSecondaryFireEffects.add(
-        new KnockbackEffect(1));
-    WeaponAction copperSecondaryAction = new WeaponAction(copperSecondaryFireEffects, 20, 4.2f,
-        Sound.ENTITY_CHICKEN_EGG);
-    Weapon copperHoe = new Weapon(copperHoeID, Material.COPPER_HOE, WeaponAction.empty(), copperSecondaryAction);
-    register(copperHoe);
+                register(Weapon.builder("stone_hoe").withWeaponItemMaterial(Material.STONE_HOE)
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(50)
+                                                .withVelocityMultiplier(1.5f)
+                                                .addEffect(new ExplosionEffect(2.4f, Particle.EXPLOSION))
+                                                .addEffect(new KnockbackEffect(2))
+                                                .build())
+                                .build());
 
-  }
+                register(Weapon.builder("copper_hoe").withWeaponItemMaterial(Material.COPPER_HOE)
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(12)
+                                                .withVelocityMultiplier(4.2f)
+                                                .addEffect(new ExplosionEffect(2.5f, Particle.EXPLOSION))
+                                                .addEffect(new KnockbackEffect(1))
+                                                .withProjectileMaterial(Material.BROWN_EGG)
+                                                .build())
+                                .build());
 
-  public static WeaponRegistry getInstance() {
-    return instance;
-  }
+                register(Weapon.builder("iron_hoe").withWeaponItemMaterial(Material.IRON_HOE)
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withVelocityMultiplier(4.8f)
+                                                .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
+                                                .addEffect(new KnockbackEffect(1.1f))
+                                                .build())
+                                .build());
 
-  public void register(Weapon weapon) {
-    this.weapons.put(weapon.weaponID, weapon);
-  }
+                register(Weapon.builder("golden_hoe").withWeaponItemMaterial(Material.GOLDEN_HOE)
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(17)
+                                                .withVelocityMultiplier(15.5f)
+                                                .addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION))
+                                                .addEffect(new KnockbackEffect(0.9f))
+                                                .withProjectileMaterial(Material.BLUE_EGG)
+                                                .build())
+                                .build());
 
-  public Weapon getWeaponByID(NamespacedKey key) {
-    return weapons.get(key);
-  }
+                register(Weapon.builder("diamond_hoe").withWeaponItemMaterial(Material.DIAMOND_HOE)
+                                .withSecondaryAction(
+                                                WeaponAction.builder().withReloadTime(84).withVelocityMultiplier(1.5f)
+                                                                .addEffect(new ExplosionEffect(3f, Particle.EXPLOSION))
+                                                                .addEffect(new KnockbackEffect(3f))
+                                                                .withProjectileMaterial(Material.SNIFFER_EGG)
+                                                                .build())
+                                .build());
+        }
 
-  @Override
-  public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String commandLabel,
-      @NotNull String @NotNull [] args) {
-    if (commandLabel.equalsIgnoreCase("weapon")) {
+        public void registerWeapons() {
+                register(Weapon.builder("shrieker_weapon")
+                                .withDisplayName(MiniMessage.miniMessage()
+                                                .deserialize("<gradient:#041820:#61c3cb>Sculked Hoe</gradient>"))
+                                .withWeaponItemMaterial(Material.DIAMOND_HOE)
+                                .withPrimaryAction(WeaponAction.builder().withReloadTime(75)
+                                                .withVelocityMultiplier(2.75f)
+                                                .addCastEffect(new SonicBoomEffect(Particle.SONIC_BOOM, 2, 30,
+                                                                new DamageEffect(3.0, 20.0f,
+                                                                                DamageType.SONIC_BOOM, false),
+                                                                Sound.ENTITY_WARDEN_SONIC_BOOM))
+                                                .build())
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(3)
+                                                .withVelocityMultiplier(2.75f)
+                                                .withProjectileMaterial(Material.ECHO_SHARD)
+                                                .addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION)).build())
+                                .build());
 
-      if (sender instanceof Player) {
-        Player player = (Player) sender;
-        NamespacedKey woodenHoeID = new NamespacedKey(EggSplosion.getInstance(), "wooden_hoe");
-        player.give(getWeaponByID(woodenHoeID).getItem());
+                register(Weapon.builder("spartan_laser")
+                                .withDisplayName(
+                                                MiniMessage.miniMessage().deserialize(
+                                                                "<gradient:#de0b0b:#ffe8e8>Spartan Laser</gradient>"))
+                                .withWeaponItemMaterial(Material.STONE_HOE)
+                                .withPrimaryAction(WeaponAction.builder().withReloadTime(200)
+                                                .addCastEffect(new SonicBoomEffect(null, 2, 25, 5,
+                                                                new ExplosionEffect(2.5f, null,
+                                                                                Particle.EXPLOSION),
+                                                                Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE))
+                                                .build())
+                                .withSecondaryAction(
+                                                WeaponAction.builder().withReloadTime(10)
+                                                                .withProjectileMaxTicksLived(10)
+                                                                .withVelocityMultiplier(1.5f)
+                                                                .withProjectileMaterial(Material.TURTLE_EGG)
+                                                                .addEffect(new ExplosionEffect(2.4f,
+                                                                                Particle.EXPLOSION))
+                                                                .addEffect(new KnockbackEffect(1.1f)).build())
+                                .build());
 
-        NamespacedKey stoneHoeID = new NamespacedKey(EggSplosion.getInstance(), "stone_hoe");
-        player.give(getWeaponByID(stoneHoeID).getItem());
+                register(Weapon.builder("dashing_hoe")
+                                .withDisplayName(
+                                                MiniMessage.miniMessage().deserialize(
+                                                                "<gradient:#e69d0b:#fcbe42>Dashing Hoe</gradient>"))
+                                .withWeaponItemMaterial(Material.GOLDEN_HOE)
+                                .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .addCastEffect(new DashEffect(1.2f))
+                                                .build())
+                                .withSecondaryAction(
+                                                WeaponAction.builder().withReloadTime(17).withVelocityMultiplier(15.5f)
+                                                                .addEffect(new ExplosionEffect(1.25f,
+                                                                                Particle.EXPLOSION))
+                                                                .addEffect(new KnockbackEffect(0.9f))
+                                                                .addEffect(new DamageEffect(3.0f, 20.f,
+                                                                                DamageType.PLAYER_EXPLOSION, false))
+                                                                .build())
+                                .build());
 
-        NamespacedKey copperHoeID = new NamespacedKey(EggSplosion.getInstance(), "copper_hoe");
-        player.give(getWeaponByID(copperHoeID).getItem());
+                register(Weapon.builder("wanderer_hoe")
+                                .withDisplayName(
+                                                MiniMessage.miniMessage().deserialize(
+                                                                "<gradient:#2C456C:#435F91>Wanderer's</gradient> <gradient:#F2C039:#CC8E29>Hoe</gradient>"))
+                                .withWeaponItemMaterial(Material.MILK_BUCKET)
+                                .withPrimaryAction(WeaponAction.builder().withReloadTime(100)
+                                                .withVelocityMultiplier(4.8f)
+                                                // TODO: Wind Charge Particles (WeaponEffect Abstract Particles / Sounds
+                                                // / Effects Functionality)
+                                                .addEffect(new KnockbackEffect(2))
+                                                .withProjectileMaterial(Material.EMERALD)
+                                                .withFireSound(Sound.ENTITY_WANDERING_TRADER_YES)
+                                                .build())
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withVelocityMultiplier(4.8f)
+                                                .addEffect(new ExplosionEffect(2.6f, Sound.BLOCK_SLIME_BLOCK_BREAK,
+                                                                Particle.EXPLOSION)
+                                                                .withPitch(0.5f).withVolume(5.0f))
+                                                .addEffect(new KnockbackEffect(1.1f))
+                                                .withFireSound(Sound.ENTITY_LLAMA_SPIT)
+                                                .withProjectile(LlamaSpit.class)
+                                                .build())
+                                .withSneakAction(WeaponAction.builder().withReloadTime(22)
+                                                .withVelocityMultiplier(4.8f)
+                                                .addCastEffect(new DashEffect(0.9f, Particle.HAPPY_VILLAGER))
+                                                .withFireSound(Sound.ENTITY_WANDERING_TRADER_REAPPEARED)
+                                                .build())
 
-      }
-    }
-    return true;
-  }
+                                .build());
+
+                register(Weapon.builder("ender_hoe")
+                                .withDisplayName(
+                                                MiniMessage.miniMessage().deserialize(
+                                                                "<gradient:#316364:#4E8386>The</gradient> <gradient:#B5E45A:#579143>Eye</gradient>"))
+                                .withWeaponItemMaterial(Material.GRASS_BLOCK)
+                                .withPrimaryAction(
+                                                WeaponAction.builder().withReloadTime(100).withVelocityMultiplier(2.8f)
+                                                                .addEffect(new TeleportEffect())
+                                                                .withProjectileMaxTicksLived(8)
+                                                                .withFireSound(Sound.ENTITY_ENDER_PEARL_THROW)
+                                                                .withProjectileMaterial(Material.ENDER_PEARL)
+                                                                .build())
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withVelocityMultiplier(4.8f)
+                                                .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
+                                                .addEffect(new KnockbackEffect(1.1f))
+                                                .withProjectileMaterial(Material.ENDER_EYE)
+                                                .withFireSound(Sound.ENTITY_ENDERMAN_SCREAM)
+                                                .build())
+                                .build());
+
+                ArrayList<PotionEffect> potionEffects = new ArrayList<>();
+                potionEffects.add(new PotionEffect(PotionEffectType.REGENERATION, 5, 4));
+                register(Weapon.builder("allay_hoe")
+                                .withDisplayName(
+                                                MiniMessage.miniMessage().deserialize(
+                                                                "<gradient:#FFFFFF:#6CC2F2>Allay Hoe</gradient>"))
+                                .withWeaponItemMaterial(Material.AMETHYST_SHARD)
+                                .withPrimaryAction(WeaponAction.builder().withReloadTime(100)
+                                                .withVelocityMultiplier(2.8f)
+                                                .addCastEffect(new SplashPotionEffect(potionEffects, 5)
+                                                                .affectsEnemyTeam(false).affectsOwnTeam(true))
+                                                .withFireSound(Sound.ENTITY_ALLAY_AMBIENT_WITH_ITEM)
+                                                .build())
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withVelocityMultiplier(4.8f)
+                                                .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
+                                                .addEffect(new KnockbackEffect(1.1f))
+                                                .withProjectileMaterial(Material.AMETHYST_SHARD)
+                                                .withFireSound(Sound.ENTITY_ALLAY_ITEM_GIVEN)
+                                                .build())
+                                .build());
+
+        }
+
+        public static WeaponRegistry getInstance() {
+                return instance;
+        }
+
+        public static NamespacedKey getWeaponIDKey() {
+                return weaponIDKey;
+        }
+
+        public static NamespacedKey getIsWeaponPrimaryFireKey() {
+                return isWeaponPrimaryFireKey;
+        }
+
+        public static NamespacedKey getPrimaryFireReloadAfterKey() {
+                return primaryFireReloadAfterKey;
+        }
+
+        public static NamespacedKey getSecondaryFireReloadAfterKey() {
+                return secondaryFireReloadAfterKey;
+        }
+
+        public static NamespacedKey getSneakActionReloadAfterKey() {
+                return sneakActionReloadAfterKey;
+        }
+
+        public void register(Weapon weapon) {
+                this.weapons.put(weapon.weaponID, weapon);
+        }
+
+        public Weapon getWeaponByID(NamespacedKey key) {
+                return weapons.getOrDefault(key, defaultWeapon);
+        }
+
+        @Override
+        public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String commandLabel,
+                        @NotNull String @NotNull [] args) {
+                if (commandLabel.equalsIgnoreCase("weapon")) {
+                        if (sender instanceof Player) {
+                                Player player = (Player) sender;
+                                if (args.length == 0) {
+                                        NamespacedKey woodenHoeID = new NamespacedKey(EggSplosion.getInstance(),
+                                                        "wooden_hoe");
+                                        player.give(getWeaponByID(woodenHoeID).getItem());
+
+                                        NamespacedKey stoneHoeID = new NamespacedKey(EggSplosion.getInstance(),
+                                                        "stone_hoe");
+                                        player.give(getWeaponByID(stoneHoeID).getItem());
+
+                                        NamespacedKey copperHoeID = new NamespacedKey(EggSplosion.getInstance(),
+                                                        "copper_hoe");
+                                        player.give(getWeaponByID(copperHoeID).getItem());
+                                } else if (args.length == 1) {
+                                        NamespacedKey weaponID = NamespacedKey.fromString(args[0]);
+                                        Weapon weapon = getWeaponByID(weaponID);
+                                        if (weapon != null) {
+                                                player.give(weapon.getItem());
+                                        } else {
+                                                player.sendMessage(MiniMessage.miniMessage().deserialize(
+                                                                "No weapon with ID <weapon_id>",
+                                                                Placeholder.component("weapon_id",
+                                                                                MiniMessage.miniMessage().deserialize(
+                                                                                                weaponID.asString()))));
+                                        }
+                                }
+
+                        }
+                }
+                return true;
+        }
+
+        @Override
+        public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
+                if (cmd.getName().equalsIgnoreCase("weapon")) {
+                        switch (args.length) {
+                                case 1:
+                                        List<String> commands = new ArrayList<>();
+                                        for (NamespacedKey weaponID : weapons.keySet()) {
+                                                commands.add(weaponID.asString());
+                                        }
+                                        return Utils.FilterTabComplete(args[0], commands);
+                        }
+                }
+                return null;
+        }
 }

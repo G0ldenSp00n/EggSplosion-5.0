@@ -14,6 +14,8 @@ import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.MainLobby;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.WaitingLobby;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
+import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
+import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreType;
 import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
 
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -126,6 +128,18 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
   public Boolean canPlayerAttackPlayer(Player victim, Player attacker) {
     Lobby playerLobby = lobbyManager.getPlayersLobby(victim);
     Lobby damagerLobby = lobbyManager.getPlayersLobby(attacker);
+    if (playerLobby.getScoreManager() != null) {
+      ScoreManager scoreManager = playerLobby.getScoreManager();
+      if (scoreManager.getScoreType() == ScoreType.TEAM) {
+        attacker.sendMessage(
+            "RUNNING THIS CODE?? - "
+                + (!scoreManager.getPlayerTeam(victim).equals(scoreManager.getPlayerTeam(attacker))));
+        return !scoreManager.getPlayerTeam(victim).equals(scoreManager.getPlayerTeam(attacker));
+      }
+    }
+    if (victim.equals(attacker)) {
+      return false;
+    }
     return playerLobby == damagerLobby;
   }
 

@@ -1,14 +1,15 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects;
 
 import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
 import com.g0ldensp00n.eggsplosion.EggSplosion;
+import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponEffect;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.EffectListeners.KnockbackEffectListener;
 
 public class KnockbackEffect extends WeaponEffect {
   float knockbackPower;
@@ -45,16 +46,18 @@ public class KnockbackEffect extends WeaponEffect {
       direction.multiply(knockbackPower * intensity);
 
       entity.setVelocity(entity.getVelocity().add(direction));
-      // TODO: Prevent Team Damage?
-      if (entity.equals(shooter)) {
-        shooter.setFallDistance(0);
+      LobbyManager lobbyManager = EggSplosion.getInstance().getLobbyManager();
+      if (entity instanceof Player) {
+        Player victim = (Player) entity;
+        if (victim.equals(shooter) && lobbyManager.canPlayerAttackPlayer(shooter, victim)) {
+          shooter.setFallDistance(0);
 
-        NamespacedKey windChargeAnchorKey = new NamespacedKey(EggSplosion.getInstance(),
-            "wind_charge_anchor");
-        shooter.getPersistentDataContainer().set(windChargeAnchorKey,
-            PersistentDataType.DOUBLE,
-            location.getY());
+          shooter.getPersistentDataContainer().set(KnockbackEffectListener.getWindChargeAnchorKey(),
+              PersistentDataType.DOUBLE,
+              location.getY());
+        }
       }
+
     }
   }
 }

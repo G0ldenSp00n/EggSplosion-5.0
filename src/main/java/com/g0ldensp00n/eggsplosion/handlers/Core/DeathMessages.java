@@ -47,11 +47,14 @@ public class DeathMessages implements Listener {
 
   @EventHandler
   public void playerTakeDamage(EntityDamageByEntityEvent entityDamageEvent) {
-    if (entityDamageEvent.getEntity() instanceof Player && entityDamageEvent.getDamager() instanceof Player) {
+    DamageCause cause = entityDamageEvent.getCause();
+    if (entityDamageEvent.getEntity() instanceof Player
+        && entityDamageEvent.getDamageSource().getCausingEntity() instanceof Player) {
       Player player = (Player) entityDamageEvent.getEntity();
-      Player damager = (Player) entityDamageEvent.getDamager();
+      Player damager = (Player) entityDamageEvent.getDamageSource().getCausingEntity();
 
       if (!lobbyManager.canPlayerAttackPlayer(player, damager)) {
+        entityDamageEvent.setCancelled(true);
         return;
       }
 

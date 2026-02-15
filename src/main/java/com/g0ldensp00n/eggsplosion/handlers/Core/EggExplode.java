@@ -109,8 +109,6 @@ public class EggExplode implements Listener {
             if (entity == playerShooter) {
               entity.setFallDistance(0);
 
-              entity.setMetadata("wind_charge_anchor",
-                  new FixedMetadataValue(EggSplosion.getInstance(), location.getY()));
             }
           }
         }

@@ -1,20 +1,18 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
-import java.util.Collection;
-import java.util.UUID;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
-import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.components.UseCooldownComponent;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import com.g0ldensp00n.eggsplosion.EggSplosion;
 
@@ -22,10 +20,11 @@ import net.kyori.adventure.text.Component;
 
 public class Weapon implements Listener {
   NamespacedKey weaponID;
-  Material projectile;
+  Component displayName;
   Material item;
   WeaponAction primaryAction;
   WeaponAction secondaryAction;
+  WeaponAction sneakAction;
 
   protected Weapon(NamespacedKey weaponID, Material item, WeaponAction primaryAction,
       WeaponAction secondaryAction) {
@@ -33,153 +32,127 @@ public class Weapon implements Listener {
     this.primaryAction = primaryAction;
     this.secondaryAction = secondaryAction;
     this.item = item;
-
-    projectile = Material.EGG;
-
     Bukkit.getPluginManager().registerEvents(this, EggSplosion.getInstance());
   }
 
-  protected Weapon(NamespacedKey weaponID, Material item, WeaponAction primaryAction,
-      WeaponAction secondaryAction, Material projectile) {
+  public static WeaponBuilder builder(String weaponID) {
+    return new WeaponBuilder(weaponID);
+  }
+
+  protected Weapon(NamespacedKey weaponID, Component displayName, Material item, WeaponAction primaryAction,
+      WeaponAction secondaryAction, WeaponAction sneakAction) {
     this.weaponID = weaponID;
     this.primaryAction = primaryAction;
     this.secondaryAction = secondaryAction;
+    this.sneakAction = sneakAction;
     this.item = item;
-    this.projectile = projectile;
-
+    this.displayName = displayName;
 
     Bukkit.getPluginManager().registerEvents(this, EggSplosion.getInstance());
   }
 
   public ItemStack getItem() {
     ItemStack weapon = new ItemStack(item);
-    NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(),
-        "weapon_id");
-
+    weapon.editPersistentDataContainer(pdc -> {
+      pdc.set(WeaponRegistry.getWeaponIDKey(),
+          PersistentDataType.STRING,
+          weaponID.asString());
+    });
     ItemMeta weaponMeta = weapon.getItemMeta();
-    weaponMeta.getPersistentDataContainer().set(weaponIDKey,
-        PersistentDataType.STRING,
-        weaponID.asString());
-    weaponMeta.displayName(Component.translatable(weaponID.getKey()));
+    UseCooldownComponent useCooldownComponent = weaponMeta.getUseCooldown();
+    useCooldownComponent.setCooldownGroup(weaponID);
+    weaponMeta.displayName(displayName);
+    weaponMeta.setUseCooldown(useCooldownComponent);
+    weaponMeta.setUnbreakable(true);
+
     weapon.setItemMeta(weaponMeta);
     return weapon;
   }
 
-  //TODO: Move Reloading to cast action
-  private void fire(Player player, ItemStack weaponItem, WeaponAction action, boolean isPrimaryAction) {
-    NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(), "weapon_id");
-    NamespacedKey fireReloadKey;
-    if (isPrimaryAction) {
-      fireReloadKey = new NamespacedKey(EggSplosion.getInstance(), "primary_fire_reloaded_after");
-    } else {
+  private void setReloading(Player player, ItemStack weaponItem, WeaponAction action) {
+    weaponItem.editPersistentDataContainer(pdc -> {
+      pdc.set(action.reloadingKey, PersistentDataType.INTEGER,
+          Bukkit.getServer().getCurrentTick() + action.fireReloadTicks);
+    });
+    if (action.isPrimaryAction()) {
+      player.setCooldown(weaponID, primaryAction.fireReloadTicks);
+    }
+    player.playSound(player.getLocation(), action.fireSound, SoundCategory.PLAYERS, 0.2f, 1f);
 
-      fireReloadKey = new NamespacedKey(EggSplosion.getInstance(),
-          "secondary_fire_reloaded_after");
+  }
+
+  private void fire(Player player, ItemStack weaponItem, WeaponAction action) {
+    Projectile projectile = player.launchProjectile(action.projectile,
+        player.getLocation().getDirection().multiply(action.fireVelocityMultiplier));
+
+    if (projectile instanceof Egg) {
+      Egg egg = (Egg) projectile;
+      egg.setItem(new ItemStack(action.projectileMaterial));
     }
 
-    Egg egg = player.launchProjectile(Egg.class);
+    projectile.getPersistentDataContainer().set(WeaponRegistry.getWeaponIDKey(), PersistentDataType.STRING,
+        weaponID.asString());
+    projectile.getPersistentDataContainer().set(WeaponRegistry.getIsWeaponPrimaryFireKey(), PersistentDataType.BOOLEAN,
+        action.isPrimaryAction());
 
-    egg.setItem(new ItemStack(projectile));
-
-    egg.getPersistentDataContainer().set(weaponIDKey, PersistentDataType.STRING, weaponID.asString());
-    NamespacedKey isWeaponPrimaryFireKey = new NamespacedKey(EggSplosion.getInstance(),
-        "is_weapon_primary_fire");
-
-    egg.setVelocity(player.getLocation().getDirection().multiply(action.fireVelocityMultiplier));
-    player.playSound(player.getLocation(), action.fireSound, SoundCategory.PLAYERS, 0.2f, 1f);
-    egg.getPersistentDataContainer().set(isWeaponPrimaryFireKey, PersistentDataType.BOOLEAN, isPrimaryAction);
-
-    ItemMeta meta = weaponItem.getItemMeta();
-    meta.getPersistentDataContainer().set(fireReloadKey, PersistentDataType.INTEGER,
-        Bukkit.getServer().getCurrentTick() + action.fireReloadTicks);
-    weaponItem.setItemMeta(meta);
+    if (action.projectileMaxTicksLived != -1) {
+      new BukkitRunnable() {
+        @Override
+        public void run() {
+          if (projectile != null && !projectile.isDead()) {
+            for (WeaponEffect effect : action.fireEffects) {
+              effect.activateEffect(projectile.getLocation(), player);
+            }
+            projectile.remove();
+          }
+        }
+      }.runTaskLater(EggSplosion.getInstance(), action.projectileMaxTicksLived);
+    }
   }
 
-  public void firePrimary(Player player, ItemStack weaponItem) {
-    fire(player, weaponItem, primaryAction, true);
-  }
-
-  public void fireSecondary(Player player, ItemStack weaponItem) {
-    fire(player, weaponItem, secondaryAction, false);
-  }
-
-  private void activateCastAction(Player player, ItemStack weaponItem, WeaponAction primaryCastAction) {
+  public void fireWeapon(Player player, ItemStack weaponItem, WeaponAction action) {
+    activateCastAction(player, weaponItem, action);
+    if (action.hasFireEffect()) {
+      fire(player, weaponItem, action);
+    }
+    setReloading(player, weaponItem, action);
 
   }
 
-  public void activatePrimaryCastAction(Player player, ItemStack weaponItem) {
-    activateCastAction(player, weaponItem, primaryCastAction);
-  }
-
-  public void activateSecondaryCastAction(Player player, ItemStack weaponItem) {
-    activateCastAction(player, weaponItem, primaryCastAction);
-  }
-
-
-  public boolean hasPrimaryEffect() {
-    return !primaryAction.fireEffects.isEmpty();
-  }
-
-  public boolean hasSecondaryEffect() {
-    return !secondaryAction.fireEffects.isEmpty();
+  private void activateCastAction(Player player, ItemStack weaponItem,
+      WeaponAction action) {
+    for (WeaponEffect effect : action.castEffects) {
+      effect.activateEffect(player.getLocation(), player);
+    }
   }
 
   public static boolean isWeapon(ItemStack item) {
-    NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(), "weapon_id");
-
-    if (item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(weaponIDKey)) {
+    if (item.hasItemMeta() && item.getPersistentDataContainer().has(WeaponRegistry.getWeaponIDKey())) {
       return true;
     }
     return false;
   }
 
   public static NamespacedKey getWeaponID(ItemStack item) {
-    NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(), "weapon_id");
-
     if (isWeapon(item)) {
       NamespacedKey weaponID = NamespacedKey.fromString(
-          item.getItemMeta().getPersistentDataContainer().get(weaponIDKey, PersistentDataType.STRING));
+          item.getPersistentDataContainer().get(WeaponRegistry.getWeaponIDKey(), PersistentDataType.STRING));
       return weaponID;
     }
     return null;
   }
 
-  public static boolean isPrimaryReloading(ItemStack item) {
-    NamespacedKey primaryFireReloadKey = new NamespacedKey(EggSplosion.getInstance(), "primary_fire_reloaded_after");
-    if (item.getItemMeta().getPersistentDataContainer().has(primaryFireReloadKey)) {
-      if (Bukkit.getCurrentTick() <= item.getItemMeta().getPersistentDataContainer().get(primaryFireReloadKey,
-          PersistentDataType.INTEGER)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public static int getPrimaryReloadTimeLeft(ItemStack item) {
-    NamespacedKey primaryFireReloadKey = new NamespacedKey(EggSplosion.getInstance(), "primary_fire_reloaded_after");
-
-    if (item.getItemMeta().getPersistentDataContainer().has(primaryFireReloadKey)) {
-      int tickReloaded = item.getItemMeta().getPersistentDataContainer().get(primaryFireReloadKey,
-          PersistentDataType.INTEGER);
-      return tickReloaded - Bukkit.getCurrentTick();
-    }
-    return 0;
-  }
-
-  public static boolean isSecondaryReloading(ItemStack item) {
-    int reloadingTimeLeft = getSecondaryReloadTimeLeft(item);
+  public static boolean isReloading(WeaponAction action, ItemStack item) {
+    int reloadingTimeLeft = getReloadTimeLeft(action, item);
     if (reloadingTimeLeft > 0) {
       return true;
     }
     return false;
   }
 
-  public static int getSecondaryReloadTimeLeft(ItemStack item) {
-    NamespacedKey secondaryFireReloadKey = new NamespacedKey(EggSplosion.getInstance(),
-        "secondary_fire_reloaded_after");
-
-    if (item.getItemMeta().getPersistentDataContainer().has(secondaryFireReloadKey)) {
-      int tickReloaded = item.getItemMeta().getPersistentDataContainer().get(secondaryFireReloadKey,
+  public static int getReloadTimeLeft(WeaponAction action, ItemStack item) {
+    if (item.getPersistentDataContainer().has(action.reloadingKey)) {
+      int tickReloaded = item.getPersistentDataContainer().get(action.reloadingKey,
           PersistentDataType.INTEGER);
       return tickReloaded - Bukkit.getCurrentTick();
     }

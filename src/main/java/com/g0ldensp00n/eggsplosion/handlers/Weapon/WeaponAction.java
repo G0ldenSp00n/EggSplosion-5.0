@@ -3,7 +3,13 @@ package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.entity.Egg;
+import org.bukkit.entity.Projectile;
+import org.bukkit.inventory.ItemStack;
 
 public class WeaponAction {
   Collection<WeaponEffect> fireEffects;
@@ -12,25 +18,59 @@ public class WeaponAction {
   float fireVelocityMultiplier;
   Sound fireSound;
   Particle trailParticle;
+  int projectileMaxTicksLived = -1;
+  Class<? extends Projectile> projectile = Egg.class;
+  Material projectileMaterial;
+  NamespacedKey reloadingKey;
 
-  public WeaponAction(Collection<WeaponEffect> fireEffects) {
-    this(fireEffects, 10, 1.0f, Sound.ENTITY_CHICKEN_EGG);
+  public WeaponAction(Collection<WeaponEffect> fireEffects,
+      Collection<WeaponEffect> castEffects) {
+    this(fireEffects, castEffects, 10, -1, 1.0f, Sound.ENTITY_CHICKEN_EGG, Egg.class, Material.EGG);
   }
 
-  public WeaponAction(Collection<WeaponEffect> fireEffects, int fireReloadTicks,
-      float fireVelocityMultiplier) {
-    this(fireEffects, fireReloadTicks, fireVelocityMultiplier, Sound.ENTITY_CHICKEN_EGG);
-  }
-
-  public WeaponAction(Collection<WeaponEffect> fireEffects, int fireReloadTicks,
-      float fireVelocityMultiplier, Sound fireSound) {
+  public WeaponAction(Collection<WeaponEffect> fireEffects, Collection<WeaponEffect> castEffects, int fireReloadTicks,
+      int maxTicksLived, float fireVelocityMultiplier, Sound fireSound, Class<? extends Projectile> projectile,
+      Material projectileMaterial) {
     this.fireEffects = fireEffects;
+    this.castEffects = castEffects;
     this.fireReloadTicks = fireReloadTicks;
     this.fireSound = fireSound;
     this.fireVelocityMultiplier = fireVelocityMultiplier;
+    this.projectileMaxTicksLived = maxTicksLived;
+    this.projectile = projectile;
+    this.projectileMaterial = projectileMaterial;
+  }
+
+  public boolean isPrimaryAction() {
+    return reloadingKey == WeaponRegistry.getPrimaryFireReloadAfterKey();
+  }
+
+  public boolean hasFireEffect() {
+    return !fireEffects.isEmpty();
+  }
+
+  public boolean hasCastEffect() {
+    return !castEffects.isEmpty();
+  }
+
+  public boolean hasEffect() {
+    return hasCastEffect() || hasFireEffect();
+  }
+
+  public void resetReloadIfInvalid(ItemStack item) {
+    int reloadLeft = Weapon.getReloadTimeLeft(this, item);
+    if (reloadLeft > fireReloadTicks) {
+      item.editPersistentDataContainer(pdc -> {
+        pdc.remove(reloadingKey);
+      });
+    }
+  }
+
+  public static WeaponActionBuilder builder() {
+    return new WeaponActionBuilder();
   }
 
   public static WeaponAction empty() {
-    return new WeaponAction(new ArrayList<>());
+    return new WeaponAction(new ArrayList<>(), new ArrayList<>());
   }
 }

@@ -1,27 +1,30 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+
+import com.g0ldensp00n.eggsplosion.EggSplosion;
+
+import net.kyori.adventure.text.Component;
+
 class WeaponBuilder {
   NamespacedKey weaponID;
-  Material projectile;
+  Component displayName;
   Material item;
   WeaponAction primaryAction;
   WeaponAction secondaryAction;
-
+  WeaponAction sneakAction;
 
   public WeaponBuilder(String weaponID) {
-    weaponID = new NamespacedKey(EggSplosion.getInstance(), "weapon_id");
+    this.weaponID = new NamespacedKey(EggSplosion.getInstance(), weaponID);
   }
 
-  public static WeaponBuilder builder(String weaponID) {
-    return new WeaponBuilder(weaponID);
-  }
-
-  public WeaponBuilder withProjectile(Material projectile) {
-    this.projectile = projectile;
+  public WeaponBuilder withDisplayName(Component displayName) {
+    this.displayName = displayName;
     return this;
   }
 
-  public WeaponBuilder withWeaponItemMaterial(Material wepaonItem) {
+  public WeaponBuilder withWeaponItemMaterial(Material weaponItem) {
     this.item = weaponItem;
     return this;
   }
@@ -33,6 +36,11 @@ class WeaponBuilder {
 
   public WeaponBuilder withSecondaryAction(WeaponAction secondaryAction) {
     this.secondaryAction = secondaryAction;
+    return this;
+  }
+
+  public WeaponBuilder withSneakAction(WeaponAction sneakAction) {
+    this.sneakAction = sneakAction;
     return this;
   }
 
@@ -49,10 +57,14 @@ class WeaponBuilder {
       secondaryAction = WeaponAction.empty();
     }
 
-    if (projectile == null) {
-      projectile = Material.EGG;
+    if (sneakAction == null) {
+      sneakAction = WeaponAction.empty();
     }
 
-    return new Weapon(weaponID, item, primaryAction, secondaryAction, projectile);
+    primaryAction.reloadingKey = WeaponRegistry.getPrimaryFireReloadAfterKey();
+    secondaryAction.reloadingKey = WeaponRegistry.getSecondaryFireReloadAfterKey();
+    sneakAction.reloadingKey = WeaponRegistry.getSneakActionReloadAfterKey();
+
+    return new Weapon(weaponID, displayName, item, primaryAction, secondaryAction, sneakAction);
   }
 }

@@ -1,12 +1,7 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
-import java.util.UUID;
-
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
-import org.bukkit.SoundCategory;
-import org.bukkit.entity.Egg;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -14,8 +9,8 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffectType;
 
@@ -35,26 +30,27 @@ class UseWeaponListener implements Listener {
       ItemStack item = playerInteractEvent.getItem();
 
       if (Weapon.isWeapon(item)) {
+        playerInteractEvent.setCancelled(true);
         NamespacedKey weaponID = Weapon.getWeaponID(item);
         Weapon weapon = WeaponRegistry.getInstance().getWeaponByID(weaponID);
         Action interaction = playerInteractEvent.getAction();
         if (interaction.isLeftClick() ||
             interaction.isRightClick()) {
           Player player = playerInteractEvent.getPlayer();
-          if (interaction.isLeftClick() && (Weapon.isPrimaryReloading(item) || !weapon.hasPrimaryEffect())) {
+          if (interaction.isLeftClick()
+              && (Weapon.isReloading(weapon.primaryAction, item) || !weapon.primaryAction.hasEffect())) {
             return;
           } else if (interaction.isRightClick()
-              && (Weapon.isSecondaryReloading(item) || !weapon.hasSecondaryEffect())) {
+              && (Weapon.isReloading(weapon.secondaryAction, item) || !weapon.secondaryAction.hasEffect())) {
             return;
           }
 
           if (!(player.hasPotionEffect(PotionEffectType.INVISIBILITY)
               && player.hasPotionEffect(PotionEffectType.REGENERATION))) {
-            playerInteractEvent.setCancelled(true);
             if (interaction.isLeftClick()) {
-              weapon.firePrimary(player, item);
+              weapon.fireWeapon(player, item, weapon.primaryAction);
             } else if (interaction.isRightClick()) {
-              weapon.fireSecondary(player, item);
+              weapon.fireWeapon(player, item, weapon.secondaryAction);
             }
           } else {
             Component spawnProtectionWarning = MiniMessage.miniMessage()
@@ -66,29 +62,36 @@ class UseWeaponListener implements Listener {
     }
   }
 
+  @EventHandler
+  public void playerCrouchEvent(PlayerToggleSneakEvent playerToggleSneakEvent) {
+    Player player = playerToggleSneakEvent.getPlayer();
+    if (!playerToggleSneakEvent.isSneaking()) {
+      return;
+    }
+
+    ItemStack heldItem = player.getInventory().getItemInMainHand();
+    if (Weapon.isWeapon(heldItem)) {
+      NamespacedKey weaponID = Weapon.getWeaponID(heldItem);
+      Weapon weapon = WeaponRegistry.getInstance().getWeaponByID(weaponID);
+      if ((Weapon.isReloading(weapon.sneakAction, heldItem) || !weapon.sneakAction.hasEffect())) {
+        return;
+      }
+      if (!(player.hasPotionEffect(PotionEffectType.INVISIBILITY)
+          && player.hasPotionEffect(PotionEffectType.REGENERATION))) {
+        weapon.fireWeapon(player, heldItem, weapon.sneakAction);
+      }
+
+    }
+  }
+
   private void resetWeaponIfInvalid(ItemStack item) {
     if (Weapon.isWeapon(item)) {
       NamespacedKey weaponID = Weapon.getWeaponID(item);
       Weapon weapon = WeaponRegistry.getInstance().getWeaponByID(weaponID);
 
-      NamespacedKey primaryFireReloadKey = new NamespacedKey(EggSplosion.getInstance(), "primary_fire_reloaded_after");
-      int primaryReloadLeft = Weapon.getSecondaryReloadTimeLeft(item);
-      if (primaryReloadLeft > weapon.primaryAction.fireReloadTicks) {
-        ItemMeta meta = item.getItemMeta();
-        meta.getPersistentDataContainer().set(primaryFireReloadKey, PersistentDataType.INTEGER,
-            0);
-        item.setItemMeta(meta);
-      }
-
-      NamespacedKey secondaryFireReloadKey = new NamespacedKey(EggSplosion.getInstance(),
-          "secondary_fire_reloaded_after");
-      int secondaryReloadLeft = Weapon.getSecondaryReloadTimeLeft(item);
-      if (secondaryReloadLeft > weapon.secondaryAction.fireReloadTicks) {
-        ItemMeta meta = item.getItemMeta();
-        meta.getPersistentDataContainer().set(secondaryFireReloadKey, PersistentDataType.INTEGER,
-            0);
-        item.setItemMeta(meta);
-      }
+      weapon.primaryAction.resetReloadIfInvalid(item);
+      weapon.secondaryAction.resetReloadIfInvalid(item);
+      weapon.sneakAction.resetReloadIfInvalid(item);
     }
   }
 
