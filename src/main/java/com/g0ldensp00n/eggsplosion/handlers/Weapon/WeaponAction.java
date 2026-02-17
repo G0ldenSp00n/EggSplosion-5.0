@@ -14,6 +14,7 @@ import org.bukkit.inventory.ItemStack;
 public class WeaponAction {
   Collection<WeaponEffect> fireEffects;
   Collection<WeaponEffect> castEffects;
+  Collection<WeaponEffect> reloadEffects;
   int fireReloadTicks;
   float fireVelocityMultiplier;
   Sound fireSound;
@@ -24,15 +25,16 @@ public class WeaponAction {
   NamespacedKey reloadingKey;
 
   public WeaponAction(Collection<WeaponEffect> fireEffects,
-      Collection<WeaponEffect> castEffects) {
-    this(fireEffects, castEffects, 10, -1, 1.0f, Sound.ENTITY_CHICKEN_EGG, Egg.class, Material.EGG);
+      Collection<WeaponEffect> castEffects, Collection<WeaponEffect> reloadEffects) {
+    this(fireEffects, castEffects, reloadEffects, 10, -1, 1.0f, Sound.ENTITY_CHICKEN_EGG, Egg.class, Material.EGG);
   }
 
-  public WeaponAction(Collection<WeaponEffect> fireEffects, Collection<WeaponEffect> castEffects, int fireReloadTicks,
+  public WeaponAction(Collection<WeaponEffect> fireEffects, Collection<WeaponEffect> castEffects, Collection<WeaponEffect> reloadEffects, int fireReloadTicks,
       int maxTicksLived, float fireVelocityMultiplier, Sound fireSound, Class<? extends Projectile> projectile,
       Material projectileMaterial) {
     this.fireEffects = fireEffects;
     this.castEffects = castEffects;
+    this.reloadEffects = reloadEffects;
     this.fireReloadTicks = fireReloadTicks;
     this.fireSound = fireSound;
     this.fireVelocityMultiplier = fireVelocityMultiplier;
@@ -53,8 +55,12 @@ public class WeaponAction {
     return !castEffects.isEmpty();
   }
 
+  public boolean hasReloadEffect() {
+    return !reloadEffects.isEmpty();
+  }
+
   public boolean hasEffect() {
-    return hasCastEffect() || hasFireEffect();
+    return hasCastEffect() || hasFireEffect() || hasReloadEffect();
   }
 
   public void resetReloadIfInvalid(ItemStack item) {
@@ -71,6 +77,6 @@ public class WeaponAction {
   }
 
   public static WeaponAction empty() {
-    return new WeaponAction(new ArrayList<>(), new ArrayList<>());
+    return new WeaponAction(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
   }
 }

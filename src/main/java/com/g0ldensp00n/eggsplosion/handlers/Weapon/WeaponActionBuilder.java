@@ -9,9 +9,11 @@ import org.bukkit.entity.Egg;
 import org.bukkit.entity.Projectile;
 import org.jetbrains.annotations.NotNull;
 
+//TODO: Nest in WeaponAction Class
 class WeaponActionBuilder {
   Collection<WeaponEffect> fireEffects;
   Collection<WeaponEffect> castEffects;
+  Collection<WeaponEffect> reloadEffects;
   int fireReloadTicks;
   int projectileMaxTicksLived = -1;
   Material projectileMaterial;
@@ -54,6 +56,11 @@ class WeaponActionBuilder {
     return this;
   }
 
+  public WeaponActionBuilder addReloadEffect(WeaponEffect effect) {
+    this.reloadEffects.add(effect);
+    return this;
+  }
+
   public WeaponActionBuilder withProjectileMaterial(Material projectileMaterial) {
     this.projectileMaterial = projectileMaterial;
     return this;
@@ -73,7 +80,8 @@ class WeaponActionBuilder {
       projectileMaterial = Material.EGG;
     }
 
-    return new WeaponAction(fireEffects, castEffects, fireReloadTicks, projectileMaxTicksLived, fireVelocityMultiplier,
+    return new WeaponAction(fireEffects, castEffects, reloadEffects, fireReloadTicks, projectileMaxTicksLived,
+        fireVelocityMultiplier,
         fireSound, projectile, projectileMaterial);
   }
 }

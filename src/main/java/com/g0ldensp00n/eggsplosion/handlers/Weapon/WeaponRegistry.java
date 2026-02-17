@@ -1,13 +1,13 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
-import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -17,6 +17,8 @@ import org.bukkit.damage.DamageType;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.LlamaSpit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +30,12 @@ import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DashEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.ExplosionEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.KnockbackEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.SonicBoomEffect;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.SoundEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.SplashPotionEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.TeleportEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.EffectListeners.KnockbackEffectListener;
 
+import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
@@ -64,10 +68,18 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
         }
 
         protected void registerLegacyWeapons() {
+                // TODO: Fire Sound Effects / Single Shared at Top
+                WeaponEffect reloadSoundEffect = SoundEffect.builder()
+                                .addSound(Sound.sound().source(Sound.Source.HOSTILE)
+                                                .type(org.bukkit.Sound.BLOCK_CHEST_LOCKED).build())
+                                .playerIsSoundSource().build();
+
                 Weapon woodenHoe = Weapon.builder("wooden_hoe").withWeaponItemMaterial(Material.WOODEN_HOE)
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(3)
                                                 .withVelocityMultiplier(2.75f)
                                                 .addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION))
+                                                .addEffect(SoundEffect.explosionSound())
+                                                .addReloadEffect(reloadSoundEffect)
                                                 .withProjectileMaterial(Material.BLUE_EGG)
                                                 .build())
                                 .build();
@@ -78,7 +90,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(50)
                                                 .withVelocityMultiplier(1.5f)
                                                 .addEffect(new ExplosionEffect(2.4f, Particle.EXPLOSION))
+                                                .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(new KnockbackEffect(2))
+                                                .addReloadEffect(reloadSoundEffect)
                                                 .build())
                                 .build());
 
@@ -86,7 +100,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(12)
                                                 .withVelocityMultiplier(4.2f)
                                                 .addEffect(new ExplosionEffect(2.5f, Particle.EXPLOSION))
+                                                .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(new KnockbackEffect(1))
+                                                .addReloadEffect(reloadSoundEffect)
                                                 .withProjectileMaterial(Material.BROWN_EGG)
                                                 .build())
                                 .build());
@@ -95,7 +111,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
                                                 .withVelocityMultiplier(4.8f)
                                                 .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
+                                                .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(new KnockbackEffect(1.1f))
+                                                .addReloadEffect(reloadSoundEffect)
                                                 .build())
                                 .build());
 
@@ -103,7 +121,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(17)
                                                 .withVelocityMultiplier(15.5f)
                                                 .addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION))
+                                                .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(new KnockbackEffect(0.9f))
+                                                .addReloadEffect(reloadSoundEffect)
                                                 .withProjectileMaterial(Material.BLUE_EGG)
                                                 .build())
                                 .build());
@@ -113,12 +133,16 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 WeaponAction.builder().withReloadTime(84).withVelocityMultiplier(1.5f)
                                                                 .addEffect(new ExplosionEffect(3f, Particle.EXPLOSION))
                                                                 .addEffect(new KnockbackEffect(3f))
+                                                                .addEffect(SoundEffect.explosionSound())
+                                                                .addReloadEffect(reloadSoundEffect)
                                                                 .withProjectileMaterial(Material.SNIFFER_EGG)
                                                                 .build())
                                 .build());
         }
 
         public void registerWeapons() {
+                // TODO: Pull out some weapon actions into reusable chunks
+
                 register(Weapon.builder("shrieker_weapon")
                                 .withDisplayName(MiniMessage.miniMessage()
                                                 .deserialize("<gradient:#041820:#61c3cb>Sculked Hoe</gradient>"))
@@ -126,16 +150,22 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(75)
                                                 .withVelocityMultiplier(2.75f)
                                                 .addCastEffect(new SonicBoomEffect(Particle.SONIC_BOOM, 2, 30,
-                                                                new DamageEffect(3.0, 20.0f,
-                                                                                DamageType.SONIC_BOOM, false),
-                                                                Sound.ENTITY_WARDEN_SONIC_BOOM))
+                                                                Arrays.asList(new DamageEffect(3.0, 20.0f,
+                                                                                DamageType.SONIC_BOOM, false))))
+                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.HOSTILE)
+                                                                .type(org.bukkit.Sound.ENTITY_WARDEN_SONIC_BOOM)
+                                                                .volume(3.0f).build()).playerIsSoundSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(3)
                                                 .withVelocityMultiplier(2.75f)
                                                 .withProjectileMaterial(Material.ECHO_SHARD)
-                                                .addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION)).build())
+                                                .addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION))
+                                                .addEffect(SoundEffect.explosionSound())
+                                                .build())
                                 .build());
 
+                // TODO: Sound Effects on Secondary Action
                 register(Weapon.builder("spartan_laser")
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
@@ -143,9 +173,12 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withWeaponItemMaterial(Material.STONE_HOE)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(200)
                                                 .addCastEffect(new SonicBoomEffect(null, 2, 25, 5,
-                                                                new ExplosionEffect(2.5f, null,
-                                                                                Particle.EXPLOSION),
-                                                                Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE))
+                                                                Arrays.asList(new ExplosionEffect(2.5f,
+                                                                                Particle.EXPLOSION))))
+                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.HOSTILE)
+                                                                .type(org.bukkit.Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE)
+                                                                .volume(3.0f).build()).build())
                                                 .build())
                                 .withSecondaryAction(
                                                 WeaponAction.builder().withReloadTime(10)
@@ -154,9 +187,12 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withProjectileMaterial(Material.TURTLE_EGG)
                                                                 .addEffect(new ExplosionEffect(2.4f,
                                                                                 Particle.EXPLOSION))
-                                                                .addEffect(new KnockbackEffect(1.1f)).build())
+                                                                .addEffect(new KnockbackEffect(1.1f))
+                                                                .addEffect(SoundEffect.explosionSound())
+                                                                .build())
                                 .build());
 
+                // TODO: Sound Effects
                 register(Weapon.builder("dashing_hoe")
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
@@ -170,6 +206,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .addEffect(new ExplosionEffect(1.25f,
                                                                                 Particle.EXPLOSION))
                                                                 .addEffect(new KnockbackEffect(0.9f))
+                                                                .addEffect(SoundEffect.explosionSound())
                                                                 .addEffect(new DamageEffect(3.0f, 20.f,
                                                                                 DamageType.PLAYER_EXPLOSION, false))
                                                                 .build())
@@ -179,28 +216,40 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
                                                                 "<gradient:#2C456C:#435F91>Wanderer's</gradient> <gradient:#F2C039:#CC8E29>Hoe</gradient>"))
-                                .withWeaponItemMaterial(Material.MILK_BUCKET)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(100)
                                                 .withVelocityMultiplier(4.8f)
                                                 // TODO: Wind Charge Particles (WeaponEffect Abstract Particles / Sounds
                                                 // / Effects Functionality)
                                                 .addEffect(new KnockbackEffect(2))
                                                 .withProjectileMaterial(Material.EMERALD)
-                                                .withFireSound(Sound.ENTITY_WANDERING_TRADER_YES)
+                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.HOSTILE)
+                                                                .type(org.bukkit.Sound.ENTITY_WANDERING_TRADER_YES)
+                                                                .volume(3.0f).build()).playerIsSoundSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
                                                 .withVelocityMultiplier(4.8f)
-                                                .addEffect(new ExplosionEffect(2.6f, Sound.BLOCK_SLIME_BLOCK_BREAK,
-                                                                Particle.EXPLOSION)
-                                                                .withPitch(0.5f).withVolume(5.0f))
+                                                .addEffect(new ExplosionEffect(2.6f,
+                                                                Particle.EXPLOSION))
+                                                .addEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.HOSTILE)
+                                                                .type(org.bukkit.Sound.BLOCK_SLIME_BLOCK_BREAK)
+                                                                .volume(3.5f).pitch(0.5f).build()).playerIsSoundSource()
+                                                                .withPitchRange(0.4f, 0.6f).build())
                                                 .addEffect(new KnockbackEffect(1.1f))
-                                                .withFireSound(Sound.ENTITY_LLAMA_SPIT)
+                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.HOSTILE)
+                                                                .type(org.bukkit.Sound.ENTITY_LLAMA_SPIT)
+                                                                .volume(3.0f).build()).playerIsSoundSource().build())
                                                 .withProjectile(LlamaSpit.class)
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(22)
                                                 .withVelocityMultiplier(4.8f)
                                                 .addCastEffect(new DashEffect(0.9f, Particle.HAPPY_VILLAGER))
-                                                .withFireSound(Sound.ENTITY_WANDERING_TRADER_REAPPEARED)
+                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.HOSTILE)
+                                                                .type(org.bukkit.Sound.ENTITY_WANDERING_TRADER_REAPPEARED)
+                                                                .volume(3.0f).build()).playerIsSoundSource().build())
                                                 .build())
 
                                 .build());
@@ -214,15 +263,24 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 WeaponAction.builder().withReloadTime(100).withVelocityMultiplier(2.8f)
                                                                 .addEffect(new TeleportEffect())
                                                                 .withProjectileMaxTicksLived(8)
-                                                                .withFireSound(Sound.ENTITY_ENDER_PEARL_THROW)
+                                                                .addCastEffect(SoundEffect.builder().addSound(Sound
+                                                                                .sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(org.bukkit.Sound.ENTITY_ENDER_PEARL_THROW)
+                                                                                .volume(3.0f).build())
+                                                                                .playerIsSoundSource().build())
                                                                 .withProjectileMaterial(Material.ENDER_PEARL)
                                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
                                                 .withVelocityMultiplier(4.8f)
                                                 .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
                                                 .addEffect(new KnockbackEffect(1.1f))
+                                                .addEffect(SoundEffect.explosionSound())
                                                 .withProjectileMaterial(Material.ENDER_EYE)
-                                                .withFireSound(Sound.ENTITY_ENDERMAN_SCREAM)
+                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.HOSTILE)
+                                                                .type(org.bukkit.Sound.ENTITY_ENDERMAN_SCREAM)
+                                                                .volume(3.0f).build()).playerIsSoundSource().build())
                                                 .build())
                                 .build());
 
@@ -237,14 +295,21 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .withVelocityMultiplier(2.8f)
                                                 .addCastEffect(new SplashPotionEffect(potionEffects, 5)
                                                                 .affectsEnemyTeam(false).affectsOwnTeam(true))
-                                                .withFireSound(Sound.ENTITY_ALLAY_AMBIENT_WITH_ITEM)
+                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.HOSTILE)
+                                                                .type(org.bukkit.Sound.ENTITY_ALLAY_AMBIENT_WITH_ITEM)
+                                                                .volume(3.0f).build()).playerIsSoundSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
                                                 .withVelocityMultiplier(4.8f)
                                                 .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
                                                 .addEffect(new KnockbackEffect(1.1f))
+                                                .addEffect(SoundEffect.explosionSound())
                                                 .withProjectileMaterial(Material.AMETHYST_SHARD)
-                                                .withFireSound(Sound.ENTITY_ALLAY_ITEM_GIVEN)
+                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.HOSTILE)
+                                                                .type(org.bukkit.Sound.ENTITY_ALLAY_ITEM_GIVEN)
+                                                                .volume(3.0f).build()).playerIsSoundSource().build())
                                                 .build())
                                 .build());
 

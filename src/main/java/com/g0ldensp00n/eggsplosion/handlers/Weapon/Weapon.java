@@ -78,6 +78,16 @@ public class Weapon implements Listener {
       player.setCooldown(weaponID, primaryAction.fireReloadTicks);
     }
     player.playSound(player.getLocation(), action.fireSound, SoundCategory.PLAYERS, 0.2f, 1f);
+    if (action.hasReloadEffect()) {
+      new BukkitRunnable() {
+        @Override
+        public void run() {
+          for (WeaponEffect effect : action.reloadEffects) {
+            effect.activateEffect(player.getLocation(), player);
+          }
+        }
+      }.runTaskLater(EggSplosion.getInstance(), action.fireReloadTicks);
+    }
 
   }
 
