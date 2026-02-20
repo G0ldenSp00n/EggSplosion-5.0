@@ -13,7 +13,6 @@ import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponEffect;
 import io.papermc.paper.entity.TeleportFlag;
 
 public class TeleportEffect extends WeaponEffect {
-  Sound teleportSound = Sound.ENTITY_ENDERMAN_TELEPORT;
   Particle teleportParticle = Particle.PORTAL;
 
   @Override
@@ -25,9 +24,5 @@ public class TeleportEffect extends WeaponEffect {
     shooter.setRotation(yaw, pitch);
 
     shooter.getWorld().spawnParticle(teleportParticle, shooter.getLocation(), 1);
-    Random random = new Random();
-    shooter.getLocation().getWorld().playSound(shooter.getEyeLocation(), teleportSound,
-        SoundCategory.HOSTILE, 1.0f, random.nextFloat(0.8f, 1.2f));
-
   }
 }

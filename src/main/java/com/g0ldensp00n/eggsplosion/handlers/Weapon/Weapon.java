@@ -7,6 +7,7 @@ import org.bukkit.SoundCategory;
 import org.bukkit.entity.Egg;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.WitherSkull;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -77,7 +78,6 @@ public class Weapon implements Listener {
     if (action.isPrimaryAction()) {
       player.setCooldown(weaponID, primaryAction.fireReloadTicks);
     }
-    player.playSound(player.getLocation(), action.fireSound, SoundCategory.PLAYERS, 0.2f, 1f);
     if (action.hasReloadEffect()) {
       new BukkitRunnable() {
         @Override
@@ -98,11 +98,16 @@ public class Weapon implements Listener {
     if (projectile instanceof Egg) {
       Egg egg = (Egg) projectile;
       egg.setItem(new ItemStack(action.projectileMaterial));
+    } else if (projectile instanceof WitherSkull) {
+      WitherSkull skull = (WitherSkull) projectile;
+      skull.setCharged(action.isCharged);
     }
 
+    projectile.setRotation(player.getYaw(), player.getPitch());
     projectile.getPersistentDataContainer().set(WeaponRegistry.getWeaponIDKey(), PersistentDataType.STRING,
         weaponID.asString());
-    projectile.getPersistentDataContainer().set(WeaponRegistry.getIsWeaponPrimaryFireKey(), PersistentDataType.BOOLEAN,
+    projectile.getPersistentDataContainer().set(WeaponRegistry.getIsWeaponPrimaryFireKey(),
+        PersistentDataType.BOOLEAN,
         action.isPrimaryAction());
 
     if (action.projectileMaxTicksLived != -1) {

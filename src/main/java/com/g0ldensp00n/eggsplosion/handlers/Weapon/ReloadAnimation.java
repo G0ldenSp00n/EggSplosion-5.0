@@ -11,7 +11,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -36,29 +35,44 @@ class ReloadAnimation implements Listener {
             public void run() {
               ItemStack heldWeapon = player.getInventory().getItemInMainHand();
 
-              if (heldWeapon.hasItemMeta()
-                  && heldWeapon.getPersistentDataContainer().has(WeaponRegistry.getWeaponIDKey())
-                  && heldWeapon.getPersistentDataContainer().has(WeaponRegistry.getSecondaryFireReloadAfterKey())) {
-                NamespacedKey weaponID = NamespacedKey.fromString(
-                    heldWeapon.getPersistentDataContainer().get(WeaponRegistry.getWeaponIDKey(),
-                        PersistentDataType.STRING));
+              if (Weapon.isWeapon(heldWeapon)) {
+                NamespacedKey weaponID = Weapon.getWeaponID(heldWeapon);
                 Weapon weapon = WeaponRegistry.getInstance().getWeaponByID(weaponID);
 
-                int secondaryFireReloadedAfter = heldWeapon.getPersistentDataContainer().get(
-                    WeaponRegistry.getSecondaryFireReloadAfterKey(),
-                    PersistentDataType.INTEGER);
-                int currentTick = Bukkit.getCurrentTick();
+                if (weapon == null) {
+                  player.setLevel(0);
+                  player.setExp(0);
+                  return;
+                }
 
-                if (weapon != null) {
-                  float percentageReloaded = (float) (secondaryFireReloadedAfter - currentTick)
+                if (heldWeapon.getPersistentDataContainer().has(WeaponRegistry.getSecondaryFireReloadAfterKey())) {
+                  int secondaryReloadTimeLeft = Weapon.getReloadTimeLeft(weapon.secondaryAction, heldWeapon);
+
+                  float percentageReloaded = (float) (secondaryReloadTimeLeft)
                       / (float) weapon.secondaryAction.fireReloadTicks;
                   if (percentageReloaded >= 0 && percentageReloaded <= 1) {
                     player.setExp(percentageReloaded);
-                    return;
+                  } else {
+                    player.setExp(0);
                   }
+                } else {
+                  player.setExp(0);
                 }
+
+                if (heldWeapon.getPersistentDataContainer().has(WeaponRegistry.getSneakActionReloadAfterKey())) {
+                  int sneakReloadTimeLeft = Weapon.getReloadTimeLeft(weapon.sneakAction, heldWeapon);
+                  if (sneakReloadTimeLeft > 0) {
+                    player.setLevel((sneakReloadTimeLeft / 20) + 1);
+                  } else {
+                    player.setLevel(0);
+                  }
+                } else {
+                  player.setLevel(0);
+                }
+              } else {
+                player.setLevel(0);
+                player.setExp(0);
               }
-              player.setExp(0);
             }
           }.runTaskTimer(EggSplosion.getInstance(), 0, 1));
     }

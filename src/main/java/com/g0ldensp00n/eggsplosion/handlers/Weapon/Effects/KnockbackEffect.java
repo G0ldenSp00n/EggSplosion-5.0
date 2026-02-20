@@ -49,7 +49,7 @@ public class KnockbackEffect extends WeaponEffect {
       LobbyManager lobbyManager = EggSplosion.getInstance().getLobbyManager();
       if (entity instanceof Player) {
         Player victim = (Player) entity;
-        if (victim.equals(shooter) && lobbyManager.canPlayerAttackPlayer(shooter, victim)) {
+        if (victim.equals(shooter) || !lobbyManager.canPlayerAttackPlayer(shooter, victim)) {
           shooter.setFallDistance(0);
 
           shooter.getPersistentDataContainer().set(KnockbackEffectListener.getWindChargeAnchorKey(),

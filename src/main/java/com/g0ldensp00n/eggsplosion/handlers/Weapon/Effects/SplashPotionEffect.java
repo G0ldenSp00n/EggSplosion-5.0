@@ -16,6 +16,8 @@ public class SplashPotionEffect extends WeaponEffect {
   double potionRadius = 4.0;
   boolean affectsOwnTeam = false;
   boolean affectsEnemyTeam = true;
+  boolean showSplashEffect = true;
+  boolean doFalloff = true;
 
   public SplashPotionEffect(Collection<PotionEffect> potionEffects) {
     this.potionEffects = potionEffects;
@@ -36,11 +38,18 @@ public class SplashPotionEffect extends WeaponEffect {
     return this;
   }
 
+  public SplashPotionEffect withHiddenSplashEffect() {
+    this.showSplashEffect = false;
+    return this;
+  }
+
   @Override
   public void activateEffect(Location location, Player shooter) {
     double potionRadiusSq = potionRadius * potionRadius;
-    for (PotionEffect effect : potionEffects) {
-      location.getWorld().playEffect(location, Effect.POTION_BREAK, effect.getType().getColor());
+    if (showSplashEffect) {
+      for (PotionEffect effect : potionEffects) {
+        location.getWorld().playEffect(location, Effect.POTION_BREAK, effect.getType().getColor());
+      }
     }
 
     for (LivingEntity entity : location.getWorld().getNearbyLivingEntities(location, potionRadius, potionRadius,
@@ -50,11 +59,15 @@ public class SplashPotionEffect extends WeaponEffect {
 
       if (entity instanceof Player) {
         Player victim = (Player) entity;
-        double intensity = 1.0 - (entity.getLocation().distance(location) / potionRadius);
-        int originalDurration = 100;
-        int newDuration = (int) (originalDurration * intensity);
+        double intensity = 1.0;
+        if (!doFalloff) {
+          intensity = 1.0 - (entity.getLocation().distance(location) / potionRadius);
+        }
 
         for (PotionEffect effect : potionEffects) {
+          int originalDurration = effect.getDuration();
+          int newDuration = (int) (originalDurration * intensity);
+
           if ((affectsOwnTeam && !EggSplosion.getInstance().getLobbyManager().canPlayerAttackPlayer(victim,
               shooter))
               || (affectsEnemyTeam && EggSplosion.getInstance().getLobbyManager().canPlayerAttackPlayer(victim,

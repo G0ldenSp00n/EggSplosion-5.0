@@ -19,11 +19,12 @@ class WeaponActionBuilder {
   Material projectileMaterial;
   Class<? extends Projectile> projectile = Egg.class;
   float fireVelocityMultiplier;
-  Sound fireSound;
+  boolean isCharged;
 
   public WeaponActionBuilder() {
     fireEffects = new ArrayList<>();
     castEffects = new ArrayList<>();
+    reloadEffects = new ArrayList<>();
   }
 
   public WeaponActionBuilder withReloadTime(int ticks) {
@@ -38,11 +39,6 @@ class WeaponActionBuilder {
 
   public WeaponActionBuilder withVelocityMultiplier(float velocityMultiplier) {
     this.fireVelocityMultiplier = velocityMultiplier;
-    return this;
-  }
-
-  public WeaponActionBuilder withFireSound(Sound sound) {
-    this.fireSound = sound;
     return this;
   }
 
@@ -71,17 +67,18 @@ class WeaponActionBuilder {
     return this;
   }
 
-  public WeaponAction build() {
-    if (fireSound == null) {
-      fireSound = Sound.ENTITY_CHICKEN_EGG;
-    }
+  public WeaponActionBuilder isCharged(boolean isCharged) {
+    this.isCharged = isCharged;
+    return this;
+  }
 
+  public WeaponAction build() {
     if (projectileMaterial == null) {
       projectileMaterial = Material.EGG;
     }
 
     return new WeaponAction(fireEffects, castEffects, reloadEffects, fireReloadTicks, projectileMaxTicksLived,
         fireVelocityMultiplier,
-        fireSound, projectile, projectileMaterial);
+        projectile, projectileMaterial, isCharged);
   }
 }

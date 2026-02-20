@@ -32,14 +32,21 @@ public class SoundEffect extends WeaponEffect {
     this.pitchRangeHigher = pitchRangeHigher;
   }
 
-  public void playSound(int delayKey, Player player) {
+  public void playSound(int delayKey, Player player, Location location) {
     for (Sound sound : soundsToPlayAtDelay.getOrDefault(delayKey, new ArrayList<>())) {
-      Random random = new Random();
-      Sound pitchAlteredSound = Sound.sound(sound).pitch(random.nextFloat(pitchRangeLower, pitchRangeHigher)).build();
+      Sound.Builder pitchAlteredSound = Sound.sound(sound);
+      if (pitchRangeLower != pitchRangeHigher) {
+        Random random = new Random();
+        if (pitchRangeLower < pitchRangeHigher) {
+          pitchAlteredSound.pitch(random.nextFloat(pitchRangeLower, pitchRangeHigher));
+        } else {
+          pitchAlteredSound.pitch(random.nextFloat(pitchRangeHigher, pitchRangeLower));
+        }
+      }
       if (isPlayerSoundSound) {
-        player.getWorld().playSound(pitchAlteredSound, player);
+        player.getWorld().playSound(pitchAlteredSound.build(), Sound.Emitter.self());
       } else {
-        player.getWorld().playSound(pitchAlteredSound);
+        location.getWorld().playSound(pitchAlteredSound.build(), location.getX(), location.getY(), location.getZ());
       }
     }
   }
@@ -48,12 +55,12 @@ public class SoundEffect extends WeaponEffect {
   public void activateEffect(Location location, Player shooter) {
     for (int tickDelay : soundsToPlayAtDelay.keySet()) {
       if (tickDelay == 0) {
-        playSound(0, shooter);
+        this.playSound(0, shooter, location);
       } else {
         new BukkitRunnable() {
           @Override
           public void run() {
-            playSound(tickDelay, shooter);
+            playSound(tickDelay, shooter, location);
           }
         }.runTaskLater(EggSplosion.getInstance(), tickDelay);
       }
@@ -88,6 +95,7 @@ public class SoundEffect extends WeaponEffect {
     public Builder addSoundWithDelay(Sound sound, int tickDelay) {
       Collection<Sound> sounds = this.soundsToPlayAtDelay.getOrDefault(tickDelay, new ArrayList<>());
       sounds.add(sound);
+      this.soundsToPlayAtDelay.put(tickDelay, sounds);
       return this;
     }
 

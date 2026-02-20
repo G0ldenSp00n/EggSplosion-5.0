@@ -38,6 +38,6 @@ public class ExplosionEffect extends WeaponEffect {
     World world = location.getWorld();
 
     world.createExplosion(location, explosionPower, false, true, (Entity) shooter);
-    world.spawnParticle(explosionParticle, location, 0);
+    // world.spawnParticle(explosionParticle, location, 0);
   }
 }

@@ -32,30 +32,30 @@ public class Weapon implements Listener {
     Bukkit.getPluginManager().registerEvents(this, plugin);
   }
 
-  @EventHandler
-  public void playerInteractEvent(PlayerInteractEvent playerInteractEvent) {
-    if (playerInteractEvent.getItem() != null) {
-      if ((playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_AIR)
-          || playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
-        Player player = playerInteractEvent.getPlayer();
-        if (!(player.hasPotionEffect(PotionEffectType.INVISIBILITY)
-            && player.hasPotionEffect(PotionEffectType.REGENERATION))) {
-          switch (playerInteractEvent.getItem().getType()) {
-            case NETHERITE_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 3f, 15, 15, 4, Material.EGG);
-              break;
-            default:
-              break;
-          }
-        } else {
-          player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-              TextComponent.fromLegacy("Can't Fire Weapon with Spawn Protection"));
-        }
-      }
-    }
-  }
-
+  // @EventHandler
+  // public void playerInteractEvent(PlayerInteractEvent playerInteractEvent) {
+  // if (playerInteractEvent.getItem() != null) {
+  // if ((playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_AIR)
+  // || playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
+  // Player player = playerInteractEvent.getPlayer();
+  // if (!(player.hasPotionEffect(PotionEffectType.INVISIBILITY)
+  // && player.hasPotionEffect(PotionEffectType.REGENERATION))) {
+  // switch (playerInteractEvent.getItem().getType()) {
+  // // case NETHERITE_HOE:
+  // // playerInteractEvent.setCancelled(true);
+  // // launchWeapon(player, 3f, 15, 15, 4, Material.EGG);
+  // // break;
+  // default:
+  // break;
+  // }
+  // } else {
+  // player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+  // TextComponent.fromLegacy("Can't Fire Weapon with Spawn Protection"));
+  // }
+  // }
+  // }
+  // }
+  //
   private void launchWeapon(Player player, float velocityMultiplier, float explosionPower, double reloadTime,
       int rocket_jump_power, Material eggType) {
     reloadTime = reloadTime * 20;

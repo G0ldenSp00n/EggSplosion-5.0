@@ -18,26 +18,14 @@ import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.EffectListeners.Knock
 
 public class DashEffect extends WeaponEffect {
   float dashPower;
-  Sound dashSound = Sound.ITEM_ARMOR_EQUIP_ELYTRA;
   Particle dashParticle = Particle.CLOUD;
 
   public DashEffect(float dashPower) {
     this.dashPower = dashPower;
   }
 
-  public DashEffect(float dashPower, Sound dashSound) {
-    this.dashPower = dashPower;
-    this.dashSound = dashSound;
-  }
-
   public DashEffect(float dashPower, Particle dashParticle) {
     this.dashPower = dashPower;
-    this.dashParticle = dashParticle;
-  }
-
-  public DashEffect(float dashPower, Sound dashSound, Particle dashParticle) {
-    this.dashPower = dashPower;
-    this.dashSound = dashSound;
     this.dashParticle = dashParticle;
   }
 
@@ -54,8 +42,6 @@ public class DashEffect extends WeaponEffect {
           getParticleDirection.getZ(), 1.f);
     }
 
-    shooter.getLocation().getWorld().playSound(shooter.getLocation(), dashSound,
-        SoundCategory.HOSTILE, 1, 1.5f);
     shooter.setVelocity(shooter.getVelocity().add(shooter.getLocation().getDirection().multiply(dashPower)));
     shooter.setFallDistance(0);
 

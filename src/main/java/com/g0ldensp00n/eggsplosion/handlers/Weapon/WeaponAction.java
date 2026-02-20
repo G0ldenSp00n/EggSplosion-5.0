@@ -17,30 +17,32 @@ public class WeaponAction {
   Collection<WeaponEffect> reloadEffects;
   int fireReloadTicks;
   float fireVelocityMultiplier;
-  Sound fireSound;
   Particle trailParticle;
   int projectileMaxTicksLived = -1;
+  boolean isCharged = false;
   Class<? extends Projectile> projectile = Egg.class;
   Material projectileMaterial;
   NamespacedKey reloadingKey;
 
   public WeaponAction(Collection<WeaponEffect> fireEffects,
       Collection<WeaponEffect> castEffects, Collection<WeaponEffect> reloadEffects) {
-    this(fireEffects, castEffects, reloadEffects, 10, -1, 1.0f, Sound.ENTITY_CHICKEN_EGG, Egg.class, Material.EGG);
+    this(fireEffects, castEffects, reloadEffects, 10, -1, 1.0f, Egg.class, Material.EGG,
+        false);
   }
 
-  public WeaponAction(Collection<WeaponEffect> fireEffects, Collection<WeaponEffect> castEffects, Collection<WeaponEffect> reloadEffects, int fireReloadTicks,
-      int maxTicksLived, float fireVelocityMultiplier, Sound fireSound, Class<? extends Projectile> projectile,
-      Material projectileMaterial) {
+  public WeaponAction(Collection<WeaponEffect> fireEffects, Collection<WeaponEffect> castEffects,
+      Collection<WeaponEffect> reloadEffects, int fireReloadTicks,
+      int maxTicksLived, float fireVelocityMultiplier, Class<? extends Projectile> projectile,
+      Material projectileMaterial, boolean isCharged) {
     this.fireEffects = fireEffects;
     this.castEffects = castEffects;
     this.reloadEffects = reloadEffects;
     this.fireReloadTicks = fireReloadTicks;
-    this.fireSound = fireSound;
     this.fireVelocityMultiplier = fireVelocityMultiplier;
     this.projectileMaxTicksLived = maxTicksLived;
     this.projectile = projectile;
     this.projectileMaterial = projectileMaterial;
+    this.isCharged = isCharged;
   }
 
   public boolean isPrimaryAction() {

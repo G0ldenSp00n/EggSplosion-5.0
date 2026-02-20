@@ -4,8 +4,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.WindCharge;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.ExplosionPrimeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -40,6 +42,16 @@ class EffectListener implements Listener {
             }
           }
         }
+      }
+    }
+  }
+
+  @EventHandler
+  public void onWindChargeExplode(ExplosionPrimeEvent event) {
+    if (event.getEntity().getPersistentDataContainer().has(WeaponRegistry.getWeaponIDKey())) {
+      if (event.getEntity() instanceof WindCharge) {
+        event.setCancelled(true);
+        event.getEntity().remove();
       }
     }
   }
