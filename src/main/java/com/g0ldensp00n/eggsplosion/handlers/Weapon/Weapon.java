@@ -1,10 +1,13 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
+import java.util.Random;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Egg;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.WitherSkull;
@@ -14,6 +17,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.components.UseCooldownComponent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 import com.g0ldensp00n.eggsplosion.EggSplosion;
 
@@ -92,36 +96,47 @@ public class Weapon implements Listener {
   }
 
   private void fire(Player player, ItemStack weaponItem, WeaponAction action) {
-    Projectile projectile = player.launchProjectile(action.projectile,
-        player.getLocation().getDirection().multiply(action.fireVelocityMultiplier));
+    for (int projectileCount = 0; projectileCount < action.projectileCount; projectileCount += 1) {
+      Vector fireAngle = player.getLocation().getDirection();
+      if (action.projectileCount > 1) {
+        Random random = new Random();
+        float deflectionAmount = 0.04f;
+        Vector offset = new Vector(random.nextFloat(-deflectionAmount, deflectionAmount),
+            random.nextFloat(-deflectionAmount, deflectionAmount),
+            random.nextFloat(-deflectionAmount, deflectionAmount));
+        fireAngle = fireAngle.add(offset);
+      }
+      Projectile projectile = player.launchProjectile(action.projectile,
+          fireAngle.multiply(action.fireVelocityMultiplier));
 
-    if (projectile instanceof Egg) {
-      Egg egg = (Egg) projectile;
-      egg.setItem(new ItemStack(action.projectileMaterial));
-    } else if (projectile instanceof WitherSkull) {
-      WitherSkull skull = (WitherSkull) projectile;
-      skull.setCharged(action.isCharged);
-    }
+      if (projectile instanceof Egg) {
+        Egg egg = (Egg) projectile;
+        egg.setItem(new ItemStack(action.projectileMaterial));
+      } else if (projectile instanceof WitherSkull) {
+        WitherSkull skull = (WitherSkull) projectile;
+        skull.setCharged(action.isCharged);
+      }
 
-    projectile.setRotation(player.getYaw(), player.getPitch());
-    projectile.getPersistentDataContainer().set(WeaponRegistry.getWeaponIDKey(), PersistentDataType.STRING,
-        weaponID.asString());
-    projectile.getPersistentDataContainer().set(WeaponRegistry.getIsWeaponPrimaryFireKey(),
-        PersistentDataType.BOOLEAN,
-        action.isPrimaryAction());
+      projectile.setRotation(player.getYaw(), player.getPitch());
+      projectile.getPersistentDataContainer().set(WeaponRegistry.getWeaponIDKey(), PersistentDataType.STRING,
+          weaponID.asString());
+      projectile.getPersistentDataContainer().set(WeaponRegistry.getIsWeaponPrimaryFireKey(),
+          PersistentDataType.BOOLEAN,
+          action.isPrimaryAction());
 
-    if (action.projectileMaxTicksLived != -1) {
-      new BukkitRunnable() {
-        @Override
-        public void run() {
-          if (projectile != null && !projectile.isDead()) {
-            for (WeaponEffect effect : action.fireEffects) {
-              effect.activateEffect(projectile.getLocation(), player);
+      if (action.projectileMaxTicksLived != -1) {
+        new BukkitRunnable() {
+          @Override
+          public void run() {
+            if (projectile != null && !projectile.isDead()) {
+              for (WeaponEffect effect : action.fireEffects) {
+                effect.activateEffect(projectile.getLocation(), player);
+              }
+              projectile.remove();
             }
-            projectile.remove();
           }
-        }
-      }.runTaskLater(EggSplosion.getInstance(), action.projectileMaxTicksLived);
+        }.runTaskLater(EggSplosion.getInstance(), action.projectileMaxTicksLived);
+      }
     }
   }
 

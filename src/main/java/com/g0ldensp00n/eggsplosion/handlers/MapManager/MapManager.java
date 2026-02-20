@@ -14,7 +14,6 @@ import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.Lobby;
 import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.Bukkit;
@@ -887,26 +886,26 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                         if (matchingPotionEffect == null) {
                           PotionEffectType potionEffectType = Registry.POTION_EFFECT_TYPE.get(potionEffectTypeKey);
                           map.addMapEffect(potionEffectType, amplifier);
-                          sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                          sender.sendRichMessage(
                               "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier1></gray> <green>added</green>",
-                              Placeholder.component("map", MiniMessage.miniMessage().deserialize(args[1])),
+                              Placeholder.component("map", Component.text(args[1])),
                               Placeholder.component("effect",
                                   Component.translatable(potionEffectType.translationKey())),
                               Placeholder.component("amplifier1",
-                                  Component.translatable("enchantment.level." + amplifier))));
+                                  Component.translatable("enchantment.level." + amplifier)));
                         } else {
                           map.removeMapEffect(matchingPotionEffect);
                           map.addMapEffect(matchingPotionEffect.withAmplifier(amplifier - 1));
-                          sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                          sender.sendRichMessage(
                               "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier1></gray> updated to <gray><effect> <amplifier2></gray>",
-                              Placeholder.component("map", MiniMessage.miniMessage().deserialize(args[1])),
+                              Placeholder.component("map", Component.text(args[1])),
                               Placeholder.component("effect",
                                   Component.translatable(matchingPotionEffect.getType().translationKey())),
                               Placeholder.component("amplifier1",
                                   Component
                                       .translatable("enchantment.level." + (matchingPotionEffect.getAmplifier() + 1))),
                               Placeholder.component("amplifier2",
-                                  Component.translatable("enchantment.level." + amplifier))));
+                                  Component.translatable("enchantment.level." + amplifier)));
                           // sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] +
                           // ChatColor.RESET
                           // + " Effect " + ChatColor.GRAY +
@@ -925,20 +924,20 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
 
                         if (potionEffectToRemove != null) {
                           map.removeMapEffect(potionEffectToRemove);
-                          sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                          sender.sendRichMessage(
                               "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier1></gray> <red>removed</red>",
-                              Placeholder.component("map", MiniMessage.miniMessage().deserialize(args[1])),
+                              Placeholder.component("map", Component.text(args[1])),
                               Placeholder.component("effect",
                                   Component.translatable(potionEffectToRemove.getType().translationKey())),
                               Placeholder.component("amplifier1",
                                   Component.translatable(
-                                      "enchantment.level." + (potionEffectToRemove.getAmplifier() + 1)))));
+                                      "enchantment.level." + (potionEffectToRemove.getAmplifier() + 1))));
                         } else {
-                          sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                          sender.sendRichMessage(
                               "<red>[EggSplosion]</red> No effect <gray><effect></gray> on map <aqua><map></aqua>",
-                              Placeholder.component("map", MiniMessage.miniMessage().deserialize(args[1])),
+                              Placeholder.component("map", Component.text(args[1])),
                               Placeholder.component("effect",
-                                  Component.translatable(potionEffectType.translationKey()))));
+                                  Component.translatable(potionEffectType.translationKey())));
                         }
                       }
                       return true;

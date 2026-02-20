@@ -17,7 +17,6 @@ import org.bukkit.potion.PotionEffectType;
 import com.g0ldensp00n.eggsplosion.EggSplosion;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 
 class UseWeaponListener implements Listener {
   public UseWeaponListener() {
@@ -53,9 +52,7 @@ class UseWeaponListener implements Listener {
               weapon.fireWeapon(player, item, weapon.secondaryAction);
             }
           } else {
-            Component spawnProtectionWarning = MiniMessage.miniMessage()
-                .deserialize("Can't Fire Weapon with Spawn Protection");
-            player.sendActionBar(spawnProtectionWarning);
+            player.sendActionBar(Component.text("Can't Fire Weapon with Spawn Protection"));
           }
         }
       }

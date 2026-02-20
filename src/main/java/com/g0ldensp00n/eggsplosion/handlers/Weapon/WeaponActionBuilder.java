@@ -20,6 +20,7 @@ class WeaponActionBuilder {
   Class<? extends Projectile> projectile = Egg.class;
   float fireVelocityMultiplier;
   boolean isCharged;
+  int projectileCount = 1;
 
   public WeaponActionBuilder() {
     fireEffects = new ArrayList<>();
@@ -29,6 +30,11 @@ class WeaponActionBuilder {
 
   public WeaponActionBuilder withReloadTime(int ticks) {
     this.fireReloadTicks = ticks;
+    return this;
+  }
+
+  public WeaponActionBuilder withProjectiles(int projectileCount) {
+    this.projectileCount = projectileCount;
     return this;
   }
 
@@ -79,6 +85,6 @@ class WeaponActionBuilder {
 
     return new WeaponAction(fireEffects, castEffects, reloadEffects, fireReloadTicks, projectileMaxTicksLived,
         fireVelocityMultiplier,
-        projectile, projectileMaterial, isCharged);
+        projectile, projectileMaterial, isCharged, projectileCount);
   }
 }

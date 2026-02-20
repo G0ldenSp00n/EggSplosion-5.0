@@ -13,8 +13,10 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.damage.DamageType;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LlamaSpit;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.WindCharge;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.WitherSkull;
@@ -353,6 +355,70 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .build())
                                 .build());
 
+                register(Weapon.builder("blazing_hoe")
+                                .withDisplayName(
+                                                MiniMessage.miniMessage().deserialize(
+                                                                "<gradient:#e69d0b:#fcbe42>Blazing Hoe</gradient>"))
+                                .withWeaponItemMaterial(Material.BLAZE_ROD)
+                                .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .addCastEffect(new DashEffect(1.2f, Particle.LARGE_SMOKE))
+                                                .addCastEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(org.bukkit.Sound.ENTITY_BLAZE_AMBIENT)
+                                                                                .volume(2.0f).build())
+                                                                .build())
+                                                .build())
+                                .withSecondaryAction(
+                                                WeaponAction.builder().withReloadTime(17)
+                                                                .withProjectile(SmallFireball.class)
+                                                                .withVelocityMultiplier(1.25f)
+                                                                .addCastEffect(
+                                                                                SoundEffect.builder().addSound(
+                                                                                                Sound.sound()
+                                                                                                                .source(Sound.Source.HOSTILE)
+                                                                                                                .type(org.bukkit.Sound.ENTITY_BLAZE_SHOOT)
+                                                                                                                .volume(1.5f)
+                                                                                                                .build())
+                                                                                                .build())
+                                                                .addEffect(new ExplosionEffect(1.25f,
+                                                                                Particle.EXPLOSION))
+                                                                .addEffect(new KnockbackEffect(1.6f))
+                                                                .addEffect(VisualEffect.builder()
+                                                                                .addParticle(Particle.LARGE_SMOKE
+                                                                                                .builder().count(100)
+                                                                                                .offset(0, -1, 0)
+                                                                                                .extra(0.2))
+                                                                                .build())
+                                                                .addEffect(SoundEffect.builder().addSound(
+                                                                                Sound.sound()
+                                                                                                .source(Sound.Source.HOSTILE)
+                                                                                                .type(org.bukkit.Sound.ITEM_FIRECHARGE_USE)
+                                                                                                .volume(3.0f).build())
+                                                                                .build())
+
+                                                                .addEffect(new DamageEffect(3.0f, 20.f,
+                                                                                DamageType.PLAYER_EXPLOSION, false))
+                                                                .build())
+                                .withSneakAction(WeaponAction.builder().withReloadTime(300)
+                                                .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
+                                                                PotionEffectType.SPEED, 50, 3)))
+                                                                .withHiddenSplashEffect())
+                                                .addCastEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(org.bukkit.Sound.ENTITY_BLAZE_BURN)
+                                                                                .volume(1.0f).build())
+                                                                .build())
+                                                .addReloadEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.UI)
+                                                                                .type(org.bukkit.Sound.ENTITY_BREEZE_HURT)
+                                                                                .volume(1.0f).build())
+                                                                .build())
+                                                .build())
+                                .build());
+
                 register(Weapon.builder("wanderer_hoe")
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
@@ -491,6 +557,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
                                                 .withVelocityMultiplier(4.8f)
+                                                .withProjectiles(3)
                                                 .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
                                                 .addEffect(new KnockbackEffect(1.1f))
                                                 .addEffect(SoundEffect.explosionSound())

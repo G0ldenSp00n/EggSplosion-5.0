@@ -18,7 +18,7 @@ import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreType;
 import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
 
-import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.entity.Player;
@@ -164,8 +164,8 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
         switch (args[0]) {
           case "create":
             if (args.length == 1) {
-              sender.sendMessage(MiniMessage.miniMessage().deserialize(
-                  "<red>[EggSplosion]</red> Must specify the name of the lobby when creating"));
+              sender.sendRichMessage(
+                  "<red>[EggSplosion]</red> Must specify the name of the lobby when creating");
               return true;
             }
             if (lobbies.get(args[1]) == null) {
@@ -176,24 +176,23 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
                   Player playerCmdSender = (Player) sender;
                   createdLobby.addAdmin(playerCmdSender);
                 }
-                sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                sender.sendRichMessage(
                     "[EggSplosion] Lobby <aqua><lobby_name></aqua> created!",
-                    Placeholder.component("lobby_name", MiniMessage.miniMessage().deserialize(args[1]))));
+                    Placeholder.component("lobby_name", Component.text(args[1])));
 
                 if (sender instanceof Player) {
                   Player playerCmdSender = (Player) sender;
                   joinLobby(createdLobby, playerCmdSender);
                 }
               } else {
-                sender.sendMessage(
-                    MiniMessage.miniMessage().deserialize(
-                        "<red>[EggSplosion]</red> No waiting room found, create a WAITING_ROOM map before starting a lobby"));
+                sender.sendRichMessage(
+                    "<red>[EggSplosion]</red> No waiting room found, create a WAITING_ROOM map before starting a lobby");
               }
               return true;
             } else {
-              sender.sendMessage(MiniMessage.miniMessage().deserialize(
+              sender.sendRichMessage(
                   "<red>[EggSplosion]</red> Lobby <lobby_name> already exists, use /lobby join <lobby_name>",
-                  Placeholder.component("lobby_name", MiniMessage.miniMessage().deserialize(args[1]))));
+                  Placeholder.component("lobby_name", Component.text(args[1])));
               return true;
             }
           case "join":
