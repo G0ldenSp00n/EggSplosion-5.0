@@ -21,6 +21,8 @@ class WeaponActionBuilder {
   float fireVelocityMultiplier;
   boolean isCharged;
   int projectileCount = 1;
+  int burstCount = 1;
+  int burstDelayTicks = 0;
 
   public WeaponActionBuilder() {
     fireEffects = new ArrayList<>();
@@ -35,6 +37,16 @@ class WeaponActionBuilder {
 
   public WeaponActionBuilder withProjectiles(int projectileCount) {
     this.projectileCount = projectileCount;
+    return this;
+  }
+
+  public WeaponActionBuilder withBurstCount(int burstCount) {
+    this.burstCount = burstCount;
+    return this;
+  }
+
+  public WeaponActionBuilder withBurstDelayTicks(int burstDelayTicks) {
+    this.burstDelayTicks = burstDelayTicks;
     return this;
   }
 
@@ -85,6 +97,6 @@ class WeaponActionBuilder {
 
     return new WeaponAction(fireEffects, castEffects, reloadEffects, fireReloadTicks, projectileMaxTicksLived,
         fireVelocityMultiplier,
-        projectile, projectileMaterial, isCharged, projectileCount);
+        projectile, projectileMaterial, isCharged, projectileCount, burstCount, burstDelayTicks);
   }
 }

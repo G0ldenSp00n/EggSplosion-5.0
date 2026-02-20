@@ -24,17 +24,19 @@ public class WeaponAction {
   Material projectileMaterial;
   NamespacedKey reloadingKey;
   int projectileCount = 1;
+  int burstCount = 1;
+  int burstDelayTicks = 0;
 
   public WeaponAction(Collection<WeaponEffect> fireEffects,
       Collection<WeaponEffect> castEffects, Collection<WeaponEffect> reloadEffects) {
     this(fireEffects, castEffects, reloadEffects, 10, -1, 1.0f, Egg.class, Material.EGG,
-        false, 1);
+        false, 1, 1, 0);
   }
 
   public WeaponAction(Collection<WeaponEffect> fireEffects, Collection<WeaponEffect> castEffects,
       Collection<WeaponEffect> reloadEffects, int fireReloadTicks,
       int maxTicksLived, float fireVelocityMultiplier, Class<? extends Projectile> projectile,
-      Material projectileMaterial, boolean isCharged, int projectileCount) {
+      Material projectileMaterial, boolean isCharged, int projectileCount, int burstCount, int burstDelayTicks) {
     this.fireEffects = fireEffects;
     this.castEffects = castEffects;
     this.reloadEffects = reloadEffects;
@@ -45,6 +47,8 @@ public class WeaponAction {
     this.projectileMaterial = projectileMaterial;
     this.isCharged = isCharged;
     this.projectileCount = projectileCount;
+    this.burstCount = burstCount;
+    this.burstDelayTicks = burstDelayTicks;
   }
 
   public boolean isPrimaryAction() {

@@ -95,7 +95,7 @@ public class Weapon implements Listener {
 
   }
 
-  private void fire(Player player, ItemStack weaponItem, WeaponAction action) {
+  private void fire(Player player, WeaponAction action) {
     for (int projectileCount = 0; projectileCount < action.projectileCount; projectileCount += 1) {
       Vector fireAngle = player.getLocation().getDirection();
       if (action.projectileCount > 1) {
@@ -140,10 +140,26 @@ public class Weapon implements Listener {
     }
   }
 
+  public void fireBurst(int burstsRemaining, Player player, WeaponAction action) {
+    new BukkitRunnable() {
+      @Override
+      public void run() {
+        fire(player, action);
+        if ((burstsRemaining - 1) > 0) {
+          fireBurst(burstsRemaining - 1, player, action);
+        }
+      }
+    }.runTaskLater(EggSplosion.getInstance(), action.burstDelayTicks);
+
+  }
+
   public void fireWeapon(Player player, ItemStack weaponItem, WeaponAction action) {
     activateCastAction(player, weaponItem, action);
     if (action.hasFireEffect()) {
-      fire(player, weaponItem, action);
+      fire(player, action);
+      if (action.burstCount > 1) {
+        fireBurst(action.burstCount - 1, player, action);
+      }
     }
     setReloading(player, weaponItem, action);
 

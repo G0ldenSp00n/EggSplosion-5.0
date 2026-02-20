@@ -373,6 +373,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 WeaponAction.builder().withReloadTime(17)
                                                                 .withProjectile(SmallFireball.class)
                                                                 .withVelocityMultiplier(1.25f)
+                                                                .withBurstCount(3)
+                                                                .withBurstDelayTicks(6)
                                                                 .addCastEffect(
                                                                                 SoundEffect.builder().addSound(
                                                                                                 Sound.sound()
