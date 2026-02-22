@@ -3,10 +3,12 @@ package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.Egg;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -40,8 +42,8 @@ public class Weapon implements Listener {
     Bukkit.getPluginManager().registerEvents(this, EggSplosion.getInstance());
   }
 
-  public static WeaponBuilder builder(String weaponID) {
-    return new WeaponBuilder(weaponID);
+  public static Weapon.Builder builder(String weaponID) {
+    return new Weapon.Builder(weaponID);
   }
 
   protected Weapon(NamespacedKey weaponID, Component displayName, Material item, WeaponAction primaryAction,
@@ -95,6 +97,45 @@ public class Weapon implements Listener {
 
   }
 
+  public void spawnActionProjectile(Player player, WeaponAction action, Location launchLocation, Vector fireVelocity,
+      int splitCount) {
+    Projectile projectile = (Projectile) player.getWorld().spawn(launchLocation, action.projectile);
+    projectile.setVelocity(fireVelocity);
+    projectile.setShooter(player);
+
+    if (projectile instanceof Egg) {
+      Egg egg = (Egg) projectile;
+      egg.setItem(new ItemStack(action.projectileMaterial));
+    } else if (projectile instanceof WitherSkull) {
+      WitherSkull skull = (WitherSkull) projectile;
+      skull.setCharged(action.isCharged);
+    }
+
+    projectile.setRotation(player.getYaw(), player.getPitch());
+    projectile.getPersistentDataContainer().set(WeaponRegistry.getWeaponIDKey(), PersistentDataType.STRING,
+        weaponID.asString());
+    projectile.getPersistentDataContainer().set(WeaponRegistry.getIsWeaponPrimaryFireKey(),
+        PersistentDataType.BOOLEAN,
+        action.isPrimaryAction());
+    projectile.getPersistentDataContainer().set(WeaponRegistry.getSplitCountKey(),
+        PersistentDataType.INTEGER,
+        splitCount);
+
+    if (action.projectileMaxTicksLived != -1) {
+      new BukkitRunnable() {
+        @Override
+        public void run() {
+          if (projectile != null && !projectile.isDead()) {
+            for (WeaponEffect effect : action.fireEffects) {
+              effect.activateEffect(projectile.getLocation(), player);
+            }
+            projectile.remove();
+          }
+        }
+      }.runTaskLater(EggSplosion.getInstance(), action.projectileMaxTicksLived);
+    }
+  }
+
   private void fire(Player player, WeaponAction action) {
     for (int projectileCount = 0; projectileCount < action.projectileCount; projectileCount += 1) {
       Vector fireAngle = player.getLocation().getDirection();
@@ -106,37 +147,8 @@ public class Weapon implements Listener {
             random.nextFloat(-deflectionAmount, deflectionAmount));
         fireAngle = fireAngle.add(offset);
       }
-      Projectile projectile = player.launchProjectile(action.projectile,
-          fireAngle.multiply(action.fireVelocityMultiplier));
-
-      if (projectile instanceof Egg) {
-        Egg egg = (Egg) projectile;
-        egg.setItem(new ItemStack(action.projectileMaterial));
-      } else if (projectile instanceof WitherSkull) {
-        WitherSkull skull = (WitherSkull) projectile;
-        skull.setCharged(action.isCharged);
-      }
-
-      projectile.setRotation(player.getYaw(), player.getPitch());
-      projectile.getPersistentDataContainer().set(WeaponRegistry.getWeaponIDKey(), PersistentDataType.STRING,
-          weaponID.asString());
-      projectile.getPersistentDataContainer().set(WeaponRegistry.getIsWeaponPrimaryFireKey(),
-          PersistentDataType.BOOLEAN,
-          action.isPrimaryAction());
-
-      if (action.projectileMaxTicksLived != -1) {
-        new BukkitRunnable() {
-          @Override
-          public void run() {
-            if (projectile != null && !projectile.isDead()) {
-              for (WeaponEffect effect : action.fireEffects) {
-                effect.activateEffect(projectile.getLocation(), player);
-              }
-              projectile.remove();
-            }
-          }
-        }.runTaskLater(EggSplosion.getInstance(), action.projectileMaxTicksLived);
-      }
+      spawnActionProjectile(player, action, player.getEyeLocation(), fireAngle.multiply(action.fireVelocityMultiplier),
+          0);
     }
   }
 
@@ -203,5 +215,67 @@ public class Weapon implements Listener {
       return tickReloaded - Bukkit.getCurrentTick();
     }
     return 0;
+  }
+
+  public static class Builder {
+    NamespacedKey weaponID;
+    Component displayName;
+    Material item;
+    WeaponAction primaryAction;
+    WeaponAction secondaryAction;
+    WeaponAction sneakAction;
+
+    public Builder(String weaponID) {
+      this.weaponID = new NamespacedKey(EggSplosion.getInstance(), weaponID);
+    }
+
+    public Builder withDisplayName(Component displayName) {
+      this.displayName = displayName;
+      return this;
+    }
+
+    public Builder withWeaponItemMaterial(Material weaponItem) {
+      this.item = weaponItem;
+      return this;
+    }
+
+    public Builder withPrimaryAction(WeaponAction primaryAction) {
+      this.primaryAction = primaryAction;
+      return this;
+    }
+
+    public Builder withSecondaryAction(WeaponAction secondaryAction) {
+      this.secondaryAction = secondaryAction;
+      return this;
+    }
+
+    public Builder withSneakAction(WeaponAction sneakAction) {
+      this.sneakAction = sneakAction;
+      return this;
+    }
+
+    public Weapon build() {
+      if (item == null) {
+        item = Material.WOODEN_HOE;
+      }
+
+      if (primaryAction == null) {
+        primaryAction = WeaponAction.empty();
+      }
+
+      if (secondaryAction == null) {
+        secondaryAction = WeaponAction.empty();
+      }
+
+      if (sneakAction == null) {
+        sneakAction = WeaponAction.empty();
+      }
+
+      primaryAction.reloadingKey = WeaponRegistry.getPrimaryFireReloadAfterKey();
+      secondaryAction.reloadingKey = WeaponRegistry.getSecondaryFireReloadAfterKey();
+      sneakAction.reloadingKey = WeaponRegistry.getSneakActionReloadAfterKey();
+
+      return new Weapon(weaponID, displayName, item, primaryAction, secondaryAction, sneakAction);
+    }
   }
 }

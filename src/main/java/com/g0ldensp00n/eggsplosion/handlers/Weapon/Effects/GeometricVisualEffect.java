@@ -13,17 +13,17 @@ import com.destroystokyo.paper.ParticleBuilder;
 import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponEffect;
 
-public class VisualEffect extends WeaponEffect {
+public class GeometricVisualEffect extends WeaponEffect {
   HashMap<Integer, Collection<ParticleBuilder>> particleToShowAtDelay;
   boolean isPlayerParticleSoure = false;
   int radius;
   boolean sphericalRadius;
 
-  public VisualEffect() {
+  public GeometricVisualEffect() {
     particleToShowAtDelay = new HashMap<>();
   }
 
-  public VisualEffect(HashMap<Integer, Collection<ParticleBuilder>> particleToShowAtDelay,
+  public GeometricVisualEffect(HashMap<Integer, Collection<ParticleBuilder>> particleToShowAtDelay,
       boolean isPlayerParticleSource, int radius, boolean sphericalRadius) {
     this.particleToShowAtDelay = particleToShowAtDelay;
     this.isPlayerParticleSoure = isPlayerParticleSource;
@@ -106,8 +106,8 @@ public class VisualEffect extends WeaponEffect {
       return this;
     }
 
-    public VisualEffect build() {
-      return new VisualEffect(particleToShowAtDelay, isPlayerParticleSource, radius, sphericalRadius);
+    public GeometricVisualEffect build() {
+      return new GeometricVisualEffect(particleToShowAtDelay, isPlayerParticleSource, radius, sphericalRadius);
     }
   }
 }

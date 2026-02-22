@@ -205,6 +205,13 @@ public abstract class Lobby {
     return itemStack;
   }
 
+  protected void equipRandomWeapon(Player player) {
+    WeaponRegistry registry = WeaponRegistry.getInstance();
+    ItemStack randomWeapon = registry.getRandomWeapon().getItem();
+
+    player.getInventory().setItem(0, randomWeapon);
+  }
+
   protected void equipDefaultInventory(Player player) {
     WeaponRegistry registry = WeaponRegistry.getInstance();
     ItemStack woodenHoe = registry

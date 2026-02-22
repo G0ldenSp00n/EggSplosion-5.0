@@ -18,13 +18,17 @@ import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreType;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.Team;
 
-public class WaitingLobby extends Lobby {
+public class WaitingLobby extends Lobby implements Listener {
   private Hashtable<Player, Boolean> playerReadyStatus;
   private Map<Player, GameMode> gameModeVotes;
   private Map<Player, String> mapVotes;
@@ -42,11 +46,12 @@ public class WaitingLobby extends Lobby {
     setScoreManager(new ScoreManager(ScoreType.TRACKING, (Lobby) this, ChatColor.GRAY, ChatColor.GREEN, false));
 
     playerReadyStatus = new Hashtable<Player, Boolean>();
+    Bukkit.getPluginManager().registerEvents(this, plugin);
   }
 
   public void equipPlayer(Player player) {
     player.getInventory().clear();
-    equipDefaultInventory(player);
+    equipRandomWeapon(player);
     equipLobbyMenuSelector(player);
   }
 
@@ -322,4 +327,12 @@ public class WaitingLobby extends Lobby {
     Random random = new Random();
     return options.get(random.nextInt(options.size()));
   }
+
+  @EventHandler
+  public void playerDeathEvent(PlayerDeathEvent playerDeathEvent) {
+    Player victim = playerDeathEvent.getEntity();
+    victim.getInventory().clear();
+    equipRandomWeapon(victim);
+  }
+
 }

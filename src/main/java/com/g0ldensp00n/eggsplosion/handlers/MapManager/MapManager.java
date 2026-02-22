@@ -873,8 +873,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                   case 4:
                     String potionEffectNameFull = args[3];
                     if (potionEffectNameFull.split(":").length > 1) {
-                      String potionEffectName = potionEffectNameFull.split(":")[1];
-                      NamespacedKey potionEffectTypeKey = NamespacedKey.minecraft(potionEffectName);
+                      NamespacedKey potionEffectTypeKey = NamespacedKey.fromString(potionEffectNameFull);
                       if (args[2].equals("add")) {
                         PotionEffect matchingPotionEffect = null;
                         for (PotionEffect potionEffect : map.getMapEffects()) {
@@ -884,7 +883,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                         }
 
                         if (matchingPotionEffect == null) {
-                          PotionEffectType potionEffectType = Registry.POTION_EFFECT_TYPE.get(potionEffectTypeKey);
+                          PotionEffectType potionEffectType = Registry.MOB_EFFECT.get(potionEffectTypeKey);
                           map.addMapEffect(potionEffectType, amplifier);
                           sender.sendRichMessage(
                               "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier1></gray> <green>added</green>",
@@ -915,7 +914,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                         }
                       } else if (args[2].equals("remove")) {
                         PotionEffect potionEffectToRemove = null;
-                        PotionEffectType potionEffectType = Registry.POTION_EFFECT_TYPE.get(potionEffectTypeKey);
+                        PotionEffectType potionEffectType = Registry.MOB_EFFECT.get(potionEffectTypeKey);
                         for (PotionEffect potionEffect : map.getMapEffects()) {
                           if (potionEffect.getType().getKey().equals(potionEffectTypeKey)) {
                             potionEffectToRemove = potionEffect;
@@ -932,12 +931,18 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                               Placeholder.component("amplifier1",
                                   Component.translatable(
                                       "enchantment.level." + (potionEffectToRemove.getAmplifier() + 1))));
-                        } else {
+                        } else if (potionEffectType != null) {
                           sender.sendRichMessage(
                               "<red>[EggSplosion]</red> No effect <gray><effect></gray> on map <aqua><map></aqua>",
                               Placeholder.component("map", Component.text(args[1])),
                               Placeholder.component("effect",
                                   Component.translatable(potionEffectType.translationKey())));
+                        } else {
+                          sender.sendRichMessage(
+                              "<red>[EggSplosion]</red> Unknown effect <gray><effect></gray> on map <aqua><map></aqua>",
+                              Placeholder.component("map", Component.text(args[1])),
+                              Placeholder.component("effect",
+                                  Component.text(potionEffectNameFull)));
                         }
                       }
                       return true;
@@ -1113,21 +1118,12 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
             case "effect":
               switch (args[2]) {
                 case "add":
-                  PotionEffectType[] potionTypes = PotionEffectType.values();
-                  List<String> potionNames = new ArrayList<>();
-                  for (PotionEffectType potionType : potionTypes) {
-                    potionNames.add("minecraft:" + potionType.getName().toLowerCase());
-                  }
-                  return Utils.FilterTabComplete(args[3], potionNames);
                 case "remove":
-                  GameMap map = gameMaps.get(args[1]);
-                  List<String> mapPotionTypes = new ArrayList<>();
-                  if (map != null) {
-                    for (PotionEffect potionEffect : map.getMapEffects()) {
-                      mapPotionTypes.add("minecraft:" + potionEffect.getType().getName().toLowerCase());
-                    }
-                  }
-                  return Utils.FilterTabComplete(args[3], mapPotionTypes);
+                  List<String> potionNames = new ArrayList<>();
+                  Registry.MOB_EFFECT.forEach((effect) -> {
+                    potionNames.add(effect.getKey().asString());
+                  });
+                  return Utils.FilterTabComplete(args[3], potionNames);
               }
             default:
               return new ArrayList<>();

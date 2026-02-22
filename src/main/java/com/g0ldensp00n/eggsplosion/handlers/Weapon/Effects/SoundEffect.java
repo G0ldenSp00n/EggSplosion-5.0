@@ -44,7 +44,7 @@ public class SoundEffect extends WeaponEffect {
         }
       }
       if (isPlayerSoundSound) {
-        player.getWorld().playSound(pitchAlteredSound.build(), Sound.Emitter.self());
+        player.getWorld().playSound(pitchAlteredSound.build(), player);
       } else {
         location.getWorld().playSound(pitchAlteredSound.build(), location.getX(), location.getY(), location.getZ());
       }
@@ -99,7 +99,7 @@ public class SoundEffect extends WeaponEffect {
       return this;
     }
 
-    public Builder playerIsSoundSource() {
+    public Builder withPlayerAsSource() {
       isPlayerSoundSound = true;
       return this;
     }

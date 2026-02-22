@@ -131,9 +131,6 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
     if (playerLobby.getScoreManager() != null) {
       ScoreManager scoreManager = playerLobby.getScoreManager();
       if (scoreManager.getScoreType() == ScoreType.TEAM) {
-        attacker.sendMessage(
-            "RUNNING THIS CODE?? - "
-                + (!scoreManager.getPlayerTeam(victim).equals(scoreManager.getPlayerTeam(attacker))));
         return !scoreManager.getPlayerTeam(victim).equals(scoreManager.getPlayerTeam(attacker));
       }
     }

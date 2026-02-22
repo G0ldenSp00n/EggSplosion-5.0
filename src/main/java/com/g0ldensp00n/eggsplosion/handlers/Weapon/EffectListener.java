@@ -1,5 +1,7 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
+import java.util.Random;
+
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.NamespacedKey;
@@ -16,10 +18,9 @@ import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.Vector;
 
 import com.g0ldensp00n.eggsplosion.EggSplosion;
-
-import net.kyori.adventure.text.Component;
 
 class EffectListener implements Listener {
   protected EffectListener() {
@@ -53,8 +54,41 @@ class EffectListener implements Listener {
               effect.activateEffect(projectile.getLocation(), shooter);
             }
           } else if (!isWeaponPrimaryFire) {
-            for (WeaponEffect effect : weapon.secondaryAction.fireEffects) {
-              effect.activateEffect(projectile.getLocation(), shooter);
+            // TODO: Sneak Action??
+            // TODO: CLEAN THIS UP
+            if (weapon.secondaryAction.projectileSplit > 0
+                && projectile.getPersistentDataContainer().has(WeaponRegistry.getSplitCountKey())) {
+              for (int i = 0; i < weapon.secondaryAction.projectileSplit; i += 1) {
+                Vector projectileAngle = new Vector(0, 1, 0);
+                if (projectileHitEvent.getHitBlockFace() != null) {
+                  projectileAngle = projectileHitEvent.getHitBlockFace().getDirection();
+                }
+                Random random = new Random();
+                float deflectionAmount = 1.5f;
+                Vector offset = new Vector(random.nextFloat(-deflectionAmount, deflectionAmount),
+                    random.nextFloat(-deflectionAmount, deflectionAmount),
+                    random.nextFloat(-deflectionAmount, deflectionAmount));
+                projectileAngle = projectileAngle.add(offset).normalize();
+
+                int splitCount = projectile.getPersistentDataContainer().get(WeaponRegistry.getSplitCountKey(),
+                    PersistentDataType.INTEGER);
+                if (splitCount < 1) {
+                  weapon.spawnActionProjectile(shooter, weapon.secondaryAction,
+                      projectileHitEvent.getEntity().getLocation(), projectileAngle.multiply(0.5),
+                      splitCount + 1);
+                }
+              }
+              int splitCount = projectile.getPersistentDataContainer().get(WeaponRegistry.getSplitCountKey(),
+                  PersistentDataType.INTEGER);
+              if (splitCount >= 1) {
+                for (WeaponEffect effect : weapon.secondaryAction.fireEffects) {
+                  effect.activateEffect(projectile.getLocation(), shooter);
+                }
+              }
+            } else {
+              for (WeaponEffect effect : weapon.secondaryAction.fireEffects) {
+                effect.activateEffect(projectile.getLocation(), shooter);
+              }
             }
           }
         }
