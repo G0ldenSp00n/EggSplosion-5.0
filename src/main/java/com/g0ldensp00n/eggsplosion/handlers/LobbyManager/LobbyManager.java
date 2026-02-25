@@ -19,6 +19,7 @@ import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreType;
 import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.entity.Player;
@@ -196,7 +197,12 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
             if (sender instanceof Player) {
               Player playerCmdSender = (Player) sender;
               if (args.length == 1) {
-                joinLobby(lobbies.elements().nextElement(), playerCmdSender);
+                if (lobbies.size() > 0) {
+                  joinLobby(lobbies.elements().nextElement(), playerCmdSender);
+                } else {
+                  playerCmdSender.sendRichMessage(
+                      "<red>[EggSplosion]</red> No Game Lobbies Currently Exist, create one with /lobby create");
+                }
                 return true;
               }
               Lobby lobby = lobbies.get(args[1]);
@@ -243,7 +249,8 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
             if (lobbies.size() > 0) {
               sender.sendMessage(lobbiesList);
             } else {
-              sender.sendMessage("[EggSplosion] No Game Lobbies Currently Exist, create one with /lobby create <name>");
+              sender.sendRichMessage(
+                  "<red>[EggSplosion]</red> No Game Lobbies Currently Exist, create one with /lobby create");
             }
             return true;
         }

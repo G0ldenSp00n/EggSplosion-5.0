@@ -7,6 +7,7 @@ import org.bukkit.GameMode;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.SmallFireball;
@@ -44,6 +45,8 @@ class EffectListener implements Listener {
           }
         } else if (projectile instanceof Fireball) {
           projectileHitEvent.setCancelled(true);
+        } else if (projectile instanceof Firework) {
+          projectile.remove();
         }
         if (projectile.getPersistentDataContainer().has(WeaponRegistry.getIsWeaponPrimaryFireKey())) {
           boolean isWeaponPrimaryFire = projectile.getPersistentDataContainer().get(
@@ -56,6 +59,10 @@ class EffectListener implements Listener {
           } else if (!isWeaponPrimaryFire) {
             // TODO: Sneak Action??
             // TODO: CLEAN THIS UP
+            for (WeaponEffect effect : weapon.secondaryAction.fireEffects) {
+              effect.activateEffect(projectile.getLocation(), shooter);
+            }
+
             if (weapon.secondaryAction.projectileSplit > 0
                 && projectile.getPersistentDataContainer().has(WeaponRegistry.getSplitCountKey())) {
               for (int i = 0; i < weapon.secondaryAction.projectileSplit; i += 1) {
@@ -72,23 +79,13 @@ class EffectListener implements Listener {
 
                 int splitCount = projectile.getPersistentDataContainer().get(WeaponRegistry.getSplitCountKey(),
                     PersistentDataType.INTEGER);
-                if (splitCount < 1) {
+                if (splitCount < weapon.secondaryAction.maxSplit) {
                   weapon.spawnActionProjectile(shooter, weapon.secondaryAction,
                       projectileHitEvent.getEntity().getLocation(), projectileAngle.multiply(0.5),
                       splitCount + 1);
                 }
               }
-              int splitCount = projectile.getPersistentDataContainer().get(WeaponRegistry.getSplitCountKey(),
-                  PersistentDataType.INTEGER);
-              if (splitCount >= 1) {
-                for (WeaponEffect effect : weapon.secondaryAction.fireEffects) {
-                  effect.activateEffect(projectile.getLocation(), shooter);
-                }
-              }
             } else {
-              for (WeaponEffect effect : weapon.secondaryAction.fireEffects) {
-                effect.activateEffect(projectile.getLocation(), shooter);
-              }
             }
           }
         }

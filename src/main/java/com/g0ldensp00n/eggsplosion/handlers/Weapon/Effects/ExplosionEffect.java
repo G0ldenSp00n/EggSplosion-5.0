@@ -10,17 +10,11 @@ import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponEffect;
 
 public class ExplosionEffect extends WeaponEffect {
   float explosionPower;
-  Particle explosionParticle = Particle.EXPLOSION_EMITTER;
   float pitch = 1;;
   float volume = 1;
 
   public ExplosionEffect(float explosionPower) {
     this.explosionPower = explosionPower;
-  }
-
-  public ExplosionEffect(float explosionPower, Particle explosionParticle) {
-    this.explosionPower = explosionPower;
-    this.explosionParticle = explosionParticle;
   }
 
   public ExplosionEffect withPitch(float pitch) {
@@ -38,6 +32,5 @@ public class ExplosionEffect extends WeaponEffect {
     World world = location.getWorld();
 
     world.createExplosion(location, explosionPower, false, true, (Entity) shooter);
-    // world.spawnParticle(explosionParticle, location, 0);
   }
 }

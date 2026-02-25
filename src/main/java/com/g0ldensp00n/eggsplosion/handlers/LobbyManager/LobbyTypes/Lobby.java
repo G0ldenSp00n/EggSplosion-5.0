@@ -10,6 +10,7 @@ import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameMode;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Weapon;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponRegistry;
 
 import org.bukkit.Bukkit;
@@ -20,6 +21,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -248,11 +250,43 @@ public abstract class Lobby {
   protected void equipInventory(Player player) {
     if (getMap() != null) {
       Boolean equippedInventory = false;
-      for (ItemStack itemStack : getMap().getLoadout().getContents()) {
+      for (int itemStackSlot = 0; itemStackSlot < getMap().getLoadout().getContents().length; itemStackSlot += 1) {
+        ItemStack itemStack = getMap().getLoadout().getContents()[itemStackSlot];
         if (itemStack != null) {
-          player.getInventory().setContents(getMap().getLoadout().getContents());
+          if (!Weapon.isWeapon(itemStack)) {
+            WeaponRegistry registry = WeaponRegistry.getInstance();
+            if (itemStack.getType() == Material.WOODEN_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "wooden_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.STONE_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "stone_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.IRON_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "iron_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.GOLDEN_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "golden_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.DIAMOND_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "diamond_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.NETHERITE_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "netherite_hoe")).getItem();
+            }
+          }
+          player.getInventory().setItem(itemStackSlot, itemStack);
           equippedInventory = true;
-          break;
         }
       }
 

@@ -141,7 +141,8 @@ public class Weapon implements Listener {
       Vector fireAngle = player.getLocation().getDirection();
       if (action.projectileCount > 1) {
         Random random = new Random();
-        float deflectionAmount = 0.04f;
+        // TODO: CUSTOMIZABLEW??
+        float deflectionAmount = 0.14f;
         Vector offset = new Vector(random.nextFloat(-deflectionAmount, deflectionAmount),
             random.nextFloat(-deflectionAmount, deflectionAmount),
             random.nextFloat(-deflectionAmount, deflectionAmount));

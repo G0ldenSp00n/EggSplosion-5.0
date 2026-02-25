@@ -6,21 +6,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
+import org.bukkit.block.BlockType;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.damage.DamageType;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.LlamaSpit;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.WindCharge;
 import org.bukkit.entity.WitherSkull;
+import org.bukkit.inventory.ItemType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
 import com.g0ldensp00n.eggsplosion.EggSplosion;
@@ -29,6 +34,7 @@ import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DamageEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DashEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DelayEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.ExplosionEffect;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.GeometricVisualEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.KnockbackEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.SelfPotionEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.SonicBoomEffect;
@@ -73,7 +79,6 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
         }
 
         protected void registerLegacyWeapons() {
-                // TODO: Fire Sound Effects / Single Shared at Top
                 WeaponEffect castSoundEffect = SoundEffect.builder()
                                 .addSound(Sound.sound().source(Sound.Source.UI)
                                                 .type(org.bukkit.Sound.ENTITY_EGG_THROW).build())
@@ -88,7 +93,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(3)
                                                 .withVelocityMultiplier(2.75f)
                                                 .addCastEffect(castSoundEffect)
-                                                .addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION))
+                                                .addEffect(new ExplosionEffect(1.25f))
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
                                                 .addReloadEffect(reloadSoundEffect)
@@ -102,7 +107,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(50)
                                                 .withVelocityMultiplier(1.5f)
                                                 .addCastEffect(castSoundEffect)
-                                                .addEffect(new ExplosionEffect(2.4f, Particle.EXPLOSION))
+                                                .addEffect(new ExplosionEffect(2.4f))
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
                                                 .addEffect(new KnockbackEffect(2))
@@ -114,7 +119,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(12)
                                                 .withVelocityMultiplier(4.2f)
                                                 .addCastEffect(castSoundEffect)
-                                                .addEffect(new ExplosionEffect(2.5f, Particle.EXPLOSION))
+                                                .addEffect(new ExplosionEffect(2.5f))
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
                                                 .addEffect(new KnockbackEffect(1))
@@ -127,7 +132,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
                                                 .withVelocityMultiplier(4.8f)
                                                 .addCastEffect(castSoundEffect)
-                                                .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
+                                                .addEffect(new ExplosionEffect(2.6f))
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
                                                 .addEffect(new KnockbackEffect(1.1f))
@@ -139,7 +144,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(17)
                                                 .withVelocityMultiplier(15.5f)
                                                 .addCastEffect(castSoundEffect)
-                                                .addEffect(new ExplosionEffect(1.25f, Particle.EXPLOSION))
+                                                .addEffect(new ExplosionEffect(1.25f))
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
                                                 .addEffect(new KnockbackEffect(0.9f))
@@ -154,7 +159,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(84)
                                                 .withVelocityMultiplier(1.5f)
                                                 .addCastEffect(castSoundEffect)
-                                                .addEffect(new ExplosionEffect(3f, Particle.EXPLOSION))
+                                                .addEffect(new ExplosionEffect(3f))
                                                 .addEffect(new KnockbackEffect(3f))
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
@@ -162,11 +167,22 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .withProjectileMaterial(Material.SNIFFER_EGG)
                                                 .build())
                                 .build());
+
+                register(Weapon.builder("netherite_hoe").withWeaponItemMaterial(Material.NETHERITE_HOE)
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(800)
+                                                .withVelocityMultiplier(3.f)
+                                                .withProjectileSplittingCount(3).withMaxProjectileSplits(4)
+                                                .addEffect(new ExplosionEffect(3f))
+                                                .addEffect(new KnockbackEffect(3f))
+                                                .addEffect(SoundEffect.explosionSound())
+                                                .addEffect(VisualEffect.explosionVisualEffect())
+                                                .addReloadEffect(reloadSoundEffect)
+                                                .withProjectileMaterial(Material.DRAGON_EGG)
+                                                .build())
+                                .build());
         }
 
         public void registerWeapons() {
-                // TODO: Pull out some weapon actions into reusable chunks
-
                 register(Weapon.builder("sculked_hoe")
                                 .withDisplayName(MiniMessage.miniMessage()
                                                 .deserialize("<gradient:#041820:#61c3cb>Sculked Hoe</gradient>"))
@@ -222,12 +238,28 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(12)
                                                 .withVelocityMultiplier(4.0f)
                                                 .withProjectileMaterial(Material.ECHO_SHARD)
-                                                .addEffect(new ExplosionEffect(2.2f, Particle.EXPLOSION))
+                                                .addEffect(new ExplosionEffect(2.2f))
                                                 .addEffect(SoundEffect.explosionSound())
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(
+                                                                                Particle.SCULK_CHARGE_POP.builder())
+                                                                .withParticleCount(200)
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere.builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(0.2f))
+                                                                                .withRadius(.5f).build())
+                                                                .build())
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(Particle.SCULK_SOUL.builder())
+                                                                .withParticleCount(150)
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere.builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(0.5f))
+                                                                                .withRadius(1.f).build())
+                                                                .build())
                                                 .build())
                                 .build());
 
-                // TODO: Sound Effects on Secondary Action
                 register(Weapon.builder("spartan_laser")
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
@@ -237,6 +269,20 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .addCastEffect(new DelayEffect(38,
                                                                 Arrays.asList(new SonicBoomEffect(null, 2, 25, 5,
                                                                                 Arrays.asList(new ExplosionEffect(2.5f),
+                                                                                                GeometricVisualEffect
+                                                                                                                .builder()
+                                                                                                                .withParticleBuilder(
+                                                                                                                                Particle.LARGE_SMOKE
+                                                                                                                                                .builder())
+                                                                                                                .withParticleCount(
+                                                                                                                                150)
+                                                                                                                .withShape(GeometricVisualEffect.Shape.Sphere
+                                                                                                                                .builder()
+                                                                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                                                                .withSpeed(0.2f))
+                                                                                                                                .withRadius(.5f)
+                                                                                                                                .build())
+                                                                                                                .build(),
                                                                                                 VisualEffect.explosionVisualEffect())))))
                                                 .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
                                                                 .source(Sound.Source.HOSTILE)
@@ -292,20 +338,89 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withProjectileMaxTicksLived(10)
                                                                 .withVelocityMultiplier(1.5f)
                                                                 .withProjectileMaterial(Material.TURTLE_EGG)
-                                                                .addEffect(new ExplosionEffect(2.4f,
-                                                                                Particle.EXPLOSION))
+                                                                .addEffect(new ExplosionEffect(2.4f))
                                                                 .addEffect(new KnockbackEffect(1.1f))
                                                                 .addEffect(SoundEffect.explosionSound())
+                                                                .addEffect(GeometricVisualEffect.builder()
+                                                                                .withParticleBuilder(
+                                                                                                Particle.FLAME
+                                                                                                                .builder())
+                                                                                .withParticleCount(200)
+                                                                                .withShape(GeometricVisualEffect.Shape.Sphere
+                                                                                                .builder()
+                                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                                .withSpeed(0.1f))
+                                                                                                .withRadius(.25f)
+                                                                                                .build())
+                                                                                .build())
+                                                                .addEffect(GeometricVisualEffect.builder()
+                                                                                .withParticleBuilder(
+                                                                                                Particle.SMOKE
+                                                                                                                .builder())
+                                                                                .withParticleCount(200)
+                                                                                .withShape(GeometricVisualEffect.Shape.Sphere
+                                                                                                .builder()
+                                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                                .withSpeed(2.f))
+                                                                                                .withRadius(.25f)
+                                                                                                .build())
+                                                                                .build())
+                                                                .addEffect(GeometricVisualEffect.builder()
+                                                                                .withParticleBuilder(
+                                                                                                Particle.LARGE_SMOKE
+                                                                                                                .builder())
+                                                                                .withParticleCount(150)
+                                                                                .withShape(GeometricVisualEffect.Shape.Sphere
+                                                                                                .builder()
+                                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                                .withSpeed(0.2f))
+                                                                                                .withRadius(.5f)
+                                                                                                .build())
+                                                                                .build())
                                                                 .build())
+                                .withSneakAction(WeaponAction.builder().withReloadTime(450)
+                                                .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
+                                                                PotionEffectType.SPEED, 300,
+                                                                2))))
+                                                .addCastEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(org.bukkit.Sound.ENTITY_IRON_GOLEM_REPAIR)
+                                                                                .volume(1.5f).build())
+                                                                .withPlayerAsSource()
+                                                                .build())
+                                                .addReloadEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.UI)
+                                                                                .type(org.bukkit.Sound.ENTITY_IRON_GOLEM_STEP)
+                                                                                .volume(1.0f).build())
+                                                                .withPitchRange(0.8f, 1.2f)
+                                                                .withPlayerAsSource()
+                                                                .build())
+                                                .build())
                                 .build());
+
+                WeaponEffect breezyDashEffect = GeometricVisualEffect.builder()
+                                .withParticleBuilder(Particle.GUST.builder())
+                                .withShape(GeometricVisualEffect.Shape.Ring.builder()
+                                                .withRadius(0.75f)
+                                                .withOffset(new GeometricVisualEffect.Offset.InDirectionRelative(
+                                                                new Vector(0, 0, -1))
+                                                                .withSpeed(1.2f))
+                                                .build())
+                                .withPlayerAsSource()
+                                .withParticleCount(15)
+                                .build();
 
                 register(Weapon.builder("breezy_hoe")
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
-                                                                "<gradient:#e69d0b:#fcbe42>Breezy Hoe</gradient>"))
+                                                                "<gradient:#1C273B:#6C6699>Breezy Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.BREEZE_ROD)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
-                                                .addCastEffect(new DashEffect(1.8f, Particle.GUST))
+                                                .addCastEffect(new DashEffect(1.8f))
+                                                .addCastEffect(breezyDashEffect)
+                                                .addCastEffect(new DelayEffect(8, Arrays.asList(breezyDashEffect)))
                                                 .addCastEffect(SoundEffect.builder().addSound(
                                                                 Sound.sound()
                                                                                 .source(Sound.Source.HOSTILE)
@@ -327,8 +442,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                                                 .build())
                                                                                                 .withPlayerAsSource()
                                                                                                 .build())
-                                                                .addEffect(new ExplosionEffect(2.6f,
-                                                                                Particle.EXPLOSION))
+                                                                .addEffect(new ExplosionEffect(2.6f))
                                                                 .addEffect(new KnockbackEffect(1.6f))
                                                                 .addEffect(VisualEffect.builder()
                                                                                 .addParticle(Particle.GUST_EMITTER_SMALL
@@ -364,6 +478,18 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .build())
                                 .build());
 
+                WeaponEffect blazingDashEffect = GeometricVisualEffect.builder()
+                                .withParticleBuilder(Particle.LARGE_SMOKE.builder())
+                                .withShape(GeometricVisualEffect.Shape.Ring.builder()
+                                                .withRadius(0.75f)
+                                                .withOffset(new GeometricVisualEffect.Offset.InDirectionRelative(
+                                                                new Vector(0, 0, -1))
+                                                                .withSpeed(1.2f))
+                                                .build())
+                                .withParticleCount(500)
+                                .withPlayerAsSource()
+                                .build();
+
                 Sound blazeShootSound = Sound.sound()
                                 .source(Sound.Source.HOSTILE)
                                 .type(org.bukkit.Sound.ENTITY_BLAZE_SHOOT)
@@ -372,10 +498,12 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                 register(Weapon.builder("blazing_hoe")
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
-                                                                "<gradient:#e69d0b:#fcbe42>Blazing Hoe</gradient>"))
+                                                                "<gradient:#4F2400:#FCFC82>Blazing Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.BLAZE_ROD)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
-                                                .addCastEffect(new DashEffect(1.2f, Particle.LARGE_SMOKE))
+                                                .addCastEffect(new DashEffect(1.2f))
+                                                .addCastEffect(blazingDashEffect)
+                                                .addCastEffect(new DelayEffect(8, Arrays.asList(blazingDashEffect)))
                                                 .addCastEffect(SoundEffect.builder().addSound(
                                                                 Sound.sound()
                                                                                 .source(Sound.Source.HOSTILE)
@@ -401,8 +529,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                                                 12)
                                                                                                 .withPlayerAsSource()
                                                                                                 .build())
-                                                                .addEffect(new ExplosionEffect(1.25f,
-                                                                                Particle.EXPLOSION))
+                                                                .addEffect(new ExplosionEffect(1.25f))
                                                                 .addEffect(new KnockbackEffect(1.6f))
                                                                 .addEffect(VisualEffect.builder()
                                                                                 .addParticle(Particle.LARGE_SMOKE
@@ -443,44 +570,78 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .build())
                                 .build());
 
+                WeaponEffect dashGeometricEffect = GeometricVisualEffect.builder()
+                                .withParticleBuilder(Particle.POOF.builder())
+                                .withShape(GeometricVisualEffect.Shape.Ring.builder()
+                                                .withRadius(0.5f)
+                                                .withOffset(new GeometricVisualEffect.Offset.InDirectionRelative(
+                                                                new Vector(0, 0, -1))
+                                                                .withSpeed(1.2f))
+                                                .build())
+                                .withParticleCount(100)
+                                .withPlayerAsSource()
+                                .build();
+
                 register(Weapon.builder("wanderer_hoe")
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
                                                                 "<gradient:#2C456C:#435F91>Wanderer's</gradient> <gradient:#F2C039:#CC8E29>Hoe</gradient>"))
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(100)
                                                 .withVelocityMultiplier(4.8f)
-                                                // TODO: Wind Charge Particles (WeaponEffect Abstract Particles / Sounds
-                                                // / Effects Functionality)
                                                 .addEffect(new KnockbackEffect(1.2f))
                                                 .withProjectileMaterial(Material.EMERALD)
                                                 .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
                                                                 .source(Sound.Source.UI)
                                                                 .type(org.bukkit.Sound.ENTITY_WANDERING_TRADER_YES)
                                                                 .volume(3.0f).build()).withPlayerAsSource().build())
+                                                .addCastEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(Particle.ITEM.builder().data(
+                                                                                ItemType.EMERALD.createItemStack()))
+                                                                .withShape(GeometricVisualEffect.Shape.Ring.builder()
+                                                                                .withRadius(0.5f)
+                                                                                .withOffset(new GeometricVisualEffect.Offset.InDirectionRelative(
+                                                                                                new Vector(0, 0, 1))
+                                                                                                .withSpeed(0.5f))
+                                                                                .build())
+                                                                .withParticleCount(25)
+                                                                .withPlayerAsSource()
+                                                                .build())
                                                 .addEffect(SoundEffect.builder().addSound(Sound.sound()
                                                                 .source(Sound.Source.HOSTILE)
                                                                 .type(org.bukkit.Sound.ENTITY_WIND_CHARGE_WIND_BURST)
                                                                 .volume(3.0f).build()).build())
+                                                .addEffect(VisualEffect.builder()
+                                                                .addParticle(Particle.GUST_EMITTER_SMALL.builder())
+                                                                .build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
                                                 .withVelocityMultiplier(4.8f)
-                                                .addEffect(new ExplosionEffect(2.6f,
-                                                                Particle.EXPLOSION))
+                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.UI)
+                                                                .type(org.bukkit.Sound.ENTITY_LLAMA_SPIT)
+                                                                .volume(3.0f).build()).withPlayerAsSource().build())
+                                                .addEffect(new ExplosionEffect(2.6f))
                                                 .addEffect(SoundEffect.builder().addSound(Sound.sound()
                                                                 .source(Sound.Source.HOSTILE)
                                                                 .type(org.bukkit.Sound.BLOCK_SLIME_BLOCK_BREAK)
                                                                 .volume(3.5f).pitch(0.5f).build())
                                                                 .withPitchRange(0.4f, 0.6f).build())
                                                 .addEffect(new KnockbackEffect(1.1f))
-                                                .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
-                                                                .source(Sound.Source.UI)
-                                                                .type(org.bukkit.Sound.ENTITY_LLAMA_SPIT)
-                                                                .volume(3.0f).build()).withPlayerAsSource().build())
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(Particle.SPIT.builder())
+                                                                .withParticleCount(150)
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere.builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(0.5f))
+                                                                                .withRadius(1.f).build())
+                                                                .build())
                                                 .withProjectile(LlamaSpit.class)
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(320)
                                                 .withVelocityMultiplier(4.8f)
-                                                .addCastEffect(new DashEffect(0.9f, Particle.HAPPY_VILLAGER))
+                                                .addCastEffect(new DashEffect(0.9f))
+                                                .addCastEffect(dashGeometricEffect)
+                                                .addCastEffect(new DelayEffect(8, Arrays.asList(dashGeometricEffect)))
                                                 .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
                                                                 .source(Sound.Source.HOSTILE)
                                                                 .type(org.bukkit.Sound.ENTITY_WANDERING_TRADER_REAPPEARED)
@@ -502,6 +663,19 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withWeaponItemMaterial(Material.GRASS_BLOCK)
                                 .withPrimaryAction(
                                                 WeaponAction.builder().withReloadTime(100).withVelocityMultiplier(2.8f)
+                                                                .addEffect(GeometricVisualEffect.builder()
+                                                                                .withParticleBuilder(
+                                                                                                Particle.PORTAL
+                                                                                                                .builder())
+                                                                                .withShape(GeometricVisualEffect.Shape.Sphere
+                                                                                                .builder()
+                                                                                                .withRadius(1.5f)
+                                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint(
+                                                                                                                false)
+                                                                                                                .withSpeed(1.5f))
+                                                                                                .build())
+                                                                                .withPlayerAsSource()
+                                                                                .build())
                                                                 .addEffect(new TeleportEffect())
                                                                 .addEffect(SoundEffect.builder().addSound(Sound
                                                                                 .sound()
@@ -516,15 +690,36 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 .type(org.bukkit.Sound.ENTITY_ENDER_PEARL_THROW)
                                                                                 .volume(3.0f).build())
                                                                                 .withPlayerAsSource().build())
+                                                                .addCastEffect(GeometricVisualEffect.builder()
+                                                                                .withParticleBuilder(Particle.ITEM
+                                                                                                .builder().data(
+                                                                                                                ItemType.ENDER_PEARL
+                                                                                                                                .createItemStack()))
+                                                                                .withShape(GeometricVisualEffect.Shape.Ring
+                                                                                                .builder()
+                                                                                                .withRadius(0.85f)
+                                                                                                .withOffset(new GeometricVisualEffect.Offset.InDirectionRelative(
+                                                                                                                new Vector(0, 0, 1))
+                                                                                                                .withSpeed(0.75f))
+                                                                                                .build())
+                                                                                .withParticleCount(25)
+                                                                                .withPlayerAsSource()
+                                                                                .build())
                                                                 .withProjectileMaterial(Material.ENDER_PEARL)
                                                                 .build())
-                                .withSecondaryAction(WeaponAction.builder().withReloadTime(25)
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(18)
                                                 .withVelocityMultiplier(4.8f)
-                                                .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
+                                                .addEffect(new DelayEffect(10,
+                                                                Arrays.asList(new ExplosionEffect(2.6f))))
                                                 .addEffect(new KnockbackEffect(1.1f))
-                                                .addEffect(VisualEffect.builder()
-                                                                .addParticle(Particle.PORTAL.builder().count(450)
-                                                                                .offset(1.0, 1.0, 1.0).extra(1.2))
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(Particle.REVERSE_PORTAL.builder())
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere.builder()
+                                                                                .withRadius(2.5f)
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint(
+                                                                                                false)
+                                                                                                .withSpeed(1.5f))
+                                                                                .build())
                                                                 .build())
                                                 .addEffect(
                                                                 SoundEffect.builder().addSound(Sound
@@ -539,6 +734,22 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .source(Sound.Source.HOSTILE)
                                                                 .type(org.bukkit.Sound.ENTITY_ENDERMAN_HURT)
                                                                 .volume(3.0f).build()).withPlayerAsSource().build())
+                                                .addCastEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(Particle.ITEM
+                                                                                .builder().data(
+                                                                                                ItemType.ENDER_EYE
+                                                                                                                .createItemStack()))
+                                                                .withShape(GeometricVisualEffect.Shape.Ring
+                                                                                .builder()
+                                                                                .withRadius(0.85f)
+                                                                                .withOffset(new GeometricVisualEffect.Offset.InDirectionRelative(
+                                                                                                new Vector(0, 0, 1))
+                                                                                                .withSpeed(0.75f))
+                                                                                .build())
+                                                                .withParticleCount(25)
+                                                                .withPlayerAsSource()
+                                                                .build())
+
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(450)
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
@@ -562,12 +773,37 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .build())
                                 .build());
 
+                WeaponEffect allayDashEffect = GeometricVisualEffect.builder()
+                                .withParticleBuilder(Particle.BUBBLE_POP.builder())
+                                .withShape(GeometricVisualEffect.Shape.Ring.builder()
+                                                .withRadius(0.75f)
+                                                .withOffset(new GeometricVisualEffect.Offset.InDirectionRelative(
+                                                                new Vector(0, 0, -1))
+                                                                .withSpeed(1.2f))
+                                                .build())
+                                .withParticleCount(500)
+                                .withPlayerAsSource()
+                                .build();
+
                 register(Weapon.builder("allay_hoe")
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
                                                                 "<gradient:#FFFFFF:#6CC2F2>Allay Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.AMETHYST_SHARD)
-                                .withPrimaryAction(WeaponAction.builder().withReloadTime(100)
+                                .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .addCastEffect(new DashEffect(1.2f))
+                                                .addCastEffect(allayDashEffect)
+                                                .addCastEffect(new DelayEffect(8, Arrays.asList(allayDashEffect)))
+                                                .addCastEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(org.bukkit.Sound.ENTITY_ALLAY_ITEM_THROWN)
+                                                                                .volume(2.0f).build())
+                                                                .withPitchRange(0.5f, 4f)
+                                                                .withPlayerAsSource()
+                                                                .build())
+                                                .build())
+                                .withSneakAction(WeaponAction.builder().withReloadTime(100)
                                                 .withVelocityMultiplier(2.8f)
                                                 .addCastEffect(new SplashPotionEffect(
                                                                 Arrays.asList(new PotionEffect(
@@ -581,7 +817,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
                                                 .withVelocityMultiplier(4.8f)
-                                                .addEffect(new ExplosionEffect(2.6f, Particle.EXPLOSION))
+                                                .withProjectiles(2)
+                                                .addEffect(new ExplosionEffect(2.6f))
                                                 .addEffect(new KnockbackEffect(1.1f))
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .withProjectileMaterial(Material.AMETHYST_SHARD)
@@ -589,15 +826,57 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .source(Sound.Source.HOSTILE)
                                                                 .type(org.bukkit.Sound.ENTITY_ALLAY_ITEM_GIVEN)
                                                                 .volume(3.0f).build()).withPlayerAsSource().build())
+                                                .addEffect(VisualEffect.builder()
+                                                                .addParticle(Particle.FLASH.builder()
+                                                                                .color(Color.fromRGB(133, 49, 141)))
+                                                                .build())
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(
+                                                                                Particle.ITEM
+                                                                                                .builder()
+                                                                                                .data(ItemType.AMETHYST_SHARD
+                                                                                                                .createItemStack()))
+                                                                .withParticleCount(200)
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere
+                                                                                .builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(2.f))
+                                                                                .withRadius(.25f)
+                                                                                .build())
+                                                                .build())
                                                 .build())
                                 .build());
 
-                register(Weapon.builder("shotgun_hoe")
+                register(Weapon.builder("pillager_hoe")
                                 .withDisplayName(
                                                 MiniMessage.miniMessage().deserialize(
-                                                                "<gradient:#FFFFFF:#6CC2F2>Shot-Gun Hoe</gradient>"))
-                                .withWeaponItemMaterial(Material.NETHERITE_AXE)
-                                .withPrimaryAction(WeaponAction.builder().withReloadTime(100)
+                                                                "<gradient:#FFFFFF:#593210>Pillager Hoe</gradient>"))
+                                .withWeaponItemMaterial(Material.CROSSBOW)
+                                .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .addCastEffect(new DashEffect(1.2f))
+                                                .addCastEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(org.bukkit.Sound.ENTITY_PILLAGER_HURT)
+                                                                                .volume(2.0f).build())
+                                                                .withPitchRange(0.8f, 1.2f)
+                                                                .withPlayerAsSource()
+                                                                .build())
+                                                .addCastEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(Particle.ITEM.builder().data(
+                                                                                ItemType.CROSSBOW
+                                                                                                .createItemStack()))
+                                                                .withShape(GeometricVisualEffect.Shape.Ring.builder()
+                                                                                .withRadius(0.5f)
+                                                                                .withOffset(new GeometricVisualEffect.Offset.InDirectionRelative(
+                                                                                                new Vector(0, 0, 1))
+                                                                                                .withSpeed(0.5f))
+                                                                                .build())
+                                                                .withParticleCount(25)
+                                                                .withPlayerAsSource()
+                                                                .build())
+                                                .build())
+                                .withSneakAction(WeaponAction.builder().withReloadTime(100)
                                                 .withVelocityMultiplier(2.8f)
                                                 .addCastEffect(new SplashPotionEffect(
                                                                 Arrays.asList(new PotionEffect(
@@ -606,21 +885,50 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .affectsEnemyTeam(false).affectsOwnTeam(true))
                                                 .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
                                                                 .source(Sound.Source.HOSTILE)
-                                                                .type(org.bukkit.Sound.ENTITY_ALLAY_AMBIENT_WITH_ITEM)
-                                                                .volume(3.0f).build()).withPlayerAsSource().build())
+                                                                .type(org.bukkit.Sound.ENTITY_PILLAGER_CELEBRATE)
+                                                                .volume(3.0f).build())
+                                                                .withPitchRange(0.8f, 1.2f)
+                                                                .withPlayerAsSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withProjectile(Firework.class)
                                                 .withVelocityMultiplier(1.4f)
                                                 .withProjectiles(3)
-                                                .withProjectileMaxTicksLived(8)
-                                                .addEffect(new ExplosionEffect(1.5f, Particle.EXPLOSION))
+                                                .withProjectileMaxTicksLived(6)
+                                                .addEffect(new ExplosionEffect(1.5f))
+                                                .addEffect(VisualEffect.builder()
+                                                                .addParticle(Particle.FLASH.builder()
+                                                                                .color(Color.fromRGB(255, 255, 255)))
+                                                                .build())
                                                 .addEffect(new KnockbackEffect(1.1f))
-                                                .addEffect(SoundEffect.explosionSound())
-                                                .withProjectileMaterial(Material.IRON_NUGGET)
+                                                .addCastEffect(new DashEffect(-0.8f))
+                                                .addEffect(SoundEffect.builder().addSound(Sound.sound()
+                                                                .source(Sound.Source.UI)
+                                                                .type(org.bukkit.Sound.ENTITY_FIREWORK_ROCKET_BLAST)
+                                                                .volume(3.0f).build()).build())
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(
+                                                                                Particle.FIREWORK
+                                                                                                .builder())
+                                                                .withParticleCount(200)
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere
+                                                                                .builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(2.f))
+                                                                                .withRadius(.25f)
+                                                                                .build())
+                                                                .build())
+                                                .withProjectileMaterial(Material.FIREWORK_ROCKET)
                                                 .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
-                                                                .source(Sound.Source.HOSTILE)
-                                                                .type(org.bukkit.Sound.ENTITY_CREEPER_PRIMED)
-                                                                .volume(3.0f).build()).withPlayerAsSource().build())
+                                                                .source(Sound.Source.UI)
+                                                                .type(org.bukkit.Sound.ENTITY_FIREWORK_ROCKET_SHOOT)
+                                                                .volume(3.0f).build())
+                                                                .addSound(Sound.sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(org.bukkit.Sound.ENTITY_PILLAGER_AMBIENT)
+                                                                                .volume(3.0f).build())
+                                                                .withPitchRange(0.8f, 1.2f)
+                                                                .withPlayerAsSource().build())
                                                 .build())
                                 .build());
 
@@ -643,7 +951,16 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 org.bukkit.Sound.ENTITY_WITHER_SPAWN)
                                                                                 .build())
                                                                 .withPlayerAsSource().build())
-                                                .addCastEffect(new ExplosionEffect(4.5f, Particle.EXPLOSION))
+                                                .addCastEffect(new ExplosionEffect(4.5f))
+                                                .addCastEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(
+                                                                                Particle.SMOKE.builder())
+                                                                .withParticleCount(650)
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere.builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(8.2f))
+                                                                                .withRadius(.1f).build())
+                                                                .build())
                                                 .addCastEffect(new SplashPotionEffect(Arrays
                                                                 .asList(PotionEffectType.WITHER.createEffect(40, 1)), 8)
                                                                 .withHiddenSplashEffect())
@@ -657,7 +974,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 .build())
                                                                 .withPitchRange(0.8f, 1.2f)
                                                                 .withPlayerAsSource().build())
-                                                .addEffect(new ExplosionEffect(1.7f, Particle.EXPLOSION))
+                                                .addEffect(new ExplosionEffect(1.7f))
                                                 .addEffect(new SplashPotionEffect(Arrays
                                                                 .asList(PotionEffectType.WITHER.createEffect(40, 2)), 8)
                                                                 .withHiddenSplashEffect())
@@ -670,6 +987,14 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withPitchRange(0.8f, 1.2f)
                                                                 .withPlayerAsSource().build())
                                                 .isCharged(true)
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(
+                                                                                Particle.SMOKE.builder())
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere.builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(1.0f))
+                                                                                .withRadius(.25f).build())
+                                                                .build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withProjectile(WitherSkull.class)
                                                 .withVelocityMultiplier(2.7f)
@@ -680,7 +1005,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 .build())
                                                                 .withPitchRange(0.8f, 1.2f)
                                                                 .withPlayerAsSource().build())
-                                                .addEffect(new ExplosionEffect(1.7f, Particle.EXPLOSION))
+                                                .addEffect(new ExplosionEffect(1.7f))
                                                 .addEffect(new SplashPotionEffect(Arrays
                                                                 .asList(PotionEffectType.WITHER.createEffect(20, 1)), 6)
                                                                 .withHiddenSplashEffect())
@@ -692,8 +1017,122 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 .build())
                                                                 .withPitchRange(0.8f, 1.2f)
                                                                 .withPlayerAsSource().build())
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(
+                                                                                Particle.SMOKE.builder())
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere.builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(1.0f))
+                                                                                .withRadius(.25f).build())
+                                                                .build())
                                                 .build())
                                 .build());
+
+                WeaponEffect slimyDashEffect = GeometricVisualEffect.builder()
+                                .withParticleBuilder(Particle.ITEM_SLIME.builder())
+                                .withShape(GeometricVisualEffect.Shape.Ring.builder()
+                                                .withRadius(0.75f)
+                                                .withOffset(new GeometricVisualEffect.Offset.InDirectionRelative(
+                                                                new Vector(0, 0, -1))
+                                                                .withSpeed(1.2f))
+                                                .build())
+                                .withParticleCount(500)
+                                .withPlayerAsSource()
+                                .build();
+
+                register(Weapon.builder("slimy_hoe").withWeaponItemMaterial(Material.SLIME_BLOCK)
+                                .withDisplayName(MiniMessage.miniMessage()
+                                                .deserialize("<gradient:#6AA84F:#223622>Slimy Hoe</gradient>"))
+                                .withPrimaryAction(WeaponAction.builder().withReloadTime(450)
+                                                .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
+                                                                PotionEffectType.JUMP_BOOST, 300,
+                                                                3))))
+                                                .addCastEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(org.bukkit.Sound.ENTITY_SLIME_HURT)
+                                                                                .volume(1.5f).build())
+                                                                .withPlayerAsSource()
+                                                                .build())
+                                                .addReloadEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.UI)
+                                                                                .type(org.bukkit.Sound.ENTITY_SLIME_DEATH)
+                                                                                .volume(1.0f).build())
+                                                                .withPitchRange(0.8f, 1.2f)
+                                                                .withPlayerAsSource()
+                                                                .build())
+                                                .build())
+                                .withSneakAction(WeaponAction.builder().withReloadTime(25)
+                                                .addCastEffect(new DashEffect(1.2f))
+                                                .addCastEffect(slimyDashEffect)
+                                                .addCastEffect(new DelayEffect(8, Arrays.asList(slimyDashEffect)))
+                                                .addCastEffect(SoundEffect.builder().addSound(
+                                                                Sound.sound()
+                                                                                .source(Sound.Source.UI)
+                                                                                .type(org.bukkit.Sound.ENTITY_SLIME_JUMP)
+                                                                                .volume(2.0f).build())
+                                                                .withPlayerAsSource()
+                                                                .build())
+                                                .build())
+                                .withSecondaryAction(WeaponAction.builder().withReloadTime(35)
+                                                .withVelocityMultiplier(4.2f)
+                                                .withProjectileSplittingCount(3)
+                                                .withMaxProjectileSplits(1)
+                                                .addCastEffect(SoundEffect.builder()
+                                                                .addSound(Sound.sound().source(Sound.Source.UI)
+                                                                                .type(
+                                                                                                org.bukkit.Sound.ENTITY_SNOWBALL_THROW)
+                                                                                .volume(3.0f)
+                                                                                .build())
+                                                                .withPitchRange(0.8f, 1.2f)
+                                                                .withPlayerAsSource().build())
+                                                .addEffect(new ExplosionEffect(2.5f))
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(
+                                                                                Particle.BLOCK.builder().data(
+                                                                                                BlockType.SLIME_BLOCK
+                                                                                                                .createBlockData()))
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere.builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(1.0f))
+                                                                                .withRadius(.5f).build())
+                                                                .build())
+                                                .addEffect(GeometricVisualEffect.builder()
+                                                                .withParticleBuilder(
+                                                                                Particle.ITEM.builder().data(
+                                                                                                ItemType.SLIME_BALL
+                                                                                                                .createItemStack()))
+                                                                .withShape(GeometricVisualEffect.Shape.Sphere.builder()
+                                                                                .withOffset(new GeometricVisualEffect.Offset.FromPoint()
+                                                                                                .withSpeed(1.2f))
+                                                                                .withRadius(.25f).build())
+                                                                .build())
+                                                .addEffect(SoundEffect.builder()
+                                                                .addSound(Sound.sound().source(Sound.Source.HOSTILE)
+                                                                                .type(
+                                                                                                org.bukkit.Sound.BLOCK_SLIME_BLOCK_FALL)
+                                                                                .volume(3.0f)
+                                                                                .build())
+                                                                .addSoundWithDelay(Sound.sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(
+                                                                                                org.bukkit.Sound.ENTITY_SLIME_ATTACK)
+                                                                                .volume(3.0f)
+                                                                                .build(), 2)
+                                                                .addSoundWithDelay(Sound.sound()
+                                                                                .source(Sound.Source.HOSTILE)
+                                                                                .type(
+                                                                                                org.bukkit.Sound.BLOCK_SLIME_BLOCK_PLACE)
+                                                                                .volume(3.0f)
+                                                                                .build(), 2)
+                                                                .withPitchRange(0.8f, 1.2f)
+                                                                .build())
+                                                .addEffect(new KnockbackEffect(1))
+                                                .withProjectileMaterial(Material.SLIME_BALL)
+                                                .build())
+                                .build());
+
         }
 
         public static WeaponRegistry getInstance() {

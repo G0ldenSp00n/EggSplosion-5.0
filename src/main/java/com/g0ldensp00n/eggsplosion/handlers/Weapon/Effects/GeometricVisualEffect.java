@@ -1,113 +1,267 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.Random;
 
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 import com.destroystokyo.paper.ParticleBuilder;
-import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponEffect;
 
 public class GeometricVisualEffect extends WeaponEffect {
-  HashMap<Integer, Collection<ParticleBuilder>> particleToShowAtDelay;
-  boolean isPlayerParticleSoure = false;
-  int radius;
-  boolean sphericalRadius;
+  private Shape shape;
+  private int particleCount = 500;
+  private ParticleBuilder particleBuilder;
+  private boolean isPlayerSource;
 
-  public GeometricVisualEffect() {
-    particleToShowAtDelay = new HashMap<>();
-  }
-
-  public GeometricVisualEffect(HashMap<Integer, Collection<ParticleBuilder>> particleToShowAtDelay,
-      boolean isPlayerParticleSource, int radius, boolean sphericalRadius) {
-    this.particleToShowAtDelay = particleToShowAtDelay;
-    this.isPlayerParticleSoure = isPlayerParticleSource;
-    this.radius = radius;
-    this.sphericalRadius = sphericalRadius;
-  }
-
-  public void spawnParticle(int delayKey, Player player, Location location) {
-    for (ParticleBuilder particleBuilder : particleToShowAtDelay.getOrDefault(delayKey, new ArrayList<>())) {
-      if (isPlayerParticleSoure) {
-        ParticleBuilder locatedParticle = particleBuilder.location(player.getLocation()).source(player)
-            .receivers(radius, sphericalRadius);
-        locatedParticle.spawn();
-      } else {
-        ParticleBuilder locatedParticle = particleBuilder.location(location).source(player).receivers(radius,
-            sphericalRadius);
-        locatedParticle.spawn();
-      }
-    }
+  public GeometricVisualEffect(Shape shape, int particleCount, ParticleBuilder particleBuilder,
+      boolean isPlayerSource) {
+    this.shape = shape;
+    this.particleCount = particleCount;
+    this.particleBuilder = particleBuilder;
+    this.isPlayerSource = isPlayerSource;
   }
 
   @Override
   public void activateEffect(Location location, Player shooter) {
-    for (int tickDelay : particleToShowAtDelay.keySet()) {
-      if (tickDelay == 0) {
-        spawnParticle(0, shooter, location);
-      } else {
-        new BukkitRunnable() {
-          @Override
-          public void run() {
-            spawnParticle(tickDelay, shooter, location);
-          }
-        }.runTaskLater(EggSplosion.getInstance(), tickDelay);
+    if (!isPlayerSource) {
+      shape.drawShape(particleBuilder, particleCount, location, shooter);
+    } else {
+      shape.drawShape(particleBuilder, particleCount, shooter.getEyeLocation(), shooter);
+    }
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static abstract class Offset {
+    float speed = 0.f;
+
+    public abstract ParticleBuilder applyOffsetAndSpeed(Vector particleOffset,
+        Player shooter, ParticleBuilder builder);
+
+    public Offset withSpeed(float speed) {
+      this.speed = speed;
+      return this;
+    }
+
+    public static class FromPoint extends Offset {
+      boolean awayFromPoint;
+
+      public FromPoint(boolean awayFromPoint) {
+        this.awayFromPoint = awayFromPoint;
+      }
+
+      public FromPoint() {
+        this(true);
+      }
+
+      @Override
+      public ParticleBuilder applyOffsetAndSpeed(Vector particleOffset, Player shooter,
+          ParticleBuilder builder) {
+        if (awayFromPoint) {
+          return builder.offset(particleOffset.getX(), particleOffset.getY(), particleOffset.getZ()).extra(speed);
+        } else {
+          return builder.offset(particleOffset.getX(), particleOffset.getY(), particleOffset.getZ()).extra(-speed);
+        }
+      }
+    }
+
+    public static class InDirection extends Offset {
+      Vector offset;
+
+      public InDirection(Vector offset) {
+        this.offset = offset;
+      }
+
+      @Override
+      public ParticleBuilder applyOffsetAndSpeed(Vector particleOffset, Player shooter,
+          ParticleBuilder builder) {
+        return builder.offset(offset.getX(), offset.getY(), offset.getZ()).extra(speed);
+      }
+    }
+
+    public static class InDirectionRelative extends Offset {
+      Vector offset;
+
+      public InDirectionRelative(Vector relativeOffset) {
+        this.offset = relativeOffset.clone();
+      }
+
+      @Override
+      public ParticleBuilder applyOffsetAndSpeed(Vector particleOffset, Player shooter,
+          ParticleBuilder builder) {
+        Vector forward = shooter.getLocation().getDirection();
+
+        Vector right;
+        if (Math.abs(forward.getY()) > 0.99) {
+          double yaw = Math.toRadians(shooter.getLocation().getYaw());
+          right = new Vector(-Math.cos(yaw), 0, -Math.sin(yaw));
+        } else {
+          Vector globalUp = new Vector(0, 1, 0);
+          right = forward.clone().crossProduct(globalUp).normalize();
+        }
+
+        Vector up = right.clone().crossProduct(forward).normalize();
+
+        Vector worldOffset = new Vector(0, 0, 0)
+            .add(right.multiply(offset.getX()))
+            .add(up.multiply(offset.getY()))
+            .add(forward.multiply(offset.getZ()));
+
+        return builder.offset(worldOffset.getX(), worldOffset.getY(), worldOffset.getZ()).extra(speed);
+      }
+    }
+
+  }
+
+  public static abstract class Shape {
+    Offset offset;
+
+    public Shape(Offset offset) {
+      this.offset = offset;
+    }
+
+    abstract void drawShape(ParticleBuilder builder, int particleCount, Location location, Player shooter);
+
+    public static class Sphere extends Shape {
+      float radius = 2.f;
+
+      public Sphere(float radius, Offset offset) {
+        super(offset);
+        this.radius = radius;
+      }
+
+      @Override
+      void drawShape(ParticleBuilder builder, int particleCount, Location location, Player shooter) {
+        for (float i = 0; i < particleCount; i += 1) {
+          float k = i + .5f;
+          float phi = (float) Math.acos(1f - 2f * k / particleCount);
+          float theta = (float) (Math.PI * (1 + Math.sqrt(5)) * k);
+
+          float x = (float) (Math.cos(theta) * Math.sin(phi));
+          float y = (float) (Math.sin(theta) * Math.sin(phi));
+          float z = (float) (Math.cos(phi));
+
+          offset.applyOffsetAndSpeed(new Vector(x, y, z).multiply(radius), shooter, builder.count(0))
+              .count(0)
+              .location(location.clone().add(new Vector(x, y, z).multiply(radius)))
+              .receivers(50, true).spawn();
+        }
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        float radius = 2.f;
+        Offset offset;
+
+        public Builder() {
+        }
+
+        public Builder withRadius(float radius) {
+          this.radius = radius;
+          return this;
+        }
+
+        public Builder withOffset(Offset offset) {
+          this.offset = offset;
+          return this;
+        }
+
+        public Sphere build() {
+          return new Sphere(radius, offset);
+        }
+      }
+    }
+
+    public static class Ring extends Shape {
+      float radius = 2.f;
+
+      public Ring(float radius, Offset offset) {
+        super(offset);
+        this.radius = radius;
+      }
+
+      @Override
+      void drawShape(ParticleBuilder builder, int particleCount, Location location, Player shooter) {
+        Vector shooterDirection = shooter.getEyeLocation().getDirection().normalize();
+        Vector right = new Vector(-shooterDirection.getY(), shooterDirection.getX(), 0).normalize().multiply(radius);
+        for (int i = 0; i < particleCount; i++) {
+          Vector particleOffset = right.clone().rotateAroundAxis(shooterDirection,
+              ((2.f * Math.PI) / particleCount) * i);
+          offset.applyOffsetAndSpeed(particleOffset, shooter, builder.count(0))
+              .location(location.clone().add(particleOffset.multiply(radius)))
+              .receivers(50, true).spawn();
+
+        }
+      }
+
+      public static Builder builder() {
+        return new Builder();
+      }
+
+      public static class Builder {
+        float radius = 2.f;
+        Offset offset;
+
+        public Builder() {
+        }
+
+        public Builder withRadius(float radius) {
+          this.radius = radius;
+          return this;
+        }
+
+        public Builder withOffset(Offset offset) {
+          this.offset = offset;
+          return this;
+        }
+
+        public Ring build() {
+          return new Ring(radius, offset);
+        }
       }
     }
   }
 
-  public static VisualEffect.Builder builder() {
-    return new VisualEffect.Builder();
-  }
-
-  public static VisualEffect explosionVisualEffect() {
-    return VisualEffect.builder().addParticle(Particle.EXPLOSION.builder().count(0)).build();
-  }
-
   public static class Builder {
-    HashMap<Integer, Collection<ParticleBuilder>> particleToShowAtDelay;
-    boolean isPlayerParticleSource = false;
-    int radius = 32;
-    boolean sphericalRadius = true;
+    Shape shape;
+    int particleCount = 500;
+    ParticleBuilder particleBuilder = Particle.FLAME.builder();
+    boolean isPlayerSource = false;
 
     public Builder() {
-      this.particleToShowAtDelay = new HashMap<>();
     }
 
-    public Builder addParticle(ParticleBuilder particleBuilder) {
-      return this.addParticleWithDelay(particleBuilder, 0);
+    public Builder withShape(Shape shape) {
+      this.shape = shape;
+      return this;
     }
 
-    public Builder addParticleWithDelay(ParticleBuilder particleBuilder, int tickDelay) {
-      Collection<ParticleBuilder> particleBuilders = this.particleToShowAtDelay.getOrDefault(tickDelay,
-          new ArrayList<>());
-      particleBuilders.add(particleBuilder);
-      this.particleToShowAtDelay.put(tickDelay, particleBuilders);
+    public Builder withParticleCount(int particleCount) {
+      this.particleCount = particleCount;
+      return this;
+    }
+
+    public Builder withParticleBuilder(ParticleBuilder builder) {
+      this.particleBuilder = builder;
       return this;
     }
 
     public Builder withPlayerAsSource() {
-      isPlayerParticleSource = true;
-      return this;
-    }
-
-    public Builder withCubicBoundCheck() {
-      sphericalRadius = false;
-      return this;
-    }
-
-    public Builder withRadius(int radius) {
-      this.radius = radius;
+      this.isPlayerSource = true;
       return this;
     }
 
     public GeometricVisualEffect build() {
-      return new GeometricVisualEffect(particleToShowAtDelay, isPlayerParticleSource, radius, sphericalRadius);
+      return new GeometricVisualEffect(shape, particleCount, particleBuilder, isPlayerSource);
     }
   }
 }

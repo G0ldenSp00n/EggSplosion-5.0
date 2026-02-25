@@ -331,8 +331,9 @@ public class WaitingLobby extends Lobby implements Listener {
   @EventHandler
   public void playerDeathEvent(PlayerDeathEvent playerDeathEvent) {
     Player victim = playerDeathEvent.getEntity();
-    victim.getInventory().clear();
-    equipRandomWeapon(victim);
+    if (this.playerInLobby(victim)) {
+      victim.getInventory().clear();
+      equipPlayer(victim);
+    }
   }
-
 }

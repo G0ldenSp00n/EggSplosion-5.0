@@ -27,18 +27,19 @@ public class WeaponAction {
   int burstCount = 1;
   int burstDelayTicks = 0;
   int projectileSplit = 0;
+  int maxSplit = 1;
 
   public WeaponAction(Collection<WeaponEffect> fireEffects,
       Collection<WeaponEffect> castEffects, Collection<WeaponEffect> reloadEffects) {
     this(fireEffects, castEffects, reloadEffects, 10, -1, 1.0f, Egg.class, Material.EGG,
-        false, 1, 1, 0, 0);
+        false, 1, 1, 0, 0, 0);
   }
 
   public WeaponAction(Collection<WeaponEffect> fireEffects, Collection<WeaponEffect> castEffects,
       Collection<WeaponEffect> reloadEffects, int fireReloadTicks,
       int maxTicksLived, float fireVelocityMultiplier, Class<? extends Projectile> projectile,
       Material projectileMaterial, boolean isCharged, int projectileCount, int burstCount, int burstDelayTicks,
-      int splitCount) {
+      int splitCount, int maxSplit) {
     this.fireEffects = fireEffects;
     this.castEffects = castEffects;
     this.reloadEffects = reloadEffects;
@@ -52,6 +53,7 @@ public class WeaponAction {
     this.burstCount = burstCount;
     this.burstDelayTicks = burstDelayTicks;
     this.projectileSplit = splitCount;
+    this.maxSplit = maxSplit;
   }
 
   public boolean isPrimaryAction() {
@@ -105,6 +107,7 @@ public class WeaponAction {
     int burstCount = 1;
     int burstDelayTicks = 0;
     int splitCount = 0;
+    int maxSplit = 1;
 
     public Builder() {
       fireEffects = new ArrayList<>();
@@ -177,6 +180,11 @@ public class WeaponAction {
       return this;
     }
 
+    public Builder withMaxProjectileSplits(int maxSplit) {
+      this.maxSplit = maxSplit;
+      return this;
+    }
+
     public WeaponAction build() {
       if (projectileMaterial == null) {
         projectileMaterial = Material.EGG;
@@ -184,7 +192,8 @@ public class WeaponAction {
 
       return new WeaponAction(fireEffects, castEffects, reloadEffects, fireReloadTicks, projectileMaxTicksLived,
           fireVelocityMultiplier,
-          projectile, projectileMaterial, isCharged, projectileCount, burstCount, burstDelayTicks, splitCount);
+          projectile, projectileMaterial, isCharged, projectileCount, burstCount, burstDelayTicks, splitCount,
+          maxSplit);
     }
   }
 }
