@@ -13,6 +13,8 @@ import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameModeListeners;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyMenuSystem;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponRegistry;
+
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -23,6 +25,7 @@ public class EggSplosion extends JavaPlugin {
     private MapManager mapManager;
     private LobbyManager lobbyManager;
     public String pluginFolder = getDataFolder().getAbsolutePath();
+    private static EggSplosion plugin;
 
     @Override
     public void onEnable() {
@@ -31,6 +34,7 @@ public class EggSplosion extends JavaPlugin {
             world.setGameRule(GameRules.KEEP_INVENTORY, true);
             world.setGameRule(GameRules.SHOW_DEATH_MESSAGES, false);
         });
+        plugin = this;
         versionNumber = Bukkit.getServer().getPluginManager().getPlugin("EggSplosion").getDescription().getVersion();
         getLogger().info("Enabled EggSplosion v" + versionNumber);
         explosionRegen = new ExplosionRegen(this);
@@ -47,10 +51,25 @@ public class EggSplosion extends JavaPlugin {
         new Food(this);
         new PlayerLeaveHandler(this, lobbyManager);
 
+        WeaponRegistry registry = new WeaponRegistry();
+
         this.getCommand("lobby").setExecutor(lobbyManager);
         this.getCommand("lobby").setTabCompleter(lobbyManager);
         this.getCommand("map").setExecutor(mapManager);
         this.getCommand("map").setTabCompleter(mapManager);
+        this.getCommand("weapon").setExecutor(registry);
+    }
+
+    public static EggSplosion getInstance() {
+        return plugin;
+    }
+
+    public LobbyManager getLobbyManager() {
+        return lobbyManager;
+    }
+
+    public MapManager getMapManager() {
+        return mapManager;
     }
 
     @Override

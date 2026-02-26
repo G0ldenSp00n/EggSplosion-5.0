@@ -5,18 +5,23 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameMode;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.Weapon;
+import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponRegistry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -202,20 +207,34 @@ public abstract class Lobby {
     return itemStack;
   }
 
-  protected void equipDefaultInventory(Player player) {
-    ItemStack woodenHoe = new ItemStack(Material.WOODEN_HOE);
-    ItemStack stoneHoe = new ItemStack(Material.STONE_HOE);
-    ItemStack copperHoe = new ItemStack(Material.COPPER_HOE);
-    ItemStack ironHoe = new ItemStack(Material.IRON_HOE);
-    ItemStack goldenHoe = new ItemStack(Material.GOLDEN_HOE);
-    ItemStack diamondHoe = new ItemStack(Material.DIAMOND_HOE);
+  protected void equipRandomWeapon(Player player) {
+    WeaponRegistry registry = WeaponRegistry.getInstance();
+    ItemStack randomWeapon = registry.getRandomWeapon().getItem();
 
-    player.getInventory().setItem(0, setUnbreakable(woodenHoe));
-    player.getInventory().setItem(1, setUnbreakable(stoneHoe));
-    player.getInventory().setItem(2, setUnbreakable(copperHoe));
-    player.getInventory().setItem(3, setUnbreakable(ironHoe));
-    player.getInventory().setItem(4, setUnbreakable(goldenHoe));
-    player.getInventory().setItem(5, setUnbreakable(diamondHoe));
+    player.getInventory().setItem(0, randomWeapon);
+  }
+
+  protected void equipDefaultInventory(Player player) {
+    WeaponRegistry registry = WeaponRegistry.getInstance();
+    ItemStack woodenHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "wooden_hoe")).getItem();
+    ItemStack stoneHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "stone_hoe")).getItem();
+    ItemStack copperHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "copper_hoe")).getItem();
+    ItemStack ironHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "iron_hoe")).getItem();
+    ItemStack goldenHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "golden_hoe")).getItem();
+    ItemStack diamondHoe = registry
+        .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "diamond_hoe")).getItem();
+
+    player.getInventory().setItem(0, woodenHoe);
+    player.getInventory().setItem(1, stoneHoe);
+    player.getInventory().setItem(2, copperHoe);
+    player.getInventory().setItem(3, ironHoe);
+    player.getInventory().setItem(4, goldenHoe);
+    player.getInventory().setItem(5, diamondHoe);
   }
 
   protected void equipLobbyMenuSelector(Player player) {
@@ -231,11 +250,43 @@ public abstract class Lobby {
   protected void equipInventory(Player player) {
     if (getMap() != null) {
       Boolean equippedInventory = false;
-      for (ItemStack itemStack : getMap().getLoadout().getContents()) {
+      for (int itemStackSlot = 0; itemStackSlot < getMap().getLoadout().getContents().length; itemStackSlot += 1) {
+        ItemStack itemStack = getMap().getLoadout().getContents()[itemStackSlot];
         if (itemStack != null) {
-          player.getInventory().setContents(getMap().getLoadout().getContents());
+          if (!Weapon.isWeapon(itemStack)) {
+            WeaponRegistry registry = WeaponRegistry.getInstance();
+            if (itemStack.getType() == Material.WOODEN_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "wooden_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.STONE_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "stone_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.IRON_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "iron_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.GOLDEN_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "golden_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.DIAMOND_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "diamond_hoe")).getItem();
+            }
+
+            if (itemStack.getType() == Material.NETHERITE_HOE) {
+              itemStack = registry
+                  .getWeaponByID(new NamespacedKey(EggSplosion.getInstance(), "netherite_hoe")).getItem();
+            }
+          }
+          player.getInventory().setItem(itemStackSlot, itemStack);
           equippedInventory = true;
-          break;
         }
       }
 

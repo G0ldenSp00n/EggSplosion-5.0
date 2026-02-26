@@ -32,54 +32,30 @@ public class Weapon implements Listener {
     Bukkit.getPluginManager().registerEvents(this, plugin);
   }
 
-  @EventHandler
-  public void playerInteractEvent(PlayerInteractEvent playerInteractEvent) {
-    if (playerInteractEvent.getItem() != null) {
-      if ((playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_AIR)
-          || playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
-        Player player = playerInteractEvent.getPlayer();
-        if (!(player.hasPotionEffect(PotionEffectType.INVISIBILITY)
-            && player.hasPotionEffect(PotionEffectType.REGENERATION))) {
-          switch (playerInteractEvent.getItem().getType()) {
-            case NETHERITE_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 3f, 15, 15, 4, Material.EGG);
-              break;
-            case DIAMOND_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 1.5f, 3, 4.2f, 3, Material.EGG);
-              break;
-            case GOLDEN_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 15.5f, 1.25f, 0.8875f, 1, Material.EGG);
-              break;
-            case IRON_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 4.8f, 2.6f, 0.7f, 1, Material.EGG);
-              break;
-            case COPPER_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 4.2f, 2.5f, 0.6f, 1, Material.EGG);
-              break;
-            case STONE_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 1.5f, 2.4f, 2.5f, 2, Material.EGG);
-              break;
-            case WOODEN_HOE:
-              playerInteractEvent.setCancelled(true);
-              launchWeapon(player, 2.75f, 1.25f, 0.15f, 0, Material.EGG);
-              break;
-            default:
-              break;
-          }
-        } else {
-          player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
-              TextComponent.fromLegacy("Can't Fire Weapon with Spawn Protection"));
-        }
-      }
-    }
-  }
-
+  // @EventHandler
+  // public void playerInteractEvent(PlayerInteractEvent playerInteractEvent) {
+  // if (playerInteractEvent.getItem() != null) {
+  // if ((playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_AIR)
+  // || playerInteractEvent.getAction().equals(Action.RIGHT_CLICK_BLOCK))) {
+  // Player player = playerInteractEvent.getPlayer();
+  // if (!(player.hasPotionEffect(PotionEffectType.INVISIBILITY)
+  // && player.hasPotionEffect(PotionEffectType.REGENERATION))) {
+  // switch (playerInteractEvent.getItem().getType()) {
+  // // case NETHERITE_HOE:
+  // // playerInteractEvent.setCancelled(true);
+  // // launchWeapon(player, 3f, 15, 15, 4, Material.EGG);
+  // // break;
+  // default:
+  // break;
+  // }
+  // } else {
+  // player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+  // TextComponent.fromLegacy("Can't Fire Weapon with Spawn Protection"));
+  // }
+  // }
+  // }
+  // }
+  //
   private void launchWeapon(Player player, float velocityMultiplier, float explosionPower, double reloadTime,
       int rocket_jump_power, Material eggType) {
     reloadTime = reloadTime * 20;

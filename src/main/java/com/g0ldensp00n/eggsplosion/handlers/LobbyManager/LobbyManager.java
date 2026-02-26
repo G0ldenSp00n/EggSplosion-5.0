@@ -14,8 +14,11 @@ import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.MainLobby;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.WaitingLobby;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
+import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
+import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreType;
 import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
@@ -123,9 +126,18 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
     lobbies = new Hashtable<>();
   }
 
-  public Boolean canPlayerAttackPlayer(Player playerA, Player playerB) {
-    Lobby playerLobby = lobbyManager.getPlayersLobby(playerA);
-    Lobby damagerLobby = lobbyManager.getPlayersLobby(playerB);
+  public Boolean canPlayerAttackPlayer(Player victim, Player attacker) {
+    Lobby playerLobby = lobbyManager.getPlayersLobby(victim);
+    Lobby damagerLobby = lobbyManager.getPlayersLobby(attacker);
+    if (playerLobby.getScoreManager() != null) {
+      ScoreManager scoreManager = playerLobby.getScoreManager();
+      if (scoreManager.getScoreType() == ScoreType.TEAM) {
+        return !scoreManager.getPlayerTeam(victim).equals(scoreManager.getPlayerTeam(attacker));
+      }
+    }
+    if (victim.equals(attacker)) {
+      return false;
+    }
     return playerLobby == damagerLobby;
   }
 
@@ -150,8 +162,8 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
         switch (args[0]) {
           case "create":
             if (args.length == 1) {
-              sender.sendMessage(MiniMessage.miniMessage().deserialize(
-                  "<red>[EggSplosion]</red> Must specify the name of the lobby when creating"));
+              sender.sendRichMessage(
+                  "<red>[EggSplosion]</red> Must specify the name of the lobby when creating");
               return true;
             }
             if (lobbies.get(args[1]) == null) {
@@ -162,31 +174,35 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
                   Player playerCmdSender = (Player) sender;
                   createdLobby.addAdmin(playerCmdSender);
                 }
-                sender.sendMessage(MiniMessage.miniMessage().deserialize(
+                sender.sendRichMessage(
                     "[EggSplosion] Lobby <aqua><lobby_name></aqua> created!",
-                    Placeholder.component("lobby_name", MiniMessage.miniMessage().deserialize(args[1]))));
+                    Placeholder.component("lobby_name", Component.text(args[1])));
 
                 if (sender instanceof Player) {
                   Player playerCmdSender = (Player) sender;
                   joinLobby(createdLobby, playerCmdSender);
                 }
               } else {
-                sender.sendMessage(
-                    MiniMessage.miniMessage().deserialize(
-                        "<red>[EggSplosion]</red> No waiting room found, create a WAITING_ROOM map before starting a lobby"));
+                sender.sendRichMessage(
+                    "<red>[EggSplosion]</red> No waiting room found, create a WAITING_ROOM map before starting a lobby");
               }
               return true;
             } else {
-              sender.sendMessage(MiniMessage.miniMessage().deserialize(
+              sender.sendRichMessage(
                   "<red>[EggSplosion]</red> Lobby <lobby_name> already exists, use /lobby join <lobby_name>",
-                  Placeholder.component("lobby_name", MiniMessage.miniMessage().deserialize(args[1]))));
+                  Placeholder.component("lobby_name", Component.text(args[1])));
               return true;
             }
           case "join":
             if (sender instanceof Player) {
               Player playerCmdSender = (Player) sender;
               if (args.length == 1) {
-                joinLobby(lobbies.elements().nextElement(), playerCmdSender);
+                if (lobbies.size() > 0) {
+                  joinLobby(lobbies.elements().nextElement(), playerCmdSender);
+                } else {
+                  playerCmdSender.sendRichMessage(
+                      "<red>[EggSplosion]</red> No Game Lobbies Currently Exist, create one with /lobby create");
+                }
                 return true;
               }
               Lobby lobby = lobbies.get(args[1]);
@@ -233,7 +249,8 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
             if (lobbies.size() > 0) {
               sender.sendMessage(lobbiesList);
             } else {
-              sender.sendMessage("[EggSplosion] No Game Lobbies Currently Exist, create one with /lobby create <name>");
+              sender.sendRichMessage(
+                  "<red>[EggSplosion]</red> No Game Lobbies Currently Exist, create one with /lobby create");
             }
             return true;
         }

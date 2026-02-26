@@ -7,7 +7,7 @@ plugins {
 import xyz.jpenilla.runpaper.task.RunServer
 
 group = 'com.g0ldensp00n.eggsplosion'
-version = '5.0'
+version = '5.1'
 
 repositories {
     mavenCentral()

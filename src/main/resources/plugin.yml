@@ -10,3 +10,7 @@ commands:
     map:
         description: Create and Edit Maps
         usage: /map <tools>
+    weapon:
+        description: Weapon Commands
+        usage: /weapon
+
