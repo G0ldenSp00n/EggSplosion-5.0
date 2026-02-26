@@ -15,6 +15,8 @@ import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyMenuSystem;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.WeaponRegistry;
 
+import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
+
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -50,14 +52,17 @@ public class EggSplosion extends JavaPlugin {
         new LobbyMenuSystem(this, lobbyManager, mapManager);
         new Food(this);
         new PlayerLeaveHandler(this, lobbyManager);
+        new WeaponRegistry();
 
-        WeaponRegistry registry = new WeaponRegistry();
-
-        this.getCommand("lobby").setExecutor(lobbyManager);
-        this.getCommand("lobby").setTabCompleter(lobbyManager);
-        this.getCommand("map").setExecutor(mapManager);
-        this.getCommand("map").setTabCompleter(mapManager);
-        this.getCommand("weapon").setExecutor(registry);
+        this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
+            commands.registrar().register(WeaponRegistry.createWeaponCommand(), "Give Player Weapon");
+            commands.registrar().register(LobbyManager.createLobbyCommands(), "Lobby Manegment");
+        });
+        // this.getCommand("lobby").setExecutor(lobbyManager);
+        // this.getCommand("lobby").setTabCompleter(lobbyManager);
+        // this.getCommand("map").setExecutor(mapManager);
+        // this.getCommand("map").setTabCompleter(mapManager);
+        // this.getCommand("weapon").setExecutor(registry);
     }
 
     public static EggSplosion getInstance() {

@@ -1,24 +1,18 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.block.BlockType;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.LlamaSpit;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.WindCharge;
 import org.bukkit.entity.WitherSkull;
@@ -26,10 +20,7 @@ import org.bukkit.inventory.ItemType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
-
 import com.g0ldensp00n.eggsplosion.EggSplosion;
-import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DamageEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DashEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DelayEffect;
@@ -43,12 +34,22 @@ import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.SplashPotionEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.TeleportEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.VisualEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.EffectListeners.KnockbackEffectListener;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.MessageComponentSerializer;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
-public class WeaponRegistry implements CommandExecutor, TabCompleter {
+public class WeaponRegistry {
         private static WeaponRegistry instance;
         private static NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(), "weapon_id");
         private static NamespacedKey isWeaponPrimaryFireKey = new NamespacedKey(EggSplosion.getInstance(),
@@ -286,7 +287,11 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(580)
                                                 .addCastEffect(new DelayEffect(38,
                                                                 Arrays.asList(new SonicBoomEffect(null, 2, 25, 5,
-                                                                                Arrays.asList(new ExplosionEffect(2.5f),
+                                                                                Arrays.asList(new ExplosionEffect(2.8f),
+                                                                                                new DamageEffect(4.5f,
+                                                                                                                40.0f,
+                                                                                                                DamageType.OUTSIDE_BORDER,
+                                                                                                                false),
                                                                                                 GeometricVisualEffect
                                                                                                                 .builder()
                                                                                                                 .withParticleBuilder(
@@ -969,7 +974,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withParticleBuilder(
                                                                                 Particle.FIREWORK
                                                                                                 .builder())
-                                                                .withParticleCount(200)
+                                                                .withParticleCount(100)
                                                                 .withShape(GeometricVisualEffect.Shape.Sphere
                                                                                 .builder()
                                                                                 .withOffset(new GeometricVisualEffect.Offset.FromPoint()
@@ -1234,60 +1239,93 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                 return weapons.getOrDefault(key, defaultWeapon);
         }
 
+        public Weapon getWeaponByID(String weapon_id) {
+                return weapons.getOrDefault(new NamespacedKey(EggSplosion.getInstance(), weapon_id), defaultWeapon);
+        }
+
         public Weapon getRandomWeapon() {
                 Random random = new Random();
                 return (Weapon) weapons.values().toArray()[random.nextInt(weapons.values().size())];
         }
 
-        @Override
-        public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String commandLabel,
-                        @NotNull String @NotNull [] args) {
-                if (commandLabel.equalsIgnoreCase("weapon")) {
-                        if (sender instanceof Player) {
-                                Player player = (Player) sender;
-                                if (args.length == 0) {
-                                        NamespacedKey woodenHoeID = new NamespacedKey(EggSplosion.getInstance(),
-                                                        "wooden_hoe");
-                                        player.give(getWeaponByID(woodenHoeID).getItem());
-
-                                        NamespacedKey stoneHoeID = new NamespacedKey(EggSplosion.getInstance(),
-                                                        "stone_hoe");
-                                        player.give(getWeaponByID(stoneHoeID).getItem());
-
-                                        NamespacedKey copperHoeID = new NamespacedKey(EggSplosion.getInstance(),
-                                                        "copper_hoe");
-                                        player.give(getWeaponByID(copperHoeID).getItem());
-                                } else if (args.length == 1) {
-                                        NamespacedKey weaponID = NamespacedKey.fromString(args[0]);
-                                        Weapon weapon = getWeaponByID(weaponID);
-                                        if (weapon != null) {
-                                                player.give(weapon.getItem());
-                                        } else {
-                                                player.sendMessage(MiniMessage.miniMessage().deserialize(
-                                                                "No weapon with ID <weapon_id>",
-                                                                Placeholder.component("weapon_id",
-                                                                                MiniMessage.miniMessage().deserialize(
-                                                                                                weaponID.asString()))));
-                                        }
-                                }
-
-                        }
-                }
-                return true;
+        public static LiteralCommandNode<CommandSourceStack> createWeaponCommand() {
+                return Commands.literal("weapon")
+                                .then(Commands.argument("target", ArgumentTypes.players())
+                                                .executes(WeaponRegistry::executeGiveDefaultWeapons)
+                                                .then(Commands.argument("weapon_id", ArgumentTypes.namespacedKey())
+                                                                .suggests(WeaponRegistry::getWeaponNamespacedKeySuggestions)
+                                                                .executes(WeaponRegistry::executeGiveSpecificWeapon)))
+                                .build();
         }
 
-        @Override
-        public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
-                if (cmd.getName().equalsIgnoreCase("weapon")) {
-                        switch (args.length) {
-                                case 1:
-                                        List<String> commands = new ArrayList<>();
-                                        for (NamespacedKey weaponID : weapons.keySet()) {
-                                                commands.add(weaponID.asString());
-                                        }
-                                        return Utils.FilterTabComplete(args[0], commands);
-                        }
-                }
-                return null;
+        private static CompletableFuture<Suggestions> getWeaponNamespacedKeySuggestions(
+                        final CommandContext<CommandSourceStack> ctx,
+                        final SuggestionsBuilder builder) {
+                WeaponRegistry registry = WeaponRegistry.getInstance();
+                WeaponRegistry.getInstance().weapons.keySet()
+                                .stream()
+                                .filter(entry -> entry
+                                                .asString()
+                                                .toLowerCase()
+                                                .startsWith(builder
+                                                                .getRemainingLowerCase()))
+                                .forEach(entry -> {
+                                        builder.suggest(entry
+                                                        .asString(),
+                                                        MessageComponentSerializer.message().serialize(
+                                                                        registry.getWeaponByID(entry).displayName));
+                                });
+                return builder.buildFuture();
+
         }
+
+        private static int executeGiveDefaultWeapons(final CommandContext<CommandSourceStack> ctx)
+                        throws CommandSyntaxException {
+                final PlayerSelectorArgumentResolver playerSelector = ctx
+                                .getArgument("target",
+                                                PlayerSelectorArgumentResolver.class);
+                WeaponRegistry registry = WeaponRegistry.getInstance();
+                Weapon woodenHoe = registry.getWeaponByID("wooden_hoe");
+                Weapon stoneHoe = registry.getWeaponByID("stone_hoe");
+                Weapon copperHoe = registry.getWeaponByID("copper_hoe");
+                Weapon ironHoe = registry.getWeaponByID("iron_hoe");
+                Weapon goldenHoe = registry.getWeaponByID("golden_hoe");
+                Weapon diamondHoe = registry.getWeaponByID("diamond_hoe");
+
+                playerSelector.resolve(ctx.getSource())
+                                .forEach(targetPlayer -> {
+                                        targetPlayer.give(woodenHoe.getItem());
+                                        targetPlayer.give(stoneHoe.getItem());
+                                        targetPlayer.give(copperHoe.getItem());
+                                        targetPlayer.give(ironHoe.getItem());
+                                        targetPlayer.give(goldenHoe.getItem());
+                                        targetPlayer.give(diamondHoe.getItem());
+                                });
+                return Command.SINGLE_SUCCESS;
+        }
+
+        private static int executeGiveSpecificWeapon(final CommandContext<CommandSourceStack> ctx)
+                        throws CommandSyntaxException {
+                final PlayerSelectorArgumentResolver playerSelector = ctx
+                                .getArgument("target",
+                                                PlayerSelectorArgumentResolver.class);
+                final NamespacedKey weaponKey = ctx.getArgument(
+                                "weapon_id",
+                                NamespacedKey.class);
+
+                Weapon weapon = WeaponRegistry.getInstance()
+                                .getWeaponByID(weaponKey);
+                if (weapon != null) {
+                        playerSelector.resolve(ctx.getSource())
+                                        .forEach(targetPlayer -> {
+                                                targetPlayer.give(
+                                                                weapon
+                                                                                .getItem());
+                                        });
+                        return Command.SINGLE_SUCCESS;
+                }
+                return 0;
+
+        }
+
 }

@@ -2,13 +2,12 @@ package com.g0ldensp00n.eggsplosion.handlers.LobbyManager;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
+import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.Lobby;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.MainLobby;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.WaitingLobby;
@@ -16,10 +15,17 @@ import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreType;
-import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.entity.Player;
@@ -29,7 +35,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 
-public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
+public class LobbyManager implements Listener {
   private Plugin plugin;
   private Hashtable<String, Lobby> lobbies;
   private Lobby mainLobby;
@@ -155,138 +161,156 @@ public class LobbyManager implements Listener, CommandExecutor, TabCompleter {
     }
   }
 
-  @Override
-  public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
-    if (commandLabel.equalsIgnoreCase("lobby")) {
-      if (args.length >= 1) {
-        switch (args[0]) {
-          case "create":
-            if (args.length == 1) {
-              sender.sendRichMessage(
-                  "<red>[EggSplosion]</red> Must specify the name of the lobby when creating");
-              return true;
-            }
-            if (lobbies.get(args[1]) == null) {
-              GameMap waiting_room = mapManager.getMapByName("WAITING_ROOM");
-              if (waiting_room != null) {
-                Lobby createdLobby = addLobby(10, args[1], waiting_room);
-                if (sender instanceof Player) {
-                  Player playerCmdSender = (Player) sender;
-                  createdLobby.addAdmin(playerCmdSender);
-                }
-                sender.sendRichMessage(
-                    "[EggSplosion] Lobby <aqua><lobby_name></aqua> created!",
-                    Placeholder.component("lobby_name", Component.text(args[1])));
+  public static LiteralCommandNode<CommandSourceStack> createLobbyCommands() {
+    LobbyManager lobbyManager = EggSplosion.getInstance().getLobbyManager();
+    LiteralCommandNode<CommandSourceStack> listCommand = Commands.literal("list")
+        .requires(ctx -> lobbyManager.lobbies.size() > 0)
+        .executes(LobbyManager::executeListLobbies)
+        .build();
 
-                if (sender instanceof Player) {
-                  Player playerCmdSender = (Player) sender;
-                  joinLobby(createdLobby, playerCmdSender);
-                }
-              } else {
-                sender.sendRichMessage(
-                    "<red>[EggSplosion]</red> No waiting room found, create a WAITING_ROOM map before starting a lobby");
-              }
-              return true;
-            } else {
-              sender.sendRichMessage(
-                  "<red>[EggSplosion]</red> Lobby <lobby_name> already exists, use /lobby join <lobby_name>",
-                  Placeholder.component("lobby_name", Component.text(args[1])));
-              return true;
-            }
-          case "join":
-            if (sender instanceof Player) {
-              Player playerCmdSender = (Player) sender;
-              if (args.length == 1) {
-                if (lobbies.size() > 0) {
-                  joinLobby(lobbies.elements().nextElement(), playerCmdSender);
-                } else {
-                  playerCmdSender.sendRichMessage(
-                      "<red>[EggSplosion]</red> No Game Lobbies Currently Exist, create one with /lobby create");
-                }
-                return true;
-              }
-              Lobby lobby = lobbies.get(args[1]);
-              if (lobby != null) {
-                joinLobby(lobby, playerCmdSender);
-                return true;
-              } else {
-                playerCmdSender.sendMessage("[EggSplosion] Lobby " + args[0] + " does not exist");
-                return true;
-              }
-            }
-            break;
-          case "leave":
-            if (sender instanceof Player) {
-              Player playerCmdSender = (Player) sender;
-              Lobby playerLobby = getPlayersLobby(playerCmdSender);
-              if (playerLobby == null) {
-                joinLobby(getMainLobby(), playerCmdSender);
-              }
-              if (playerLobby != null && playerLobby != getMainLobby()) {
-                joinLobby(getMainLobby(), playerCmdSender);
+    LiteralCommandNode<CommandSourceStack> createCommand = Commands.literal("create")
+        .then(Commands.argument("lobby_name", StringArgumentType.word())
+            .executes(LobbyManager::executeCreateLobby))
+        .build();
 
-                playerCmdSender.sendMessage("[EggSplosion] Left Lobby " + ChatColor.AQUA + playerLobby.getLobbyName());
-                if (playerLobby.getPlayers().size() == 0) {
-                  lobbies.remove(playerLobby.getLobbyName());
-                }
-              } else {
-                playerCmdSender.sendMessage("[EggSplosion] You can't leave the main lobby");
-              }
-              return true;
-            }
-            break;
-          case "list":
-            String lobbiesList = "[EggSplosion] Current Lobbies - ";
-            Iterator<String> lobbiesIterator = lobbies.keys().asIterator();
-            while (lobbiesIterator.hasNext()) {
-              String nextLobby = lobbiesIterator.next();
-              lobbiesList += ChatColor.AQUA + nextLobby + ChatColor.RESET;
-              if (lobbiesIterator.hasNext()) {
-                lobbiesList += ", ";
-              }
-            }
+    LiteralCommandNode<CommandSourceStack> leaveCommand = Commands.literal("leave")
+        .requires(ctx -> ctx.getExecutor() instanceof Player player
+            && !lobbyManager.getPlayersLobby(player).equals(lobbyManager.getMainLobby()))
+        .executes(LobbyManager::executeLeaveLobby)
+        .build();
 
-            if (lobbies.size() > 0) {
-              sender.sendMessage(lobbiesList);
-            } else {
-              sender.sendRichMessage(
-                  "<red>[EggSplosion]</red> No Game Lobbies Currently Exist, create one with /lobby create");
-            }
-            return true;
+    LiteralCommandNode<CommandSourceStack> joinCommand = Commands.literal("join")
+        .requires(ctx -> ctx.getExecutor() instanceof Player && lobbyManager.lobbies.size() > 0)
+        .executes(LobbyManager::executeJoinFirstLobby)
+        .then(Commands.argument("lobby_name", StringArgumentType.word()).suggests(LobbyManager::getLobbyNameSuggestions)
+            .executes(LobbyManager::executeJoinLobby))
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> lobbyCommands = Commands.literal("lobby")
+        .build();
+    lobbyCommands.addChild(listCommand);
+    lobbyCommands.addChild(createCommand);
+    lobbyCommands.addChild(joinCommand);
+    lobbyCommands.addChild(leaveCommand);
+    return lobbyCommands;
+  }
+
+  private static CompletableFuture<Suggestions> getLobbyNameSuggestions(
+      final CommandContext<CommandSourceStack> ctx,
+      final SuggestionsBuilder builder) {
+    LobbyManager lobbyManager = EggSplosion.getInstance().getLobbyManager();
+    lobbyManager.lobbies.keySet()
+        .stream()
+        .filter(entry -> entry
+            .toLowerCase()
+            .startsWith(builder
+                .getRemainingLowerCase()))
+        .forEach(entry -> {
+          builder.suggest(entry);
+        });
+    return builder.buildFuture();
+
+  }
+
+  private static int executeCreateLobby(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    final CommandSender sender = ctx.getSource().getSender();
+    final String lobbyName = StringArgumentType.getString(ctx, "lobby_name");
+    GameMap waiting_room = EggSplosion.getInstance().getMapManager().getMapByName("WAITING_ROOM");
+    LobbyManager lobbyManager = EggSplosion.getInstance().getLobbyManager();
+    if (waiting_room != null) {
+      Lobby createdLobby = lobbyManager.addLobby(10, lobbyName, waiting_room);
+      sender.sendRichMessage(
+          "[EggSplosion] Lobby <aqua><lobby_name></aqua> created!",
+          Placeholder.component("lobby_name", Component.text(lobbyName)));
+
+      if (sender instanceof Player player) {
+        createdLobby.addAdmin(player);
+        lobbyManager.joinLobby(createdLobby, player);
+        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+          onlinePlayer.updateCommands();
         }
       }
+    } else {
+      sender.sendRichMessage(
+          "<red>[EggSplosion]</red> No waiting room found, create a WAITING_ROOM map before starting a lobby");
     }
-    return false;
+
+    return Command.SINGLE_SUCCESS;
   }
 
-  @Override
-  public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
-    if (cmd.getName().equalsIgnoreCase("lobby")) {
-      switch (args.length) {
-        case 1:
-          List<String> commands = new ArrayList<>();
-          commands.add("create");
-          commands.add("join");
-          commands.add("leave");
-          commands.add("list");
-          return Utils.FilterTabComplete(args[0], commands);
-        case 2:
-          switch (args[0]) {
-            case "join":
-              List<String> lobbyNames = new ArrayList<>();
-              Iterator<String> lobbyNamesIterator = lobbies.keys().asIterator();
-              while (lobbyNamesIterator.hasNext()) {
-                lobbyNames.add(lobbyNamesIterator.next());
-              }
-              return Utils.FilterTabComplete(args[1], lobbyNames);
-            case "create":
-            case "list":
-            case "leave":
-            default:
-              return new ArrayList<>();
-          }
+  private static int executeJoinFirstLobby(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return Command.SINGLE_SUCCESS;
+    }
+    LobbyManager lobbyManager = EggSplosion.getInstance().getLobbyManager();
+
+    if (lobbyManager.lobbies.size() > 0) {
+      lobbyManager.joinLobby(lobbyManager.lobbies.elements().nextElement(), player);
+    } else {
+      player.sendRichMessage(
+          "<red>[EggSplosion]</red> No Game Lobbies Currently Exist, create one with /lobby create");
+    }
+
+    player.updateCommands();
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeJoinLobby(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return Command.SINGLE_SUCCESS;
+    }
+
+    LobbyManager lobbyManager = EggSplosion.getInstance().getLobbyManager();
+    final String lobbyName = StringArgumentType.getString(ctx, "lobby_name");
+
+    Lobby lobby = lobbyManager.lobbies.get(lobbyName);
+    if (lobby != null) {
+      lobbyManager.joinLobby(lobby, player);
+    } else {
+      player.sendRichMessage("<red>[EggSplosion]</red> Lobby " + lobbyName + " does not exist");
+    }
+
+    player.updateCommands();
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeLeaveLobby(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return Command.SINGLE_SUCCESS;
+    }
+
+    LobbyManager lobbyManager = EggSplosion.getInstance().getLobbyManager();
+    Lobby playerLobby = lobbyManager.getPlayersLobby(player);
+    lobbyManager.joinLobby(lobbyManager.getMainLobby(), player);
+
+    player.sendMessage("[EggSplosion] Left Lobby " + ChatColor.AQUA + playerLobby.getLobbyName());
+    if (playerLobby.getPlayers().size() == 0) {
+      lobbyManager.lobbies.remove(playerLobby.getLobbyName());
+      for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+        onlinePlayer.updateCommands();
+      }
+
+    }
+
+    player.updateCommands();
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeListLobbies(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    final CommandSender sender = ctx.getSource().getSender();
+    Hashtable<String, Lobby> lobbies = EggSplosion.getInstance().getLobbyManager().lobbies;
+    String lobbiesList = "[EggSplosion] Current Lobbies - ";
+    Iterator<String> lobbiesIterator = lobbies.keys().asIterator();
+    while (lobbiesIterator.hasNext()) {
+      String nextLobby = lobbiesIterator.next();
+      lobbiesList += ChatColor.AQUA + nextLobby + ChatColor.RESET;
+      if (lobbiesIterator.hasNext()) {
+        lobbiesList += ", ";
       }
     }
-    return null;
+
+    sender.sendMessage(lobbiesList);
+    return Command.SINGLE_SUCCESS;
   }
+
 }

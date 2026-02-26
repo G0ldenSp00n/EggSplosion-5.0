@@ -25,7 +25,7 @@ public class DashEffect extends WeaponEffect {
 
   @Override
   public void activateEffect(Location location, Player shooter) {
-    shooter.setVelocity(shooter.getVelocity().add(shooter.getLocation().getDirection().multiply(dashPower)));
+    shooter.setVelocity(shooter.getLocation().getDirection().multiply(dashPower));
     shooter.setFallDistance(0);
 
     shooter.getPersistentDataContainer().set(KnockbackEffectListener.getWindChargeAnchorKey(),
