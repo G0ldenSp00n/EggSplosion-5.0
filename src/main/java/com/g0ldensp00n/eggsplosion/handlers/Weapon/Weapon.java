@@ -103,6 +103,21 @@ public class Weapon implements Listener {
     projectile.setVelocity(fireVelocity);
     projectile.setShooter(player);
 
+    if (action.hasTrailEffect()) {
+      new BukkitRunnable() {
+        @Override
+        public void run() {
+          if (projectile != null && !projectile.isDead()) {
+            for (WeaponEffect trailEffect : action.trailEffects) {
+              trailEffect.activateEffect(projectile.getLocation(), player);
+            }
+          } else {
+            cancel();
+          }
+        }
+      }.runTaskTimer(EggSplosion.getInstance(), action.trailEffectDelay, action.trailEffectTimer);
+    }
+
     if (projectile instanceof Egg) {
       Egg egg = (Egg) projectile;
       egg.setItem(new ItemStack(action.projectileMaterial));
@@ -163,7 +178,6 @@ public class Weapon implements Listener {
         }
       }
     }.runTaskLater(EggSplosion.getInstance(), action.burstDelayTicks);
-
   }
 
   public void fireWeapon(Player player, ItemStack weaponItem, WeaponAction action) {

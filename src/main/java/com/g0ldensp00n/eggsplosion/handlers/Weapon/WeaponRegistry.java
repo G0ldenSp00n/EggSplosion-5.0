@@ -89,6 +89,11 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .type(org.bukkit.Sound.BLOCK_CHEST_LOCKED).pitch(2).build())
                                 .withPlayerAsSource().build();
 
+                WeaponEffect trailEffect = VisualEffect.builder()
+                                .addParticle(Particle.SMOKE.builder()
+                                                .offset(0, 0, 0).extra(0))
+                                .build();
+
                 Weapon woodenHoe = Weapon.builder("wooden_hoe").withWeaponItemMaterial(Material.WOODEN_HOE)
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(3)
                                                 .withVelocityMultiplier(2.75f)
@@ -97,6 +102,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
                                                 .addReloadEffect(reloadSoundEffect)
+                                                .addTrailEffect(trailEffect)
                                                 .withProjectileMaterial(Material.BLUE_EGG)
                                                 .build())
                                 .build();
@@ -111,6 +117,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
                                                 .addEffect(new KnockbackEffect(2))
+                                                .addTrailEffect(trailEffect)
                                                 .addReloadEffect(reloadSoundEffect)
                                                 .build())
                                 .build());
@@ -123,6 +130,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
                                                 .addEffect(new KnockbackEffect(1))
+                                                .addTrailEffect(trailEffect)
                                                 .addReloadEffect(reloadSoundEffect)
                                                 .withProjectileMaterial(Material.BROWN_EGG)
                                                 .build())
@@ -136,6 +144,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
                                                 .addEffect(new KnockbackEffect(1.1f))
+                                                .addTrailEffect(trailEffect)
                                                 .addReloadEffect(reloadSoundEffect)
                                                 .build())
                                 .build());
@@ -150,6 +159,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .addEffect(new KnockbackEffect(0.9f))
                                                 .addEffect(new DamageEffect(3.0f, 20.f,
                                                                 DamageType.PLAYER_EXPLOSION, false))
+                                                .addTrailEffect(trailEffect)
                                                 .addReloadEffect(reloadSoundEffect)
                                                 .withProjectileMaterial(Material.BLUE_EGG)
                                                 .build())
@@ -163,6 +173,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .addEffect(new KnockbackEffect(3f))
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
+                                                .addTrailEffect(trailEffect)
                                                 .addReloadEffect(reloadSoundEffect)
                                                 .withProjectileMaterial(Material.SNIFFER_EGG)
                                                 .build())
@@ -176,6 +187,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .addEffect(new KnockbackEffect(3f))
                                                 .addEffect(SoundEffect.explosionSound())
                                                 .addEffect(VisualEffect.explosionVisualEffect())
+                                                .addTrailEffect(trailEffect)
                                                 .addReloadEffect(reloadSoundEffect)
                                                 .withProjectileMaterial(Material.DRAGON_EGG)
                                                 .build())
@@ -256,6 +268,12 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 .withOffset(new GeometricVisualEffect.Offset.FromPoint()
                                                                                                 .withSpeed(0.5f))
                                                                                 .withRadius(1.f).build())
+                                                                .build())
+                                                .addTrailEffect(VisualEffect.builder()
+                                                                .addParticle(Particle.ITEM.builder()
+                                                                                .data(ItemType.ECHO_SHARD
+                                                                                                .createItemStack())
+                                                                                .offset(0, 0, 0).extra(0))
                                                                 .build())
                                                 .build())
                                 .build());
@@ -377,7 +395,14 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                                 .withRadius(.5f)
                                                                                                 .build())
                                                                                 .build())
+                                                                .addTrailEffect(VisualEffect.builder()
+                                                                                .addParticle(Particle.LARGE_SMOKE
+                                                                                                .builder()
+                                                                                                .offset(0, 0, 0)
+                                                                                                .extra(0))
+                                                                                .build())
                                                                 .build())
+
                                 .withSneakAction(WeaponAction.builder().withReloadTime(450)
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.SPEED, 300,
@@ -444,6 +469,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                                 .build())
                                                                 .addEffect(new ExplosionEffect(2.6f))
                                                                 .addEffect(new KnockbackEffect(1.6f))
+
                                                                 .addEffect(VisualEffect.builder()
                                                                                 .addParticle(Particle.GUST_EMITTER_SMALL
                                                                                                 .builder())
@@ -454,7 +480,13 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                                 .type(org.bukkit.Sound.ENTITY_WIND_CHARGE_WIND_BURST)
                                                                                                 .volume(3.0f).build())
                                                                                 .build())
-
+                                                                .addTrailEffect(VisualEffect.builder()
+                                                                                .addParticle(Particle.CLOUD.builder()
+                                                                                                .offset(0, 0, 0)
+                                                                                                .extra(0))
+                                                                                .build())
+                                                                .withTrailEffectDelay(5)
+                                                                .withTrailEffectTimer(3)
                                                                 .addEffect(new DamageEffect(3.0f, 20.f,
                                                                                 DamageType.PLAYER_EXPLOSION, false))
                                                                 .build())
@@ -543,7 +575,6 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                                 .type(org.bukkit.Sound.ENTITY_BLAZE_BURN)
                                                                                                 .volume(3.0f).build())
                                                                                 .build())
-
                                                                 .addEffect(new DamageEffect(3.0f, 20.f,
                                                                                 DamageType.PLAYER_EXPLOSION, false))
                                                                 .build())
@@ -613,6 +644,12 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .addEffect(VisualEffect.builder()
                                                                 .addParticle(Particle.GUST_EMITTER_SMALL.builder())
                                                                 .build())
+                                                .addTrailEffect(VisualEffect.builder()
+                                                                .addParticle(Particle.ITEM.builder()
+                                                                                .data(ItemType.EMERALD
+                                                                                                .createItemStack())
+                                                                                .offset(0, 0, 0).extra(0))
+                                                                .build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
                                                 .withVelocityMultiplier(4.8f)
@@ -634,6 +671,10 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 .withOffset(new GeometricVisualEffect.Offset.FromPoint()
                                                                                                 .withSpeed(0.5f))
                                                                                 .withRadius(1.f).build())
+                                                                .build())
+                                                .addTrailEffect(VisualEffect.builder()
+                                                                .addParticle(Particle.SPIT.builder().offset(0, 0, 0)
+                                                                                .extra(0))
                                                                 .build())
                                                 .withProjectile(LlamaSpit.class)
                                                 .build())
@@ -705,6 +746,13 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 .withParticleCount(25)
                                                                                 .withPlayerAsSource()
                                                                                 .build())
+                                                                .addTrailEffect(VisualEffect.builder()
+                                                                                .addParticle(Particle.ITEM.builder()
+                                                                                                .data(ItemType.ENDER_PEARL
+                                                                                                                .createItemStack())
+                                                                                                .offset(0, 0, 0)
+                                                                                                .extra(0))
+                                                                                .build())
                                                                 .withProjectileMaterial(Material.ENDER_PEARL)
                                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(18)
@@ -749,7 +797,12 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withParticleCount(25)
                                                                 .withPlayerAsSource()
                                                                 .build())
-
+                                                .addTrailEffect(VisualEffect.builder()
+                                                                .addParticle(Particle.ITEM.builder()
+                                                                                .data(ItemType.ENDER_EYE
+                                                                                                .createItemStack())
+                                                                                .offset(0, 0, 0).extra(0))
+                                                                .build())
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(450)
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
@@ -843,6 +896,12 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                                 .withSpeed(2.f))
                                                                                 .withRadius(.25f)
                                                                                 .build())
+                                                                .build())
+                                                .addTrailEffect(VisualEffect.builder()
+                                                                .addParticle(Particle.ITEM.builder()
+                                                                                .data(ItemType.AMETHYST_SHARD
+                                                                                                .createItemStack())
+                                                                                .offset(0, 0, 0).extra(0))
                                                                 .build())
                                                 .build())
                                 .build());
@@ -1129,6 +1188,10 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withPitchRange(0.8f, 1.2f)
                                                                 .build())
                                                 .addEffect(new KnockbackEffect(1))
+                                                .addTrailEffect(VisualEffect.builder()
+                                                                .addParticle(Particle.ITEM_SLIME.builder()
+                                                                                .offset(0, 0, 0).extra(0))
+                                                                .build())
                                                 .withProjectileMaterial(Material.SLIME_BALL)
                                                 .build())
                                 .build());
