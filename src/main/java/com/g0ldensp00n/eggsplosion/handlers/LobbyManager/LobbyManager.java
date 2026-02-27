@@ -209,7 +209,6 @@ public class LobbyManager implements Listener {
           builder.suggest(entry);
         });
     return builder.buildFuture();
-
   }
 
   private static int executeCreateLobby(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
