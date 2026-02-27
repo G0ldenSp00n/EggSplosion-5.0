@@ -1202,6 +1202,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                 .executes(MapManager::executeMapCreate)))
         .then(Commands.literal("remove")
             .then(Commands.argument("map_name", new MapNameArgument())
+                // TODO: Build this executor
                 .executes(MapManager::executeListMaps)))
         .build();
 
