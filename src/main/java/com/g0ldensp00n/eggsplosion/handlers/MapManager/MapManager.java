@@ -8,12 +8,27 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
+import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.Lobby;
 import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 import org.bukkit.Bukkit;
@@ -377,6 +392,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
             boundaryToolTracker.put(player, locationList);
             player.sendMessage("Added Corner B (" + cornerB.getX() + ", " + cornerB.getZ() + ") to Boundary");
             player.sendMessage("Now run the command /map create <mapName>, to create the map");
+            player.updateCommands();
           }
         } else if (mappingTool.getType().equals(Material.IRON_AXE)) {
           List<String> itemLore = mappingTool.getItemMeta().getLore();
@@ -1133,5 +1149,296 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
       }
     }
     return null;
+  }
+
+  public static LiteralCommandNode<CommandSourceStack> createMapCommands() {
+    LiteralCommandNode<CommandSourceStack> locateCommand = Commands.literal("locate")
+        .requires(ctx -> (ctx.getExecutor() instanceof Player))
+        .executes(MapManager::executeMapLocate)
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> effectAddCommand = Commands.literal("add")
+        .requires(ctx -> (ctx.getExecutor() instanceof Player))
+        .then(Commands.argument("effect_type", ArgumentTypes.resource(RegistryKey.MOB_EFFECT))
+            .then(Commands.argument("effect_amplifier", IntegerArgumentType.integer(0, 100))
+                .executes(MapManager::executeAddMapEffect)))
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> effectRemoveCommand = Commands.literal("remove")
+        .requires(ctx -> (ctx.getExecutor() instanceof Player))
+        .then(Commands.argument("effect_type", ArgumentTypes.resource(RegistryKey.MOB_EFFECT))
+            .executes(MapManager::executeRemoveMapEffect))
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> effectListCommand = Commands.literal("list")
+        .requires(ctx -> (ctx.getExecutor() instanceof Player))
+        .executes(MapManager::executeListMapEffect)
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> effectCommand = Commands.literal("effects")
+        .requires(ctx -> (ctx.getExecutor() instanceof Player))
+        .executes(MapManager::executeListMapEffect)
+        .build();
+    effectCommand.addChild(effectAddCommand);
+    effectCommand.addChild(effectRemoveCommand);
+    effectCommand.addChild(effectListCommand);
+
+    LiteralCommandNode<CommandSourceStack> mapCommands = Commands.literal("map")
+        .executes(MapManager::executeListMaps)
+        .then(Commands.literal("list")
+            .executes(MapManager::executeListMaps))
+        .then(Commands.literal("edit")
+            .then(Commands.argument("map_name", new MapNameArgument())
+                .then(effectCommand)
+                .then(locateCommand)
+                .then(Commands.literal("tools").executes(MapManager::executeMapLocationTools))))
+        .then(Commands.literal("create")
+            .requires((ctx) -> (ctx.getExecutor() instanceof Player))
+            .executes(MapManager::executeMapCreationTools)
+            .then(Commands.argument("map_name", StringArgumentType.word())
+                .requires((ctx) -> (ctx.getExecutor() instanceof Player player
+                    && (EggSplosion.getInstance().getMapManager().boundaryToolTracker.get(player) != null
+                        && EggSplosion.getInstance().getMapManager().boundaryToolTracker.get(player).size() == 2)))
+                .executes(MapManager::executeMapCreate)))
+        .then(Commands.literal("remove")
+            .then(Commands.argument("map_name", new MapNameArgument())
+                .executes(MapManager::executeListMaps)))
+        .build();
+
+    return mapCommands;
+  }
+
+  private static int executeAddMapEffect(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    final CommandSender sender = ctx.getSource().getSender();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final PotionEffectType potionEffectType = ctx.getArgument("effect_type", PotionEffectType.class);
+    final int amplifier = IntegerArgumentType.getInteger(ctx, "effect_amplifier");
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    PotionEffect matchingPotionEffect = null;
+    for (PotionEffect potionEffect : map.getMapEffects()) {
+      if (potionEffect.getType().equals(potionEffectType)) {
+        matchingPotionEffect = potionEffect;
+      }
+    }
+
+    if (matchingPotionEffect == null) {
+      map.addMapEffect(potionEffectType, amplifier);
+      sender.sendRichMessage(
+          "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier></gray> <green>added</green>",
+          Placeholder.component("map", Component.text(mapName)),
+          Placeholder.component("effect",
+              Component.translatable(potionEffectType.translationKey())),
+          Placeholder.component("amplifier",
+              amplifier <= 10
+                  ? Component.translatable("enchantment.level." + (amplifier))
+                  : Component.text(amplifier)));
+    } else {
+      map.removeMapEffect(matchingPotionEffect);
+      map.addMapEffect(matchingPotionEffect.withAmplifier(amplifier - 1));
+      sender.sendRichMessage(
+          "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier1></gray> updated to <gray><effect> <amplifier2></gray>",
+          Placeholder.component("map", Component.text(mapName)),
+          Placeholder.component("effect",
+              Component.translatable(matchingPotionEffect.getType().translationKey())),
+          Placeholder.component("amplifier1",
+              matchingPotionEffect.getAmplifier() < 10 ? Component
+                  .translatable("enchantment.level." + (matchingPotionEffect.getAmplifier() + 1))
+                  : Component.text(matchingPotionEffect.getAmplifier() + 1)),
+          Placeholder.component("amplifier2",
+              amplifier <= 10
+                  ? Component.translatable("enchantment.level." + (amplifier))
+                  : Component.text(amplifier)));
+    }
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeRemoveMapEffect(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    final CommandSender sender = ctx.getSource().getSender();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final PotionEffectType potionEffectType = ctx.getArgument("effect_type", PotionEffectType.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    PotionEffect potionEffectToRemove = null;
+    for (PotionEffect potionEffect : map.getMapEffects()) {
+      if (potionEffect.getType().equals(potionEffectType)) {
+        potionEffectToRemove = potionEffect;
+      }
+    }
+
+    if (potionEffectToRemove != null) {
+      map.removeMapEffect(potionEffectToRemove);
+      sender.sendRichMessage(
+          "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier></gray> <red>removed</red>",
+          Placeholder.component("map", Component.text(mapName)),
+          Placeholder.component("effect",
+              Component.translatable(potionEffectToRemove.getType().translationKey())),
+          Placeholder.component("amplifier",
+              potionEffectToRemove.getAmplifier() < 10
+                  ? Component.translatable("enchantment.level." + (potionEffectToRemove.getAmplifier() + 1))
+                  : Component.text(potionEffectToRemove.getAmplifier() + 1)));
+    } else {
+      sender.sendRichMessage(
+          "<red>[EggSplosion]</red> No effect <gray><effect></gray> on map <aqua><map></aqua>",
+          Placeholder.component("map", Component.text(mapName)),
+          Placeholder.component("effect",
+              Component.translatable(potionEffectType.translationKey())));
+    }
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeListMaps(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    final CommandSender sender = ctx.getSource().getSender();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+
+    Component message = MiniMessage.miniMessage().deserialize("[EggSplosion] Current Maps - ");
+    Iterator<String> mapNameIterator = mapManager.getMaps().keySet().iterator();
+    while (mapNameIterator.hasNext()) {
+      String mapName = mapNameIterator.next();
+      message = message.appendNewline().appendSpace().appendSpace()
+          .append(MiniMessage.miniMessage().deserialize("<gray><map_name></gray>",
+              Placeholder.component("map_name", Component.text(mapName))));
+      if (mapNameIterator.hasNext()) {
+        message = message.append(Component.text(", "));
+      }
+    }
+
+    sender.sendMessage(message);
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeListMapEffect(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    final CommandSender sender = ctx.getSource().getSender();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    Component message = MiniMessage.miniMessage().deserialize(
+        "[EggSplosion] Current Map <aqua><map_name></aqua> Effects - ",
+        Placeholder.component("map_name", Component.text(mapName)));
+    Iterator<PotionEffect> mapEffectIterator = map.getMapEffects().iterator();
+    while (mapEffectIterator.hasNext()) {
+      PotionEffect nextPotionEffect = mapEffectIterator.next();
+      message = message.appendNewline().appendSpace().appendSpace()
+          .append(MiniMessage.miniMessage().deserialize("<gray><effect_name> <amplifier></gray>",
+              Placeholder.component("effect_name", Component.translatable(nextPotionEffect.getType().translationKey())),
+              Placeholder.component("amplifier",
+                  nextPotionEffect.getAmplifier() < 10
+                      ? Component.translatable("enchantment.level." + (nextPotionEffect.getAmplifier() + 1))
+                      : Component.text(nextPotionEffect.getAmplifier() + 1))));
+      if (mapEffectIterator.hasNext()) {
+        message = message.append(Component.text(", "));
+      }
+    }
+
+    sender.sendMessage(message);
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapCreate(final CommandContext<CommandSourceStack> ctx) {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+    final String mapName = StringArgumentType.getString(ctx, "map_name");
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    if (mapManager.boundaryToolTracker.get(player) != null && mapManager.boundaryToolTracker.get(player).size() == 2) {
+      player.sendMessage("Map " + ChatColor.GRAY + mapName + ChatColor.RESET + " created");
+      GameMap map = new GameMap(mapManager.boundaryToolTracker.get(player).get(0),
+          mapManager.boundaryToolTracker.get(player).get(1));
+      mapManager.gameMaps.put(mapName, map);
+      mapManager.boundaryToolTracker.remove(player);
+      player.updateCommands();
+
+      player.performCommand("map edit " + mapName + " tools ");
+    }
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapCreationTools(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+
+    player.getInventory().clear();
+
+    mapManager.Map_Tool_boundary = mapManager.createMapTool(Material.WOODEN_SHOVEL, "Boundary Tool");
+    player.getInventory().addItem(mapManager.Map_Tool_boundary);
+
+    player.sendMessage(
+        "[EggSplosion] Select the boudarys of the map by right clicking the shovel, then run the command /map create <mapName>");
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapLocationTools(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+
+    player.getInventory().clear();
+
+    List<String> lore = new ArrayList<>();
+    lore.add("Map: " + mapName);
+
+    ItemStack Map_Tool_spawnPointsSolo = mapManager.createMapTool(Material.IRON_AXE, "Spawn Point Tool - Solo", lore);
+    player.getInventory().addItem(Map_Tool_spawnPointsSolo);
+
+    ItemStack Map_Tool_spawnPointsTeamA = mapManager.createMapTool(Material.GOLDEN_AXE, "Spawn Point Tool - Team A",
+        lore);
+    ItemStack Map_Tool_spawnPointsTeamB = mapManager.createMapTool(Material.DIAMOND_AXE, "Spawn Point Tool - Team B",
+        lore);
+
+    ItemStack Map_Tool_flagSpawnTeamA = mapManager.createMapTool(Material.GOLDEN_SHOVEL, "Flag Spawn - Team A", lore);
+    ItemStack Map_Tool_flagSpawnTeamB = mapManager.createMapTool(Material.DIAMOND_SHOVEL, "Flag Spawn - Team B", lore);
+
+    player.getInventory().setItem(2, Map_Tool_spawnPointsTeamA);
+    player.getInventory().setItem(3, Map_Tool_spawnPointsTeamB);
+
+    player.getInventory().setItem(5, Map_Tool_flagSpawnTeamA);
+    player.getInventory().setItem(6, Map_Tool_flagSpawnTeamB);
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapLocate(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+
+    Location to_teleport = mapManager.gameMaps.get(mapName).getSpawnPoint();
+    if (to_teleport != null) {
+      player.teleport(to_teleport);
+    } else {
+      to_teleport = mapManager.gameMaps.get(mapName).getCornerA();
+      player.teleport(to_teleport);
+    }
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
   }
 }

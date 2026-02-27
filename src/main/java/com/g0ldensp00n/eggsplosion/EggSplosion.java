@@ -57,6 +57,7 @@ public class EggSplosion extends JavaPlugin {
         this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
             commands.registrar().register(WeaponRegistry.createWeaponCommand(), "Give Player Weapon");
             commands.registrar().register(LobbyManager.createLobbyCommands(), "Lobby Manegment");
+            commands.registrar().register(MapManager.createMapCommands(), "Map Manegment");
         });
         // this.getCommand("lobby").setExecutor(lobbyManager);
         // this.getCommand("lobby").setTabCompleter(lobbyManager);
