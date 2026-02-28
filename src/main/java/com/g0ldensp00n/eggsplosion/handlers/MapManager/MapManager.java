@@ -7,6 +7,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -44,6 +45,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -58,6 +60,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ItemType;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
@@ -78,7 +81,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     Bukkit.getPluginManager().registerEvents(this, plugin);
 
     boundaryToolTracker = new Hashtable<>();
-    gameMaps = new Hashtable<>();
+    gameMaps = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     gameMapEquipment = new Hashtable<>();
     loadMapsFromFiles();
   }
@@ -487,9 +490,9 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
   @EventHandler
   public void playerInteractEvent(InventoryClickEvent inventoryClickEvent) {
     HumanEntity humanEntity = inventoryClickEvent.getWhoClicked();
-    if (humanEntity instanceof Player) {
-      Player player = (Player) humanEntity;
-      if (inventoryClickEvent.getView().getTitle().equals("Player Equipment Menu")) {
+    if (humanEntity instanceof Player player) {
+      if (inventoryClickEvent.getView().getTitle().equals("Player Equipment Menu")
+          && inventoryClickEvent.getCurrentItem() != null) {
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
         if (inventoryClickEvent.getCurrentItem().equals(disabledSlot)) {
           inventoryClickEvent.setCancelled(true);
@@ -1154,8 +1157,28 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
   public static LiteralCommandNode<CommandSourceStack> createMapCommands() {
     LiteralCommandNode<CommandSourceStack> locateCommand = Commands.literal("locate")
         .requires(ctx -> (ctx.getExecutor() instanceof Player))
-        .executes(MapManager::executeMapLocate)
+        .then(Commands.argument("map_name", new MapNameArgument())
+            .executes(MapManager::executeMapLocate))
         .build();
+
+    LiteralCommandNode<CommandSourceStack> iconCommand = Commands.literal("icon")
+        .requires(ctx -> (ctx.getExecutor() instanceof Player))
+        .then(Commands.argument("icon", ArgumentTypes.resource(RegistryKey.ITEM))
+            .executes(MapManager::executeMapIcon))
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> equipmentCommand = Commands.literal("equipment")
+        .requires(ctx -> (ctx.getExecutor() instanceof Player))
+        .executes(MapManager::executeMapEquipment)
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> loadoutCommand = Commands.literal("loadout")
+        .requires(ctx -> (ctx.getExecutor() instanceof Player))
+        .executes(MapManager::executeMapLoadout)
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> mapLocationToolsCommand = Commands.literal("tools")
+        .executes(MapManager::executeMapLocationTools).build();
 
     LiteralCommandNode<CommandSourceStack> effectAddCommand = Commands.literal("add")
         .requires(ctx -> (ctx.getExecutor() instanceof Player))
@@ -1183,15 +1206,41 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     effectCommand.addChild(effectRemoveCommand);
     effectCommand.addChild(effectListCommand);
 
+    LiteralCommandNode<CommandSourceStack> capturePointListCommand = Commands.literal("list")
+        .executes(MapManager::executeMapCapturepointList)
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> capturePointAddCommand = Commands.literal("add")
+        .then(Commands.argument("capture_point_name", StringArgumentType.word())
+            .executes(MapManager::executeMapCapturepointAdd))
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> capturePointRemoveCommand = Commands.literal("remove")
+        .then(Commands.argument("capture_point_name", new CapturePointNameArgument())
+            .executes(MapManager::executeMapCapturepointRemove))
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> capturePointCommand = Commands.literal("capture_point")
+        .requires(ctx -> (ctx.getExecutor() instanceof Player))
+        .executes(MapManager::executeMapCapturepointList)
+        .build();
+    capturePointCommand.addChild(capturePointListCommand);
+    capturePointCommand.addChild(capturePointAddCommand);
+    capturePointCommand.addChild(capturePointRemoveCommand);
+
     LiteralCommandNode<CommandSourceStack> mapCommands = Commands.literal("map")
         .executes(MapManager::executeListMaps)
         .then(Commands.literal("list")
             .executes(MapManager::executeListMaps))
+        .then(locateCommand)
         .then(Commands.literal("edit")
             .then(Commands.argument("map_name", new MapNameArgument())
                 .then(effectCommand)
-                .then(locateCommand)
-                .then(Commands.literal("tools").executes(MapManager::executeMapLocationTools))))
+                .then(iconCommand)
+                .then(equipmentCommand)
+                .then(loadoutCommand)
+                .then(capturePointCommand)
+                .then(mapLocationToolsCommand)))
         .then(Commands.literal("create")
             .requires((ctx) -> (ctx.getExecutor() instanceof Player))
             .executes(MapManager::executeMapCreationTools)
@@ -1297,6 +1346,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     return com.mojang.brigadier.Command.SINGLE_SUCCESS;
   }
 
+  // TODO: Handle No Maps Edgecase
   private static int executeListMaps(final CommandContext<CommandSourceStack> ctx)
       throws CommandSyntaxException {
     final CommandSender sender = ctx.getSource().getSender();
@@ -1319,6 +1369,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     return com.mojang.brigadier.Command.SINGLE_SUCCESS;
   }
 
+  // TODO: Handle No Effects Edgecase
   private static int executeListMapEffect(final CommandContext<CommandSourceStack> ctx)
       throws CommandSyntaxException {
     final CommandSender sender = ctx.getSource().getSender();
@@ -1347,6 +1398,25 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     }
 
     sender.sendMessage(message);
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapIcon(final CommandContext<CommandSourceStack> ctx) {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = StringArgumentType.getString(ctx, "map_name");
+    ItemType icon = ctx.getArgument("icon", ItemType.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    map.setMapIcon(icon.createItemStack().getType());
+    player.sendMessage(
+        MiniMessage.miniMessage().deserialize("[EggSplosion] Map <aqua><map_name></aqua> Icon Set to: <item_name>",
+            Placeholder.component("map_name", Component.text(mapName)),
+            Placeholder.component("item_name",
+                Component.translatable(icon.translationKey()))));
     return com.mojang.brigadier.Command.SINGLE_SUCCESS;
   }
 
@@ -1421,6 +1491,147 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     player.getInventory().setItem(5, Map_Tool_flagSpawnTeamA);
     player.getInventory().setItem(6, Map_Tool_flagSpawnTeamB);
 
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapCapturepointRemove(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final String capturePointName = StringArgumentType.getString(ctx, "capture_point_name");
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    Location capturePointLocation = map.getCapturePoint(capturePointName);
+    map.removeCapturePoint(capturePointName);
+    player.sendMessage(MiniMessage.miniMessage().deserialize(
+        "[EggSplosion] Map <aqua><map_name></aqua> <red>Removed</red> Capture Point <blue><capture_point_name></blue> (<x>, <y>, <z>)",
+        Placeholder.component("map_name", Component.text(mapName)),
+        Placeholder.component("capture_point_name", Component.text(capturePointName)),
+        Placeholder.component("x", Component.text(player.getLocation().getBlockX())),
+        Placeholder.component("y", Component.text(player.getLocation().getBlockY())),
+        Placeholder.component("z", Component.text(player.getLocation().getBlockZ()))));
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapCapturepointAdd(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final String capturePointName = ctx.getArgument("capture_point_name", String.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    Location playerLocation = player.getLocation();
+    if (!map.locationInMap(playerLocation)) {
+      player.sendMessage(MiniMessage.miniMessage().deserialize(
+          "[EggSplosion] Map <aqua><map_name></aqua> point not inside map, move into the map to add a capture point",
+          Placeholder.component("map_name", Component.text(mapName))));
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+
+    map.addCapturePoint(capturePointName, playerLocation);
+    player.sendMessage(MiniMessage.miniMessage().deserialize(
+        "[EggSplosion] Map <aqua><map_name></aqua> <green>Added</green> Capture Point <blue><capture_point_name></blue> (<x>, <y>, <z>)",
+        Placeholder.component("map_name", Component.text(mapName)),
+        Placeholder.component("capture_point_name", Component.text(capturePointName)),
+        Placeholder.component("x", Component.text(player.getLocation().getBlockX())),
+        Placeholder.component("y", Component.text(player.getLocation().getBlockY())),
+        Placeholder.component("z", Component.text(player.getLocation().getBlockZ()))));
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapCapturepointList(final CommandContext<CommandSourceStack> ctx) {
+    Entity sender = ctx.getSource().getExecutor();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    // Iterator<String> capturePointNames = map.getAllCapturePointName().iterator();
+    // String formattedString = "";
+    // while (capturePointNames.hasNext()) {
+    // String capturePointName = capturePointNames.next();
+    // formattedString += ChatColor.GREEN + capturePointName + ChatColor.RESET;
+    // if (capturePointNames.hasNext()) {
+    // formattedString += ", ";
+    // }
+    // }
+
+    if (map.getAllCapturePointName().size() > 0) {
+      Component message = MiniMessage.miniMessage().deserialize("[EggSplosion] Current Capture Points - ");
+      Iterator<String> capturePointsIterator = map.getAllCapturePointName().iterator();
+      while (capturePointsIterator.hasNext()) {
+        String capturePointName = capturePointsIterator.next();
+        Location capturePointLocation = map.getCapturePoint(capturePointName);
+        // TODO: Improve this??? properly do this?
+        message = message.appendNewline().appendSpace().appendSpace()
+            .append(MiniMessage.miniMessage().deserialize(
+                "<blue><capture_point_name></blue> (<x>, <y>, <z>) - <red><click:suggest_command:\"/map edit " + mapName
+                    + " capture_point remove "
+                    + (new NamespacedKey(mapName.toLowerCase(), capturePointName.toLowerCase())).asString()
+                    + "\">Click to Remove</click></red>",
+                Placeholder.component("capture_point_name", Component.text(capturePointName)),
+                Placeholder.component("x", Component.text(capturePointLocation.getBlockX())),
+                Placeholder.component("y", Component.text(capturePointLocation.getBlockY())),
+                Placeholder.component("z", Component.text(capturePointLocation.getBlockZ()))));
+      }
+
+      sender.sendMessage(message);
+    } else {
+      // TODO: Improve this??? properly do this?
+      sender.sendMessage(MiniMessage.miniMessage().deserialize(
+          "[EggSplosion] Map <aqua><map_name></aqua> has no capture points! Create one with <click:suggest_command:/map edit "
+              + mapName + " capture_point add>/map edit <map_name> capture_point add <capturePointName></click>",
+          Placeholder.component("map_name", Component.text(mapName))));
+    }
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapLoadout(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    Inventory mapLoadoutMenu = map.getLoadout();
+    player.openInventory(mapLoadoutMenu);
+
+    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapEquipment(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+    if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    }
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+
+    Inventory mapEquipmentMenu;
+    if (mapManager.gameMapEquipment.get(mapName) != null) {
+      mapEquipmentMenu = mapManager.gameMapEquipment.get(mapName);
+    } else {
+      mapEquipmentMenu = Bukkit.createInventory(null, InventoryType.HOPPER, "Player Equipment Menu");
+
+      mapManager.disabledSlot = mapManager.createMapTool(Material.RED_STAINED_GLASS_PANE, "Disabled");
+      mapEquipmentMenu.setItem(4, mapManager.disabledSlot);
+      mapManager.gameMapEquipment.put(mapName, mapEquipmentMenu);
+    }
+
+    player.openInventory(mapEquipmentMenu);
     return com.mojang.brigadier.Command.SINGLE_SUCCESS;
   }
 

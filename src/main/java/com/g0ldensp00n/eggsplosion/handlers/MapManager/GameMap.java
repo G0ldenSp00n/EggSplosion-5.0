@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameMode;
@@ -66,7 +67,7 @@ public class GameMap {
     sideSpawnLocations.put(0, new ArrayList<Location>());
     sideSpawnLocations.put(1, new ArrayList<Location>());
     sideFlagLocation = new Hashtable<Integer, Location>();
-    capturePointLocations = new Hashtable<String, Location>();
+    capturePointLocations = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     supportedGameModes = new ArrayList<GameMode>();
     mapEffects = new ArrayList<PotionEffect>();

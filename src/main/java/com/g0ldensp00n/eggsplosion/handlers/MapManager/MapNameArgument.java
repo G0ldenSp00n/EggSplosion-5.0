@@ -1,6 +1,5 @@
 package com.g0ldensp00n.eggsplosion.handlers.MapManager;
 
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 import org.jspecify.annotations.NullMarked;
