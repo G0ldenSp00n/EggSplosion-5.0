@@ -6,22 +6,26 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.Map.Entry;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 
 import com.g0ldensp00n.eggsplosion.EggSplosion;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.Lobby;
-import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.BooleanGameruleKeyArgument;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.CapturePointNameArgument;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.IntegerGameruleKeyArgument;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.MapNameArgument;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap.BooleanGameRules;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap.IntegerGameRules;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -37,12 +41,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.Sound;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
@@ -66,7 +66,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-public class MapManager implements Listener, CommandExecutor, TabCompleter {
+public class MapManager implements Listener {
   private ItemStack Map_Tool_boundary;
   private Map<Player, List<Location>> boundaryToolTracker;
   private Map<String, GameMap> gameMaps;
@@ -135,9 +135,6 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         map.setAllowLeggingRemoval(mapConfigFile.getBoolean("allowLeggingRemoval"));
         map.setAllowBootRemoval(mapConfigFile.getBoolean("allowBootRemoval"));
         map.setResetInventoryOnSpawn(mapConfigFile.getBoolean("resetInventoryOnSpawn"));
-        if (mapConfigFile.getInt("pointsToWinCTF") != 0) {
-          map.setPointsToWinCTF(mapConfigFile.getInt("pointsToWinCTF"));
-        }
 
         List<String> capturePointNames = mapConfigFile.getStringList("capturePointNames");
         if (capturePointNames.size() > 0) {
@@ -147,6 +144,10 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               map.addCapturePoint(capturePointName, capturePointLocation);
             }
           }
+        }
+
+        if (mapConfigFile.getInt("pointsToWinCTF") != 0) {
+          map.setPointsToWinCTF(mapConfigFile.getInt("pointsToWinCTF"));
         }
 
         if (mapConfigFile.getInt("pointsToWinTDM") != 0) {
@@ -524,636 +525,6 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     }
   }
 
-  @Override
-  public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
-    if (commandLabel.equalsIgnoreCase("map")) {
-      if (args.length > 0) {
-        switch (args[0]) {
-          case "locate":
-            if (args.length > 1) {
-              if (sender instanceof Player && gameMaps.get(args[1]) != null) {
-                Player player = (Player) sender;
-                Location to_teleport = gameMaps.get(args[1]).getSpawnPoint();
-                if (to_teleport != null) {
-                  player.teleport(to_teleport);
-                } else {
-                  to_teleport = gameMaps.get(args[1]).getCornerA();
-                  player.teleport(to_teleport);
-                }
-                return true;
-              }
-            }
-            break;
-          case "tools":
-            if (args.length > 1) {
-              if (sender instanceof Player && gameMaps.get(args[1]) != null) {
-                Player player = (Player) sender;
-                player.getInventory().clear();
-
-                List<String> lore = new ArrayList<>();
-                lore.add("Map: " + args[1]);
-
-                ItemStack Map_Tool_spawnPointsSolo = createMapTool(Material.IRON_AXE, "Spawn Point Tool - Solo", lore);
-                player.getInventory().addItem(Map_Tool_spawnPointsSolo);
-
-                ItemStack Map_Tool_spawnPointsTeamA = createMapTool(Material.GOLDEN_AXE, "Spawn Point Tool - Team A",
-                    lore);
-                ItemStack Map_Tool_spawnPointsTeamB = createMapTool(Material.DIAMOND_AXE, "Spawn Point Tool - Team B",
-                    lore);
-
-                ItemStack Map_Tool_flagSpawnTeamA = createMapTool(Material.GOLDEN_SHOVEL, "Flag Spawn - Team A", lore);
-                ItemStack Map_Tool_flagSpawnTeamB = createMapTool(Material.DIAMOND_SHOVEL, "Flag Spawn - Team B", lore);
-
-                player.getInventory().setItem(2, Map_Tool_spawnPointsTeamA);
-                player.getInventory().setItem(3, Map_Tool_spawnPointsTeamB);
-
-                player.getInventory().setItem(5, Map_Tool_flagSpawnTeamA);
-                player.getInventory().setItem(6, Map_Tool_flagSpawnTeamB);
-
-                return true;
-              }
-            } else {
-              if (sender instanceof Player) {
-                Player player = (Player) sender;
-                player.getInventory().clear();
-
-                Map_Tool_boundary = createMapTool(Material.WOODEN_SHOVEL, "Boundary Tool");
-                player.getInventory().addItem(Map_Tool_boundary);
-
-                player.sendMessage(
-                    "[EggSplosion] Select the boudarys of the map by right clicking the shovel, then run the command /map create <mapName>");
-                return true;
-              }
-            }
-            break;
-          case "create":
-            if (args.length > 1) {
-              if (sender instanceof Player) {
-                Player player = (Player) sender;
-                if (boundaryToolTracker.get(player) != null && boundaryToolTracker.get(player).size() == 2) {
-                  player.sendMessage("Map " + ChatColor.GRAY + args[1] + ChatColor.RESET + " created");
-                  GameMap map = new GameMap(boundaryToolTracker.get(player).get(0),
-                      boundaryToolTracker.get(player).get(1));
-                  gameMaps.put(args[1], map);
-                  boundaryToolTracker.remove(player);
-
-                  player.performCommand("map tools " + args[1]);
-                  return true;
-                }
-              }
-            }
-            break;
-          case "equip":
-            if (args.length > 1) {
-              GameMap map = gameMaps.get(args[1]);
-              if (map != null && sender instanceof Player) {
-                Player player = (Player) sender;
-                Inventory mapEquipmentMenu;
-                if (gameMapEquipment.get(args[1]) != null) {
-                  mapEquipmentMenu = gameMapEquipment.get(args[1]);
-                } else {
-                  mapEquipmentMenu = Bukkit.createInventory(null, InventoryType.HOPPER, "Player Equipment Menu");
-
-                  disabledSlot = createMapTool(Material.RED_STAINED_GLASS_PANE, "Disabled");
-                  mapEquipmentMenu.setItem(4, disabledSlot);
-                  gameMapEquipment.put(args[1], mapEquipmentMenu);
-                }
-
-                player.openInventory(mapEquipmentMenu);
-              } else {
-                sender.sendMessage("[EggSplosion] Map doesn't exists, create it to set its equipment");
-              }
-            }
-            break;
-          case "loadout":
-            if (args.length > 1) {
-              GameMap map = gameMaps.get(args[1]);
-              if (map != null && sender instanceof Player) {
-                Player player = (Player) sender;
-                Inventory mapLoadoutMenu = map.getLoadout();
-                player.openInventory(mapLoadoutMenu);
-              } else {
-                sender.sendMessage("[EggSplosion] Map doesn't exists, create it to set its equipment");
-              }
-            }
-            break;
-          case "gamerule":
-            if (args.length > 2) {
-              GameMap map = gameMaps.get(args[1]);
-              if (map != null) {
-                if (args.length == 3) {
-                  switch (args[2]) {
-                    case "doSideSwitch":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule doSideSwitch is currently set to: " + map.getDoSideSwitch());
-                      break;
-                    case "doFlagMessages":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule doFlagMessages is currently set to: " + map.getDoFlagMessages());
-                      break;
-                    case "allowItemDrop":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule allowItemDrop is currently set to: " + map.getAllowItemDrop());
-                      break;
-                    case "allowItemPickup":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule allowItemPickup is currently set to: " + map.getAllowItemPickup());
-                      break;
-                    case "pointsToWinCTF":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule pointsToWinCTF is currently set to: " + map.getPointsToWinCTF());
-                      break;
-                    case "pointsToWinTDM":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule pointsToWinTDM is currently set to: " + map.getPointsToWinTDM());
-                      break;
-                    case "pointsToWinDM":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule pointsToWinDM is currently set to: " + map.getPointsToWinDM());
-                      break;
-                    case "allowHelmetRemoval":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule allowHelmetRemoval is currently set to: " + map.getAllowHelmetRemoval());
-                      break;
-                    case "allowChestplateRemoval":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule allowChestplateRemoval is currently set to: " + map.getAllowChestplateRemoval());
-                      break;
-                    case "allowLeggingRemoval":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule allowLeggingRemoval is currently set to: " + map.getAllowLeggingRemoval());
-                      break;
-                    case "allowBootRemoval":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule allowBootRemoval is currently set to: " + map.getAllowBootRemoval());
-                      break;
-                    case "flagSpawnDelay":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule flagSpawnDelay is currently set to: " + map.getFlagSpawnDelay());
-                      break;
-                    case "resetInventoryOnSpawn":
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule resetInventoryOnSpawn is currently set to: " + map.getResetInventoryOnSpawn());
-                      break;
-
-                    default:
-                      return false;
-                  }
-                  return true;
-                } else if (args.length == 4) {
-                  switch (args[2]) {
-                    case "doSideSwitch":
-                      if (args[3].equalsIgnoreCase("true")) {
-                        map.setDoSideSwitch(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule doSideSwitch is now set to: true");
-                        return true;
-                      } else if (args[3].equalsIgnoreCase("false")) {
-                        map.setDoSideSwitch(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule doSideSwitch is now set to: false");
-                        return true;
-                      }
-                      break;
-                    case "doFlagMessages":
-                      if (args[3].equalsIgnoreCase("true")) {
-                        map.setDoFlagMessages(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule doFlagMessages is now set to: true");
-                        return true;
-                      } else if (args[3].equalsIgnoreCase("false")) {
-                        map.setDoFlagMessages(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule doFlagMessages is now set to: false");
-                        return true;
-                      }
-                      break;
-                    case "allowItemDrop":
-                      if (args[3].equalsIgnoreCase("true")) {
-                        map.setAllowItemDrop(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowItemDrop is now set to: true");
-                        return true;
-                      } else if (args[3].equalsIgnoreCase("false")) {
-                        map.setAllowItemDrop(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowItemDrop is now set to: false");
-                        return true;
-                      }
-                      break;
-                    case "allowItemPickup":
-                      if (args[3].equalsIgnoreCase("true")) {
-                        map.setAllowItemPickup(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowItemPickup is now set to: true");
-                        return true;
-                      } else if (args[3].equalsIgnoreCase("false")) {
-                        map.setAllowItemPickup(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowItemPickup is now set to: false");
-                        return true;
-                      }
-                      break;
-                    case "allowHelmetRemoval":
-                      if (args[3].equalsIgnoreCase("true")) {
-                        map.setAllowHelmetRemoval(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowHelmetRemoval is now set to: true");
-                        return true;
-                      } else if (args[3].equalsIgnoreCase("false")) {
-                        map.setAllowHelmetRemoval(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowHelmetRemoval is now set to: false");
-                        return true;
-                      }
-                      break;
-                    case "allowChestplateRemoval":
-                      if (args[3].equalsIgnoreCase("true")) {
-                        map.setAllowChestplateRemoval(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowChestplateRemoval is now set to: true");
-                        return true;
-                      } else if (args[3].equalsIgnoreCase("false")) {
-                        map.setAllowHelmetRemoval(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowChestplateRemoval is now set to: false");
-                        return true;
-                      }
-                      break;
-                    case "allowLeggingRemoval":
-                      if (args[3].equalsIgnoreCase("true")) {
-                        map.setAllowLeggingRemoval(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowLeggingRemoval is now set to: true");
-                        return true;
-                      } else if (args[3].equalsIgnoreCase("false")) {
-                        map.setAllowLeggingRemoval(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowLeggingRemoval is now set to: false");
-                        return true;
-                      }
-                      break;
-                    case "allowBootRemoval":
-                      if (args[3].equalsIgnoreCase("true")) {
-                        map.setAllowBootRemoval(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowBootRemoval is now set to: true");
-                        return true;
-                      } else if (args[3].equalsIgnoreCase("false")) {
-                        map.setAllowBootRemoval(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule allowBootRemoval is now set to: false");
-                        return true;
-                      }
-                      break;
-                    case "resetInventoryOnSpawn":
-                      if (args[3].equalsIgnoreCase("true")) {
-                        map.setResetInventoryOnSpawn(true);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule resetInventoryOnSpawn is now set to: true");
-                        return true;
-                      } else if (args[3].equalsIgnoreCase("false")) {
-                        map.setResetInventoryOnSpawn(false);
-                        sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " Gamerule resetInventoryOnSpawn is now set to: false");
-                        return true;
-                      }
-                      break;
-
-                    case "pointsToWinCTF":
-                      Integer pointsToWin;
-                      try {
-                        pointsToWin = Integer.parseInt(args[3]);
-                      } catch (NumberFormatException e) {
-                        sender.sendMessage("[EggSplosion] You must specify the points");
-                        return true;
-                      }
-                      map.setPointsToWinCTF(pointsToWin);
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule pointsToWinCTF is now set to: " + pointsToWin);
-                      return true;
-                    case "pointsToWinTDM":
-                      Integer pointsToWinTDM;
-                      try {
-                        pointsToWinTDM = Integer.parseInt(args[3]);
-                      } catch (NumberFormatException e) {
-                        sender.sendMessage("[EggSplosion] You must specify the points");
-                        return true;
-                      }
-                      map.setPointsToWinTDM(pointsToWinTDM);
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule pointsToWinCTF is now set to: " + pointsToWinTDM);
-                      return true;
-                    case "pointsToWinDM":
-                      Integer pointsToWinDM;
-                      try {
-                        pointsToWinDM = Integer.parseInt(args[3]);
-                      } catch (NumberFormatException e) {
-                        sender.sendMessage("[EggSplosion] You must specify the points");
-                        return true;
-                      }
-                      map.setPointsToWinDM(pointsToWinDM);
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule pointsToWinCTF is now set to: " + pointsToWinDM);
-                      return true;
-                    case "flagSpawnDelay":
-                      Integer flagSpawnDelay;
-                      try {
-                        flagSpawnDelay = Integer.parseInt(args[3]);
-                      } catch (NumberFormatException e) {
-                        sender.sendMessage("[EggSplosion] You must specify the points");
-                        return true;
-                      }
-                      map.setFlagSpawnDelay(flagSpawnDelay);
-                      sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Gamerule flagSpawnDelay is now set to: " + flagSpawnDelay);
-                      return true;
-                    default:
-                      return false;
-                  }
-
-                }
-              }
-            }
-            break;
-          case "effect":
-            if (args.length > 3) {
-              GameMap map = gameMaps.get(args[1]);
-              if (map != null) {
-                Integer amplifier = 1;
-                switch (args.length) {
-                  case 5:
-                    try {
-                      amplifier = Integer.parseInt(args[4]);
-                    } catch (NumberFormatException e) {
-                      // Suppress
-                    }
-                    // Fall Through
-                  case 4:
-                    String potionEffectNameFull = args[3];
-                    if (potionEffectNameFull.split(":").length > 1) {
-                      NamespacedKey potionEffectTypeKey = NamespacedKey.fromString(potionEffectNameFull);
-                      if (args[2].equals("add")) {
-                        PotionEffect matchingPotionEffect = null;
-                        for (PotionEffect potionEffect : map.getMapEffects()) {
-                          if (potionEffect.getType().getKey().equals(potionEffectTypeKey)) {
-                            matchingPotionEffect = potionEffect;
-                          }
-                        }
-
-                        if (matchingPotionEffect == null) {
-                          PotionEffectType potionEffectType = Registry.MOB_EFFECT.get(potionEffectTypeKey);
-                          map.addMapEffect(potionEffectType, amplifier);
-                          sender.sendRichMessage(
-                              "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier1></gray> <green>added</green>",
-                              Placeholder.component("map", Component.text(args[1])),
-                              Placeholder.component("effect",
-                                  Component.translatable(potionEffectType.translationKey())),
-                              Placeholder.component("amplifier1",
-                                  Component.translatable("enchantment.level." + amplifier)));
-                        } else {
-                          map.removeMapEffect(matchingPotionEffect);
-                          map.addMapEffect(matchingPotionEffect.withAmplifier(amplifier - 1));
-                          sender.sendRichMessage(
-                              "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier1></gray> updated to <gray><effect> <amplifier2></gray>",
-                              Placeholder.component("map", Component.text(args[1])),
-                              Placeholder.component("effect",
-                                  Component.translatable(matchingPotionEffect.getType().translationKey())),
-                              Placeholder.component("amplifier1",
-                                  Component
-                                      .translatable("enchantment.level." + (matchingPotionEffect.getAmplifier() + 1))),
-                              Placeholder.component("amplifier2",
-                                  Component.translatable("enchantment.level." + amplifier)));
-                          // sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] +
-                          // ChatColor.RESET
-                          // + " Effect " + ChatColor.GRAY +
-                          // matchingPotionEffect.getType().translationKey() + " "
-                          // + amplifier + ChatColor.RESET
-                          // + " Updated!");
-                        }
-                      } else if (args[2].equals("remove")) {
-                        PotionEffect potionEffectToRemove = null;
-                        PotionEffectType potionEffectType = Registry.MOB_EFFECT.get(potionEffectTypeKey);
-                        for (PotionEffect potionEffect : map.getMapEffects()) {
-                          if (potionEffect.getType().getKey().equals(potionEffectTypeKey)) {
-                            potionEffectToRemove = potionEffect;
-                          }
-                        }
-
-                        if (potionEffectToRemove != null) {
-                          map.removeMapEffect(potionEffectToRemove);
-                          sender.sendRichMessage(
-                              "[EggSplosion] Map <aqua><map></aqua> effect <gray><effect> <amplifier1></gray> <red>removed</red>",
-                              Placeholder.component("map", Component.text(args[1])),
-                              Placeholder.component("effect",
-                                  Component.translatable(potionEffectToRemove.getType().translationKey())),
-                              Placeholder.component("amplifier1",
-                                  Component.translatable(
-                                      "enchantment.level." + (potionEffectToRemove.getAmplifier() + 1))));
-                        } else if (potionEffectType != null) {
-                          sender.sendRichMessage(
-                              "<red>[EggSplosion]</red> No effect <gray><effect></gray> on map <aqua><map></aqua>",
-                              Placeholder.component("map", Component.text(args[1])),
-                              Placeholder.component("effect",
-                                  Component.translatable(potionEffectType.translationKey())));
-                        } else {
-                          sender.sendRichMessage(
-                              "<red>[EggSplosion]</red> Unknown effect <gray><effect></gray> on map <aqua><map></aqua>",
-                              Placeholder.component("map", Component.text(args[1])),
-                              Placeholder.component("effect",
-                                  Component.text(potionEffectNameFull)));
-                        }
-                      }
-                      return true;
-                    }
-                }
-              }
-            }
-            break;
-          case "icon": {
-            GameMap map = gameMaps.get(args[1]);
-            if (map != null) {
-              if (sender instanceof Player) {
-                Player player = (Player) sender;
-                if (player.getInventory().getItemInMainHand() != null) {
-                  map.setMapIcon(player.getInventory().getItemInMainHand().getType());
-                  player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                      + " Icon Set to: " + ChatColor.DARK_GRAY
-                      + player.getInventory().getItemInMainHand().getType().name().toLowerCase());
-                } else {
-                  player.sendMessage("[EggSplosion] Hold an item in your hand to set it as the map icon");
-                }
-                return true;
-              }
-            }
-            break;
-          }
-          case "capturepoint":
-            GameMap map = gameMaps.get(args[1]);
-            if (map != null) {
-              if (sender instanceof Player) {
-                Player player = (Player) sender;
-                if (args.length >= 4) {
-                  switch (args[2]) {
-                    case "add":
-                      Location playerLocation = player.getLocation();
-                      if (!map.locationInMap(playerLocation)) {
-                        player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                            + " point not inside map, move into map to add capture point");
-                        return true;
-                      }
-                      map.addCapturePoint(args[3], playerLocation);
-                      player.sendMessage(
-                          "[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET + " Added Capture Point "
-                              + ChatColor.GREEN + args[3] + ChatColor.RESET + " (" + playerLocation.getBlockX() + ", "
-                              + playerLocation.getBlockY() + ", " + playerLocation.getBlockZ() + ")");
-                      break;
-                    case "remove":
-                      Location capturePointLocation = map.getCapturePoint(args[3]);
-                      map.removeCapturePoint(args[3]);
-                      player.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                          + " Removed Capture Point " + ChatColor.GREEN + args[3] + ChatColor.RESET + " ("
-                          + capturePointLocation.getBlockX() + ", " + capturePointLocation.getBlockY() + ", "
-                          + capturePointLocation.getBlockZ() + ")");
-                      break;
-                  }
-                } else if (args.length == 3) {
-                  sender.sendMessage(
-                      "[EggSplosion] Capture Point Name Unspecified /map capturepoint <mapName> <add|remove> <capturePointName>");
-                } else if (args.length == 2) {
-                  Iterator<String> capturePointNames = map.getAllCapturePointName().iterator();
-                  String formattedString = "";
-                  while (capturePointNames.hasNext()) {
-                    String capturePointName = capturePointNames.next();
-                    formattedString += ChatColor.GREEN + capturePointName + ChatColor.RESET;
-                    if (capturePointNames.hasNext()) {
-                      formattedString += ", ";
-                    }
-                  }
-
-                  if (formattedString != "") {
-                    sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                        + " Capture Points: " + formattedString);
-                  } else {
-                    sender.sendMessage("[EggSplosion] Map " + ChatColor.AQUA + args[1] + ChatColor.RESET
-                        + " has no capture points! Create one with /map capturepoint add <capturePointName>");
-                  }
-                }
-                return true;
-              }
-            }
-        }
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
-    if (cmd.getName().equalsIgnoreCase("map")) {
-      switch (args.length) {
-        case 1:
-          List<String> commands = new ArrayList<>();
-          commands.add("create");
-          commands.add("tools");
-          commands.add("equip");
-          commands.add("gamerule");
-          commands.add("effect");
-          commands.add("loadout");
-          commands.add("icon");
-          commands.add("capturepoint");
-          commands.add("locate");
-          return Utils.FilterTabComplete(args[0], commands);
-        case 2:
-          switch (args[0]) {
-            case "equip":
-            case "gamerule":
-            case "tools":
-            case "effect":
-            case "loadout":
-            case "icon":
-            case "capturepoint":
-            case "locate":
-              List<String> mapNames = new ArrayList<>();
-              Iterator<String> mapNamesIterator = gameMaps.keySet().iterator();
-              while (mapNamesIterator.hasNext()) {
-                mapNames.add(mapNamesIterator.next());
-              }
-              return Utils.FilterTabComplete(args[1], mapNames);
-            case "create":
-            default:
-              return new ArrayList<>();
-          }
-        case 3:
-          switch (args[0]) {
-            case "gamerule":
-              List<String> gameRules = new ArrayList<>();
-              gameRules.add("doSideSwitch");
-              gameRules.add("doFlagMessages");
-              gameRules.add("pointsToWinCTF");
-              gameRules.add("pointsToWinTDM");
-              gameRules.add("pointsToWinDM");
-              gameRules.add("allowItemPickup");
-              gameRules.add("allowItemDrop");
-              gameRules.add("allowHelmetRemoval");
-              gameRules.add("allowChestplateRemoval");
-              gameRules.add("allowLeggingRemoval");
-              gameRules.add("allowBootRemoval");
-              gameRules.add("resetInventoryOnSpawn");
-              gameRules.add("flagSpawnDelay");
-              return Utils.FilterTabComplete(args[2], gameRules);
-            case "effect":
-            case "capturepoint":
-              List<String> effectCommands = new ArrayList<>();
-              effectCommands.add("add");
-              effectCommands.add("remove");
-              return Utils.FilterTabComplete(args[2], effectCommands);
-            default:
-              return new ArrayList<>();
-          }
-        case 4:
-          switch (args[0]) {
-            case "gamerule":
-              switch (args[2]) {
-                case "doSideSwitch":
-                case "doFlagMessages":
-                case "allowItemPickup":
-                case "allowItemDrop":
-                case "allowHelmetRemoval":
-                case "allowChestplateRemoval":
-                case "allowLeggingRemoval":
-                case "allowBootRemoval":
-                case "resetInventoryOnSpawn":
-                  List<String> trueFalse = new ArrayList<>();
-                  trueFalse.add("true");
-                  trueFalse.add("false");
-                  return Utils.FilterTabComplete(args[3], trueFalse);
-                case "pointsToWinCTF":
-                case "pointsToWinTDM":
-                case "pointsToWinDM":
-                case "flagSpawnDelay":
-                  return new ArrayList<>();
-              }
-            case "effect":
-              switch (args[2]) {
-                case "add":
-                case "remove":
-                  List<String> potionNames = new ArrayList<>();
-                  Registry.MOB_EFFECT.forEach((effect) -> {
-                    potionNames.add(effect.getKey().asString());
-                  });
-                  return Utils.FilterTabComplete(args[3], potionNames);
-              }
-            default:
-              return new ArrayList<>();
-          }
-        case 5:
-          return new ArrayList<>();
-      }
-    }
-    return null;
-  }
-
   public static LiteralCommandNode<CommandSourceStack> createMapCommands() {
     LiteralCommandNode<CommandSourceStack> locateCommand = Commands.literal("locate")
         .requires(ctx -> (ctx.getExecutor() instanceof Player))
@@ -1228,6 +599,34 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     capturePointCommand.addChild(capturePointAddCommand);
     capturePointCommand.addChild(capturePointRemoveCommand);
 
+    LiteralCommandNode<CommandSourceStack> soloSpawnPointListCommand = Commands.literal("list")
+        .executes(MapManager::executeMapListSoloSpawns)
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> soloSpawnPointRemoveCommand = Commands.literal("remove")
+        .then(Commands.argument("index", IntegerArgumentType.integer())
+            .executes(MapManager::executeMapRemoveSoloSpawns))
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> soloSpawnPointCommand = Commands.literal("solo").build();
+    soloSpawnPointCommand.addChild(soloSpawnPointListCommand);
+    soloSpawnPointCommand.addChild(soloSpawnPointRemoveCommand);
+
+    LiteralCommandNode<CommandSourceStack> spawnPointCommand = Commands.literal("spawn_points").build();
+    spawnPointCommand.addChild(soloSpawnPointCommand);
+
+    LiteralCommandNode<CommandSourceStack> gameruleCommand = Commands.literal("gamerules")
+        .then(Commands.argument("bool_game_rule", new BooleanGameruleKeyArgument())
+            .executes(MapManager::executeMapGetBooleanGamerule).then(Commands.argument("value",
+                BoolArgumentType.bool()).executes(MapManager::executeMapSetBooleanGamerule)))
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> gamevalueCommand = Commands.literal("gamevalues")
+        .then(Commands.argument("int_game_rule", new IntegerGameruleKeyArgument())
+            .executes(MapManager::executeMapGetIntGamerule).then(Commands.argument("number",
+                IntegerArgumentType.integer()).executes(MapManager::executeMapSetIntGamerule)))
+        .build();
+
     LiteralCommandNode<CommandSourceStack> mapCommands = Commands.literal("map")
         .executes(MapManager::executeListMaps)
         .then(Commands.literal("list")
@@ -1240,6 +639,9 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                 .then(equipmentCommand)
                 .then(loadoutCommand)
                 .then(capturePointCommand)
+                .then(gameruleCommand)
+                .then(gamevalueCommand)
+                .then(spawnPointCommand)
                 .then(mapLocationToolsCommand)))
         .then(Commands.literal("create")
             .requires((ctx) -> (ctx.getExecutor() instanceof Player))
@@ -1304,7 +706,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
                   : Component.text(amplifier)));
     }
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeRemoveMapEffect(final CommandContext<CommandSourceStack> ctx)
@@ -1343,7 +745,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
               Component.translatable(potionEffectType.translationKey())));
     }
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   // TODO: Handle No Maps Edgecase
@@ -1366,7 +768,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     }
 
     sender.sendMessage(message);
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   // TODO: Handle No Effects Edgecase
@@ -1385,25 +787,33 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     Iterator<PotionEffect> mapEffectIterator = map.getMapEffects().iterator();
     while (mapEffectIterator.hasNext()) {
       PotionEffect nextPotionEffect = mapEffectIterator.next();
+
       message = message.appendNewline().appendSpace().appendSpace()
-          .append(MiniMessage.miniMessage().deserialize("<gray><effect_name> <amplifier></gray>",
+          .append(MiniMessage.miniMessage().deserialize(
+              "<gray><effect_name> <amplifier></gray>",
               Placeholder.component("effect_name", Component.translatable(nextPotionEffect.getType().translationKey())),
               Placeholder.component("amplifier",
                   nextPotionEffect.getAmplifier() < 10
                       ? Component.translatable("enchantment.level." + (nextPotionEffect.getAmplifier() + 1))
-                      : Component.text(nextPotionEffect.getAmplifier() + 1))));
-      if (mapEffectIterator.hasNext()) {
-        message = message.append(Component.text(", "));
-      }
+                      : Component.text(nextPotionEffect.getAmplifier() + 1))))
+          .append(
+              MiniMessage.miniMessage().deserialize(
+                  " - <green><click:suggest_command:\"/map edit " + mapName
+                      + " effects add "
+                      + nextPotionEffect.getType().getKey().asString()
+                      + " \">[Edit]</click></green> <red><click:suggest_command:\"/map edit " + mapName
+                      + " effects remove "
+                      + nextPotionEffect.getType().getKey().asString()
+                      + "\">[Remove]</click></red>"));
     }
 
     sender.sendMessage(message);
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapIcon(final CommandContext<CommandSourceStack> ctx) {
     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
     final String mapName = StringArgumentType.getString(ctx, "map_name");
@@ -1417,12 +827,12 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
             Placeholder.component("map_name", Component.text(mapName)),
             Placeholder.component("item_name",
                 Component.translatable(icon.translationKey()))));
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapCreate(final CommandContext<CommandSourceStack> ctx) {
     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
     final String mapName = StringArgumentType.getString(ctx, "map_name");
 
@@ -1438,13 +848,13 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
       player.performCommand("map edit " + mapName + " tools ");
     }
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapCreationTools(final CommandContext<CommandSourceStack> ctx)
       throws CommandSyntaxException {
     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
 
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
@@ -1457,13 +867,13 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     player.sendMessage(
         "[EggSplosion] Select the boudarys of the map by right clicking the shovel, then run the command /map create <mapName>");
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapLocationTools(final CommandContext<CommandSourceStack> ctx)
       throws CommandSyntaxException {
     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
 
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
@@ -1491,13 +901,13 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     player.getInventory().setItem(5, Map_Tool_flagSpawnTeamA);
     player.getInventory().setItem(6, Map_Tool_flagSpawnTeamB);
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapCapturepointRemove(final CommandContext<CommandSourceStack> ctx)
       throws CommandSyntaxException {
     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
     final String mapName = ctx.getArgument("map_name", String.class);
@@ -1515,13 +925,13 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         Placeholder.component("y", Component.text(player.getLocation().getBlockY())),
         Placeholder.component("z", Component.text(player.getLocation().getBlockZ()))));
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapCapturepointAdd(final CommandContext<CommandSourceStack> ctx)
       throws CommandSyntaxException {
     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
     final String mapName = ctx.getArgument("map_name", String.class);
@@ -1534,7 +944,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
       player.sendMessage(MiniMessage.miniMessage().deserialize(
           "[EggSplosion] Map <aqua><map_name></aqua> point not inside map, move into the map to add a capture point",
           Placeholder.component("map_name", Component.text(mapName))));
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
 
     map.addCapturePoint(capturePointName, playerLocation);
@@ -1546,7 +956,7 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         Placeholder.component("y", Component.text(player.getLocation().getBlockY())),
         Placeholder.component("z", Component.text(player.getLocation().getBlockZ()))));
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapCapturepointList(final CommandContext<CommandSourceStack> ctx) {
@@ -1557,16 +967,6 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
 
     GameMap map = mapManager.getMapByName(mapName);
 
-    // Iterator<String> capturePointNames = map.getAllCapturePointName().iterator();
-    // String formattedString = "";
-    // while (capturePointNames.hasNext()) {
-    // String capturePointName = capturePointNames.next();
-    // formattedString += ChatColor.GREEN + capturePointName + ChatColor.RESET;
-    // if (capturePointNames.hasNext()) {
-    // formattedString += ", ";
-    // }
-    // }
-
     if (map.getAllCapturePointName().size() > 0) {
       Component message = MiniMessage.miniMessage().deserialize("[EggSplosion] Current Capture Points - ");
       Iterator<String> capturePointsIterator = map.getAllCapturePointName().iterator();
@@ -1576,31 +976,194 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
         // TODO: Improve this??? properly do this?
         message = message.appendNewline().appendSpace().appendSpace()
             .append(MiniMessage.miniMessage().deserialize(
-                "<blue><capture_point_name></blue> (<x>, <y>, <z>) - <red><click:suggest_command:\"/map edit " + mapName
-                    + " capture_point remove "
-                    + (new NamespacedKey(mapName.toLowerCase(), capturePointName.toLowerCase())).asString()
-                    + "\">Click to Remove</click></red>",
+                "<blue><capture_point_name></blue> (<x>, <y>, <z>)",
                 Placeholder.component("capture_point_name", Component.text(capturePointName)),
                 Placeholder.component("x", Component.text(capturePointLocation.getBlockX())),
                 Placeholder.component("y", Component.text(capturePointLocation.getBlockY())),
-                Placeholder.component("z", Component.text(capturePointLocation.getBlockZ()))));
+                Placeholder.component("z", Component.text(capturePointLocation.getBlockZ()))))
+            .append(
+                MiniMessage.miniMessage().deserialize(
+                    " - <red><click:suggest_command:\"/map edit " + mapName
+                        + " capture_point remove "
+                        + (new NamespacedKey(mapName.toLowerCase(), capturePointName.toLowerCase())).asString()
+                        + "\">[Remove]</click></red>"));
       }
 
       sender.sendMessage(message);
     } else {
       // TODO: Improve this??? properly do this?
       sender.sendMessage(MiniMessage.miniMessage().deserialize(
-          "[EggSplosion] Map <aqua><map_name></aqua> has no capture points! Create one with <click:suggest_command:/map edit "
-              + mapName + " capture_point add>/map edit <map_name> capture_point add <capturePointName></click>",
+          "[EggSplosion] Map <aqua><map_name></aqua> has no capture points - <green><click:suggest_command:/map edit "
+              + mapName + " capture_point add >[Add]</click></green>",
           Placeholder.component("map_name", Component.text(mapName))));
     }
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapGetIntGamerule(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    Entity sender = ctx.getSource().getExecutor();
+
+    sender.sendMessage("running int gamerule");
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final IntegerGameRules integerGameRule = ctx.getArgument("int_game_rule", IntegerGameRules.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    sender.sendMessage(MiniMessage.miniMessage().deserialize(
+        "[EggSplosion] Map <aqua><map_name></aqua> Gamerule <gray><game_rule></gray> is currently set to: <value>",
+        Placeholder.component("map_name", Component.text(mapName)),
+        Placeholder.component("game_rule", Component.text(integerGameRule.asString())),
+        Placeholder.component("value", Component.text(map.getIntegerGamerule(integerGameRule)))));
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapSetIntGamerule(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    Entity sender = ctx.getSource().getExecutor();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final IntegerGameRules integerGameRule = ctx.getArgument("int_game_rule", IntegerGameRules.class);
+    final Integer value = IntegerArgumentType.getInteger(ctx, "number");
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    map.setIntegerGamerule(integerGameRule, value);
+    sender.sendMessage(MiniMessage.miniMessage().deserialize(
+        "[EggSplosion] Map <aqua><map_name></aqua> Gamerule <gray><game_rule></gray> is now set to: <value>",
+        Placeholder.component("map_name", Component.text(mapName)),
+        Placeholder.component("game_rule", Component.text(integerGameRule.asString())),
+        Placeholder.component("value", Component.text(value))));
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapGetBooleanGamerule(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    Entity sender = ctx.getSource().getExecutor();
+
+    sender.sendMessage("running boolean gamerule");
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final BooleanGameRules booleanGameRule = ctx.getArgument("bool_game_rule", BooleanGameRules.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    sender.sendMessage(MiniMessage.miniMessage().deserialize(
+        "[EggSplosion] Map <aqua><map_name></aqua> Gamerule <gray><game_rule></gray> is currently set to: <value>",
+        Placeholder.component("map_name", Component.text(mapName)),
+        Placeholder.component("game_rule", Component.text(booleanGameRule.asString())),
+        Placeholder.component("value", Component.text(map.getBooleanGamerule(booleanGameRule)))));
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapSetBooleanGamerule(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    Entity sender = ctx.getSource().getExecutor();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final BooleanGameRules booleanGameRule = ctx.getArgument("bool_game_rule", BooleanGameRules.class);
+    final Boolean value = BoolArgumentType.getBool(ctx, "value");
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    map.setBooleanGamerule(booleanGameRule, value);
+    sender.sendMessage(MiniMessage.miniMessage().deserialize(
+        "[EggSplosion] Map <aqua><map_name></aqua> Gamerule <gray><game_rule></gray> is now set to: <value>",
+        Placeholder.component("map_name", Component.text(mapName)),
+        Placeholder.component("game_rule", Component.text(booleanGameRule.asString())),
+        Placeholder.component("value", Component.text(value))));
+
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static Component generateSpawnPointMessage(Location spawnLocation, String mapName, int spawnPointIndex) {
+    Component message = MiniMessage.miniMessage().deserialize(
+        "<blue><spawn_point_index></blue> (<x>, <y>, <z>)",
+        Placeholder.component("spawn_point_index", Component.text(spawnPointIndex)),
+        Placeholder.component("x", Component.text(spawnLocation.getBlockX())),
+        Placeholder.component("y", Component.text(spawnLocation.getBlockY())),
+        Placeholder.component("z", Component.text(spawnLocation.getBlockZ())));
+    return message.append(MiniMessage.miniMessage().deserialize(
+        " - <green><click:run_command:/tp @s " + spawnLocation.getBlockX() + " "
+            + (spawnLocation.getBlockY() + 1)
+            + " "
+            + spawnLocation.getBlockZ()
+            + " "
+            + spawnLocation.getYaw()
+            + " "
+            + spawnLocation.getPitch()
+            + ">[Visit]</click></green> <red><click:suggest_command:\"/map edit "
+            + mapName
+            + " spawn_points solo remove "
+            + spawnPointIndex
+            + "\">[Remove]</click></red>"));
+  }
+
+  private static int executeMapListSoloSpawns(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    Entity sender = ctx.getSource().getExecutor();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    if (map.getSoloSpawnLocations().size() > 0) {
+      Component message = MiniMessage.miniMessage().deserialize("[EggSplosion] Current Solo Spawn Points - ");
+      ListIterator<Location> soloSpawnsIterator = map.getSoloSpawnLocations().listIterator();
+
+      while (soloSpawnsIterator.hasNext()) {
+        int index = soloSpawnsIterator.nextIndex();
+        Location soloSpawnPoint = soloSpawnsIterator.next();
+
+        message = message.appendNewline().appendSpace().appendSpace()
+            .append(generateSpawnPointMessage(soloSpawnPoint, mapName, index));
+      }
+      sender.sendMessage(message);
+    } else {
+      sender.sendMessage(MiniMessage.miniMessage().deserialize(
+          "[EggSplosion] Map <aqua><map_name></aqua> has no solo spawn points - <green><click:suggest_command:/map edit "
+              + mapName + " tools>[Add]</click></green>",
+          Placeholder.component("map_name", Component.text(mapName))));
+
+    }
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapRemoveSoloSpawns(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    Entity sender = ctx.getSource().getExecutor();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final Integer soloSpawnIndex = IntegerArgumentType.getInteger(ctx, "index");
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    Location spawnLocation = map.getSoloSpawnLocations().get(soloSpawnIndex);
+    map.removeSoloSpawnLocation(soloSpawnIndex);
+
+    Component message = MiniMessage.miniMessage().deserialize(
+        "<red>Removed</red> spawn point <blue><spawn_point_index></blue> (<x>, <y>, <z>)",
+        Placeholder.component("spawn_point_index", Component.text(soloSpawnIndex)),
+        Placeholder.component("x", Component.text(spawnLocation.getBlockX())),
+        Placeholder.component("y", Component.text(spawnLocation.getBlockY())),
+        Placeholder.component("z", Component.text(spawnLocation.getBlockZ())));
+
+    sender.sendMessage(message);
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapLoadout(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
     final String mapName = ctx.getArgument("map_name", String.class);
@@ -1610,12 +1173,12 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     Inventory mapLoadoutMenu = map.getLoadout();
     player.openInventory(mapLoadoutMenu);
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapEquipment(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
     final String mapName = ctx.getArgument("map_name", String.class);
@@ -1632,12 +1195,12 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
     }
 
     player.openInventory(mapEquipmentMenu);
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 
   private static int executeMapLocate(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
     if (!(ctx.getSource().getExecutor() instanceof Player player)) {
-      return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+      return Command.SINGLE_SUCCESS;
     }
 
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
@@ -1651,6 +1214,6 @@ public class MapManager implements Listener, CommandExecutor, TabCompleter {
       player.teleport(to_teleport);
     }
 
-    return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+    return Command.SINGLE_SUCCESS;
   }
 }

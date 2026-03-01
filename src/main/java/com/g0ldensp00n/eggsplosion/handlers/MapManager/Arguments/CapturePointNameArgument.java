@@ -1,4 +1,4 @@
-package com.g0ldensp00n.eggsplosion.handlers.MapManager;
+package com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -6,6 +6,8 @@ import org.bukkit.NamespacedKey;
 import org.jspecify.annotations.NullMarked;
 
 import com.g0ldensp00n.eggsplosion.EggSplosion;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;

@@ -28,7 +28,7 @@ public class GameLobby_TeamDeathMatch extends GameLobby implements Listener {
 
   public void initializeGameLobby() {
     setScoreManager(
-        new ScoreManager(getMap().getPointsToWinCTF(), ScoreType.TEAM, this, ChatColor.RED, ChatColor.BLUE, true));
+        new ScoreManager(getMap().getPointsToWinTDM(), ScoreType.TEAM, this, ChatColor.RED, ChatColor.BLUE, true));
     randomizeTeams();
     getMap().randomizeTeamSides(scoreManager.getTeams());
   }

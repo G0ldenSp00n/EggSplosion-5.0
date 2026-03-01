@@ -13,6 +13,7 @@ import org.bukkit.block.BlockType;
 import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.LlamaSpit;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.SmallFireball;
 import org.bukkit.entity.WindCharge;
 import org.bukkit.entity.WitherSkull;
@@ -1249,13 +1250,14 @@ public class WeaponRegistry {
         }
 
         public static LiteralCommandNode<CommandSourceStack> createWeaponCommand() {
-                return Commands.literal("weapon")
-                                .then(Commands.argument("target", ArgumentTypes.players())
-                                                .executes(WeaponRegistry::executeGiveDefaultWeapons)
-                                                .then(Commands.argument("weapon_id", ArgumentTypes.namespacedKey())
-                                                                .suggests(WeaponRegistry::getWeaponNamespacedKeySuggestions)
+                LiteralCommandNode<CommandSourceStack> weapon = Commands.literal("weapon")
+                                .then(Commands.argument("weapon_id", ArgumentTypes.namespacedKey())
+                                                .suggests(WeaponRegistry::getWeaponNamespacedKeySuggestions)
+                                                .executes(WeaponRegistry::executeGiveSenderSpecificWeapon)
+                                                .then(Commands.argument("target", ArgumentTypes.player())
                                                                 .executes(WeaponRegistry::executeGiveSpecificWeapon)))
                                 .build();
+                return weapon;
         }
 
         private static CompletableFuture<Suggestions> getWeaponNamespacedKeySuggestions(
@@ -1304,6 +1306,26 @@ public class WeaponRegistry {
                 return Command.SINGLE_SUCCESS;
         }
 
+        private static int executeGiveSenderSpecificWeapon(final CommandContext<CommandSourceStack> ctx)
+                        throws CommandSyntaxException {
+                if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+                        return Command.SINGLE_SUCCESS;
+                }
+                player.sendMessage("TEST");
+
+                final NamespacedKey weaponKey = ctx.getArgument(
+                                "weapon_id",
+                                NamespacedKey.class);
+
+                Weapon weapon = WeaponRegistry.getInstance()
+                                .getWeaponByID(weaponKey);
+                if (weapon != null) {
+                        player.give(weapon.getItem());
+                        return Command.SINGLE_SUCCESS;
+                }
+                return 0;
+        }
+
         private static int executeGiveSpecificWeapon(final CommandContext<CommandSourceStack> ctx)
                         throws CommandSyntaxException {
                 final PlayerSelectorArgumentResolver playerSelector = ctx
@@ -1325,7 +1347,6 @@ public class WeaponRegistry {
                         return Command.SINGLE_SUCCESS;
                 }
                 return 0;
-
         }
 
 }

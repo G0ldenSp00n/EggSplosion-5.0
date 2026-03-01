@@ -59,11 +59,6 @@ public class EggSplosion extends JavaPlugin {
             commands.registrar().register(LobbyManager.createLobbyCommands(), "Lobby Manegment");
             commands.registrar().register(MapManager.createMapCommands(), "Map Manegment");
         });
-        // this.getCommand("lobby").setExecutor(lobbyManager);
-        // this.getCommand("lobby").setTabCompleter(lobbyManager);
-        // this.getCommand("map").setExecutor(mapManager);
-        // this.getCommand("map").setTabCompleter(mapManager);
-        // this.getCommand("weapon").setExecutor(registry);
     }
 
     public static EggSplosion getInstance() {
