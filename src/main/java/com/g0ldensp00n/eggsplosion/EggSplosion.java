@@ -2,13 +2,11 @@ package com.g0ldensp00n.eggsplosion;
 
 import com.g0ldensp00n.eggsplosion.handlers.Core.ArmorRemoveHandler;
 import com.g0ldensp00n.eggsplosion.handlers.Core.DeathMessages;
-import com.g0ldensp00n.eggsplosion.handlers.Core.EggExplode;
 import com.g0ldensp00n.eggsplosion.handlers.Core.ExplosionRegen;
 import com.g0ldensp00n.eggsplosion.handlers.Core.Food;
 import com.g0ldensp00n.eggsplosion.handlers.Core.PickupDropHandler;
 import com.g0ldensp00n.eggsplosion.handlers.Core.PlayerLeaveHandler;
 import com.g0ldensp00n.eggsplosion.handlers.Core.RespawnHandler;
-import com.g0ldensp00n.eggsplosion.handlers.Core.Weapon;
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameModeListeners;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyManager;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyMenuSystem;
@@ -43,8 +41,6 @@ public class EggSplosion extends JavaPlugin {
         mapManager = new MapManager(this, pluginFolder);
         lobbyManager = LobbyManager.getInstance(this, mapManager);
         new DeathMessages(this, lobbyManager);
-        new EggExplode(this);
-        new Weapon(this);
         new GameModeListeners(this, lobbyManager);
         new PickupDropHandler(this, lobbyManager);
         new ArmorRemoveHandler(this, lobbyManager);

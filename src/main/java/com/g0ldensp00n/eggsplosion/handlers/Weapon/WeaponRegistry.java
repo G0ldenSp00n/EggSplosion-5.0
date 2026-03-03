@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.block.BlockType;
+import org.bukkit.command.CommandSender;
 import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.LlamaSpit;
@@ -48,7 +49,13 @@ import io.papermc.paper.command.brigadier.MessageComponentSerializer;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 public class WeaponRegistry {
         private static WeaponRegistry instance;
@@ -202,6 +209,9 @@ public class WeaponRegistry {
                                                 .deserialize("<gradient:#041820:#61c3cb>Sculked Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.DIAMOND_HOE)
                                 .withSneakAction(WeaponAction.builder().withReloadTime(600)
+                                                .withActionName(Component.text("Blinding Shriek"))
+                                                .withActionDescription(
+                                                                "Perform a shriek causing blindness to teammates and enemies nearby.")
                                                 .addCastEffect(VisualEffect.builder()
                                                                 .addParticle(Particle.SHRIEK.builder().data(0))
                                                                 .addParticleWithDelay(Particle.SHRIEK.builder().data(0),
@@ -233,6 +243,9 @@ public class WeaponRegistry {
                                                                 .withPlayerAsSource().build())
                                                 .build())
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(640)
+                                                .withActionName(Component.text("Sonic Boom"))
+                                                .withActionDescription(
+                                                                "Build up a sonic blast damaging enemies in a line in front of you.")
                                                 .withVelocityMultiplier(2.75f)
                                                 .addCastEffect(new DelayEffect(30, Arrays.asList(new SonicBoomEffect(
                                                                 Particle.SONIC_BOOM, 2, 30,
@@ -250,6 +263,9 @@ public class WeaponRegistry {
                                                                 .withPlayerAsSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(12)
+                                                .withActionName(Component.text("Echo"))
+                                                .withActionDescription(
+                                                                "Perform a shriek cuasing blindness to teammates and enemies nearby.")
                                                 .withVelocityMultiplier(4.0f)
                                                 .withProjectileMaterial(Material.ECHO_SHARD)
                                                 .addEffect(new ExplosionEffect(2.2f))
@@ -286,6 +302,9 @@ public class WeaponRegistry {
                                                                 "<gradient:#de0b0b:#ffe8e8>Spartan Laser</gradient>"))
                                 .withWeaponItemMaterial(Material.STONE_HOE)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(580)
+                                                .withActionName(Component.text("Photonic Boom"))
+                                                .withActionDescription(
+                                                                "Build up a blast vaporizing the blocks and people in front of you.")
                                                 .addCastEffect(new DelayEffect(38,
                                                                 Arrays.asList(new SonicBoomEffect(null, 2, 25, 5,
                                                                                 Arrays.asList(new ExplosionEffect(2.8f),
@@ -359,6 +378,9 @@ public class WeaponRegistry {
                                                 .build())
                                 .withSecondaryAction(
                                                 WeaponAction.builder().withReloadTime(10)
+                                                                .withActionName(Component.text("Grenade Launcher"))
+                                                                .withActionDescription(
+                                                                                "Lob a grenade causing an explosion.")
                                                                 .withProjectileMaxTicksLived(10)
                                                                 .withVelocityMultiplier(1.5f)
                                                                 .withProjectileMaterial(Material.TURTLE_EGG)
@@ -410,6 +432,8 @@ public class WeaponRegistry {
                                                                 .build())
 
                                 .withSneakAction(WeaponAction.builder().withReloadTime(450)
+                                                .withActionName(Component.text("Spartan Sprint"))
+                                                .withActionDescription("Gain a temporary movement speed buff.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.SPEED, 300,
                                                                 2))))
@@ -449,6 +473,8 @@ public class WeaponRegistry {
                                                                 "<gradient:#1C273B:#6C6699>Breezy Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.BREEZE_ROD)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Strong Gust"))
+                                                .withActionDescription("Perform a large forward leaping dash.")
                                                 .addCastEffect(new DashEffect(1.8f))
                                                 .addCastEffect(breezyDashEffect)
                                                 .addCastEffect(new DelayEffect(8, Arrays.asList(breezyDashEffect)))
@@ -462,6 +488,9 @@ public class WeaponRegistry {
                                                 .build())
                                 .withSecondaryAction(
                                                 WeaponAction.builder().withReloadTime(14)
+                                                                .withActionName(Component.text("Turbulence"))
+                                                                .withActionDescription(
+                                                                                "Shoot a wind-charge exploding on impact and dealing knock-back.")
                                                                 .withProjectile(WindCharge.class)
                                                                 .withVelocityMultiplier(1.25f)
                                                                 .addCastEffect(
@@ -497,6 +526,9 @@ public class WeaponRegistry {
                                                                                 DamageType.PLAYER_EXPLOSION, false))
                                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(300)
+                                                .withActionName(Component.text("Light Headed"))
+                                                .withActionDescription(
+                                                                "Enter a whirlwind gaining a temporary movement speed buff.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.SPEED, 50, 3)))
                                                                 .withHiddenSplashEffect())
@@ -539,6 +571,8 @@ public class WeaponRegistry {
                                                                 "<gradient:#4F2400:#FCFC82>Blazing Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.BLAZE_ROD)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Burning Passion"))
+                                                .withActionDescription("A quick dash forward.")
                                                 .addCastEffect(new DashEffect(1.2f))
                                                 .addCastEffect(blazingDashEffect)
                                                 .addCastEffect(new DelayEffect(8, Arrays.asList(blazingDashEffect)))
@@ -552,6 +586,9 @@ public class WeaponRegistry {
                                                 .build())
                                 .withSecondaryAction(
                                                 WeaponAction.builder().withReloadTime(38)
+                                                                .withActionName(Component.text("Blazing Volley"))
+                                                                .withActionDescription(
+                                                                                "Fire a volley of 3 fire charge projectiles causing explosions.")
                                                                 .withProjectile(SmallFireball.class)
                                                                 .withVelocityMultiplier(1.25f)
                                                                 .withBurstCount(3)
@@ -585,6 +622,9 @@ public class WeaponRegistry {
                                                                                 DamageType.PLAYER_EXPLOSION, false))
                                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(480)
+                                                .withActionName(Component.text("Hot Temper"))
+                                                .withActionDescription(
+                                                                "Hover into the air before slowly falling down again.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.LEVITATION, 50, 3)))
                                                                 .withHiddenSplashEffect())
@@ -624,6 +664,10 @@ public class WeaponRegistry {
                                                 MiniMessage.miniMessage().deserialize(
                                                                 "<gradient:#2C456C:#435F91>Wanderer's</gradient> <gradient:#F2C039:#CC8E29>Hoe</gradient>"))
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(100)
+                                                .withActionName(MiniMessage.miniMessage()
+                                                                .deserialize("A Dazzling Escape"))
+                                                .withActionDescription(
+                                                                "Fire an Emerald Projectile providing knock-back to anything hit.")
                                                 .withVelocityMultiplier(4.8f)
                                                 .addEffect(new KnockbackEffect(1.2f))
                                                 .withProjectileMaterial(Material.EMERALD)
@@ -658,6 +702,10 @@ public class WeaponRegistry {
                                                                 .build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withActionName(MiniMessage.miniMessage()
+                                                                .deserialize("Don't Talk to my Son"))
+                                                .withActionDescription(
+                                                                "Spit an explosive blast dealing damage to the enemy team and a small knock-back to anything hit")
                                                 .withVelocityMultiplier(4.8f)
                                                 .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
                                                                 .source(Sound.Source.UI)
@@ -685,6 +733,8 @@ public class WeaponRegistry {
                                                 .withProjectile(LlamaSpit.class)
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(320)
+                                                .withActionName(MiniMessage.miniMessage().deserialize("Back to Trade"))
+                                                .withActionDescription("A quick forward dash.")
                                                 .withVelocityMultiplier(4.8f)
                                                 .addCastEffect(new DashEffect(0.9f))
                                                 .addCastEffect(dashGeometricEffect)
@@ -710,6 +760,9 @@ public class WeaponRegistry {
                                 .withWeaponItemMaterial(Material.GRASS_BLOCK)
                                 .withPrimaryAction(
                                                 WeaponAction.builder().withReloadTime(100).withVelocityMultiplier(2.8f)
+                                                                .withActionName(Component.text("Glimmering Pearl"))
+                                                                .withActionDescription(
+                                                                                "Blick through the void, performing a short range teleport.")
                                                                 .addEffect(GeometricVisualEffect.builder()
                                                                                 .withParticleBuilder(
                                                                                                 Particle.PORTAL
@@ -762,6 +815,8 @@ public class WeaponRegistry {
                                                                 .withProjectileMaterial(Material.ENDER_PEARL)
                                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(18)
+                                                .withActionName(Component.text("Look for the Eye"))
+                                                .withActionDescription("Throw an eye, causing an explosion.")
                                                 .withVelocityMultiplier(4.8f)
                                                 .addEffect(new DelayEffect(10,
                                                                 Arrays.asList(new ExplosionEffect(2.6f))))
@@ -811,6 +866,9 @@ public class WeaponRegistry {
                                                                 .build())
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(450)
+                                                .withActionName(Component.text("Unaverted Gaze"))
+                                                .withActionDescription(
+                                                                "Enter a seething rage gaining a temporary movement speed buff.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.SPEED, 300,
                                                                 2))).withHiddenSplashEffect())
@@ -850,6 +908,8 @@ public class WeaponRegistry {
                                                                 "<gradient:#FFFFFF:#6CC2F2>Allay Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.AMETHYST_SHARD)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Excited Dash"))
+                                                .withActionDescription("A quick forward dash.")
                                                 .addCastEffect(new DashEffect(1.2f))
                                                 .addCastEffect(allayDashEffect)
                                                 .addCastEffect(new DelayEffect(8, Arrays.asList(allayDashEffect)))
@@ -863,6 +923,9 @@ public class WeaponRegistry {
                                                                 .build())
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(100)
+                                                .withActionName(Component.text("Amethyst Crackle"))
+                                                .withActionDescription(
+                                                                "Launch two amethyst shards exploding in a crackle of light.")
                                                 .withVelocityMultiplier(2.8f)
                                                 .addCastEffect(new SplashPotionEffect(
                                                                 Arrays.asList(new PotionEffect(
@@ -875,6 +938,9 @@ public class WeaponRegistry {
                                                                 .volume(3.0f).build()).withPlayerAsSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withActionName(Component.text("Healing Aura"))
+                                                .withActionDescription(
+                                                                "Perform a short heal on yourself and very nearby allies.")
                                                 .withVelocityMultiplier(4.8f)
                                                 .withProjectiles(2)
                                                 .addEffect(new ExplosionEffect(2.6f))
@@ -918,6 +984,8 @@ public class WeaponRegistry {
                                                                 "<gradient:#FFFFFF:#593210>Pillager Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.CROSSBOW)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Pillaging Charge"))
+                                                .withActionDescription("A quick forward dash.")
                                                 .addCastEffect(new DashEffect(1.2f))
                                                 .addCastEffect(SoundEffect.builder().addSound(
                                                                 Sound.sound()
@@ -942,6 +1010,8 @@ public class WeaponRegistry {
                                                                 .build())
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(100)
+                                                .withActionName(Component.text("Reinforcing Celebration"))
+                                                .withActionDescription("Gain a short heal.")
                                                 .withVelocityMultiplier(2.8f)
                                                 .addCastEffect(new SplashPotionEffect(
                                                                 Arrays.asList(new PotionEffect(
@@ -956,6 +1026,9 @@ public class WeaponRegistry {
                                                                 .withPlayerAsSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withActionName(Component.text("Firework Barrage"))
+                                                .withActionDescription(
+                                                                "Shoot three short range fireworks, causing explosions.")
                                                 .withProjectile(Firework.class)
                                                 .withVelocityMultiplier(1.4f)
                                                 .withProjectiles(3)
@@ -1004,6 +1077,9 @@ public class WeaponRegistry {
                                                 .deserialize("<gradient:#221a17:#42352d>Withered Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.NETHERITE_HOE)
                                 .withSneakAction(WeaponAction.builder()
+                                                .withActionName(Component.text("Withering Depths"))
+                                                .withActionDescription(
+                                                                "Explode creating a large hole, withering and damaging nearby enemies.")
                                                 .withReloadTime(300)
                                                 .addCastEffect(SoundEffect.builder()
                                                                 .addSound(Sound.sound().source(Sound.Source.UI).type(
@@ -1031,6 +1107,9 @@ public class WeaponRegistry {
                                                                 .withHiddenSplashEffect())
                                                 .build())
                                 .withPrimaryAction(WeaponAction.builder().withProjectile(WitherSkull.class)
+                                                .withActionName(Component.text("Wither Storm"))
+                                                .withActionDescription(
+                                                                "Launch a charged wither skull breaking all breakable blocks as though their blast resistance was the same. Withers enemies.")
                                                 .withVelocityMultiplier(1.7f)
                                                 .withReloadTime(50)
                                                 .addCastEffect(SoundEffect.builder()
@@ -1062,6 +1141,9 @@ public class WeaponRegistry {
                                                                 .build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withProjectile(WitherSkull.class)
+                                                .withActionName(Component.text("Spooky Scary"))
+                                                .withActionDescription(
+                                                                "Launch a wither skull creating an explosion and withering enemies.")
                                                 .withVelocityMultiplier(2.7f)
                                                 .withReloadTime(20)
                                                 .addCastEffect(SoundEffect.builder()
@@ -1109,6 +1191,8 @@ public class WeaponRegistry {
                                 .withDisplayName(MiniMessage.miniMessage()
                                                 .deserialize("<gradient:#6AA84F:#223622>Slimy Hoe</gradient>"))
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(450)
+                                                .withActionName(Component.text("Bouncy Step"))
+                                                .withActionDescription("Gain a temporary jump boost.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.JUMP_BOOST, 300,
                                                                 3))))
@@ -1129,6 +1213,8 @@ public class WeaponRegistry {
                                                                 .build())
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Squishy Leap"))
+                                                .withActionDescription("Perform a small dash.")
                                                 .addCastEffect(new DashEffect(1.2f))
                                                 .addCastEffect(slimyDashEffect)
                                                 .addCastEffect(new DelayEffect(8, Arrays.asList(slimyDashEffect)))
@@ -1141,6 +1227,9 @@ public class WeaponRegistry {
                                                                 .build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(35)
+                                                .withActionName(Component.text("Slimy Splatter"))
+                                                .withActionDescription(
+                                                                "Launch a slime-ball that splits into other slime-balls on collision creating a chain of explosions.")
                                                 .withVelocityMultiplier(4.2f)
                                                 .withProjectileSplittingCount(3)
                                                 .withMaxProjectileSplits(1)
@@ -1251,11 +1340,13 @@ public class WeaponRegistry {
 
         public static LiteralCommandNode<CommandSourceStack> createWeaponCommand() {
                 LiteralCommandNode<CommandSourceStack> weapon = Commands.literal("weapon")
-                                .then(Commands.argument("weapon_id", ArgumentTypes.namespacedKey())
+                                .then(Commands.literal("give").then(Commands
+                                                .argument("weapon_id", ArgumentTypes.namespacedKey())
                                                 .suggests(WeaponRegistry::getWeaponNamespacedKeySuggestions)
                                                 .executes(WeaponRegistry::executeGiveSenderSpecificWeapon)
                                                 .then(Commands.argument("target", ArgumentTypes.player())
-                                                                .executes(WeaponRegistry::executeGiveSpecificWeapon)))
+                                                                .executes(WeaponRegistry::executeGiveSpecificWeapon))))
+                                .then(Commands.literal("list").executes(WeaponRegistry::executeListWeapons))
                                 .build();
                 return weapon;
         }
@@ -1279,6 +1370,48 @@ public class WeaponRegistry {
                                 });
                 return builder.buildFuture();
 
+        }
+
+        private static int executeListWeapons(final CommandContext<CommandSourceStack> ctx)
+                        throws CommandSyntaxException {
+                final CommandSender sender = ctx.getSource().getSender();
+
+                WeaponRegistry registry = WeaponRegistry.getInstance();
+
+                Component message = MiniMessage.miniMessage().deserialize("[EggSplosion] Weapons - ");
+                for (NamespacedKey weaponKey : registry.weapons.keySet()) {
+                        Weapon weapon = registry.getWeaponByID(weaponKey);
+                        Component giveButton = Component.text("[Give]").color(TextColor.fromHexString("#55FF55"))
+                                        .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+                                                        .serialize(MiniMessage.miniMessage().deserialize(
+                                                                        "/weapon give <weapon_name>",
+                                                                        Placeholder.component("weapon_name", Component
+                                                                                        .text(weaponKey.asString()))))))
+                                        .hoverEvent(
+                                                        HoverEvent.showText(
+                                                                        Component.text("Give yourself this weapon")));
+
+                        if (weapon.displayName != null) {
+                                message = message.appendNewline().appendSpace().appendSpace()
+                                                .append(MiniMessage.miniMessage().deserialize(
+                                                                "[<weapon_name>] - <give_button>",
+                                                                Placeholder.component("weapon_name",
+                                                                                weapon.displayName.hoverEvent(
+                                                                                                weapon.getItem().asHoverEvent())),
+                                                                Placeholder.component("give_button", giveButton)));
+                        } else {
+                                message = message.appendNewline().appendSpace().appendSpace()
+                                                .append(MiniMessage.miniMessage().deserialize(
+                                                                "<weapon_name> - <give_button>",
+                                                                Placeholder.component("weapon_name",
+                                                                                weapon.getItem().displayName()),
+                                                                Placeholder.component("give_button", giveButton)));
+                        }
+
+                }
+
+                sender.sendMessage(message);
+                return Command.SINGLE_SUCCESS;
         }
 
         private static int executeGiveDefaultWeapons(final CommandContext<CommandSourceStack> ctx)
@@ -1311,7 +1444,6 @@ public class WeaponRegistry {
                 if (!(ctx.getSource().getExecutor() instanceof Player player)) {
                         return Command.SINGLE_SUCCESS;
                 }
-                player.sendMessage("TEST");
 
                 final NamespacedKey weaponKey = ctx.getArgument(
                                 "weapon_id",

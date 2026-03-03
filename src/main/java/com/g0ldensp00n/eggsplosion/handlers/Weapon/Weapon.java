@@ -1,5 +1,8 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
@@ -24,6 +27,9 @@ import org.bukkit.util.Vector;
 import com.g0ldensp00n.eggsplosion.EggSplosion;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 
 public class Weapon implements Listener {
   NamespacedKey weaponID;
@@ -58,6 +64,38 @@ public class Weapon implements Listener {
     Bukkit.getPluginManager().registerEvents(this, EggSplosion.getInstance());
   }
 
+  public static List<String> wordWrap(String input, int maxLineLength) {
+    String[] words = input.split(" ");
+    List<String> output = new ArrayList<>();
+    output.add("");
+    int lineLen = 0;
+    for (String word : words) {
+      if (lineLen + word.length() > maxLineLength) {
+        output.add("");
+        lineLen = 0;
+      }
+      output.set(output.size() - 1, output.getLast() + " " + word);
+      lineLen += word.length() + 1;
+    }
+    return output;
+  }
+
+  public static void addAbilityDescription(List<Component> lore, String actionName, WeaponAction action) {
+    if (action.hasEffect()) {
+      if (action.actionName != null) {
+        lore.add(MiniMessage.miniMessage().deserialize("<white><action_name> - <primary_action_name></white>",
+            Placeholder.component("action_name", Component.text(actionName)),
+            Placeholder.component("primary_action_name", action.actionName)));
+      }
+      if (action.actionDescription != null) {
+        for (String line : wordWrap(action.actionDescription, 40)) {
+          lore.add(MiniMessage.miniMessage().deserialize("<dark_gray><line></dark_gray>",
+              Placeholder.component("line", Component.text(line))));
+        }
+      }
+    }
+  }
+
   public ItemStack getItem() {
     ItemStack weapon = new ItemStack(item);
     weapon.editPersistentDataContainer(pdc -> {
@@ -66,6 +104,12 @@ public class Weapon implements Listener {
           weaponID.asString());
     });
     ItemMeta weaponMeta = weapon.getItemMeta();
+    List<Component> lore = new ArrayList<>();
+    addAbilityDescription(lore, "Primary Action", this.primaryAction);
+    addAbilityDescription(lore, "Secondary Action", this.secondaryAction);
+    addAbilityDescription(lore, "Sneak Action", this.sneakAction);
+    weaponMeta.lore(lore);
+
     UseCooldownComponent useCooldownComponent = weaponMeta.getUseCooldown();
     useCooldownComponent.setCooldownGroup(weaponID);
     weaponMeta.displayName(displayName);

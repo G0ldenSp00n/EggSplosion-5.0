@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
@@ -18,8 +19,11 @@ import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.BooleanGamerule
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.CapturePointNameArgument;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.IntegerGameruleKeyArgument;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.MapNameArgument;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.TeamArgument;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap.BooleanGameRules;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap.IntegerGameRules;
+import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
+import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager.Teams;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -33,8 +37,13 @@ import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -65,6 +74,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
 public class MapManager implements Listener {
   private ItemStack Map_Tool_boundary;
@@ -608,12 +618,31 @@ public class MapManager implements Listener {
             .executes(MapManager::executeMapRemoveSoloSpawns))
         .build();
 
-    LiteralCommandNode<CommandSourceStack> soloSpawnPointCommand = Commands.literal("solo").build();
+    LiteralCommandNode<CommandSourceStack> teamSpawnPointListCommand = Commands.literal("list")
+        .executes(MapManager::executeMapListTeamSpawns)
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> teamSpawnPointRemoveCommand = Commands.literal("remove")
+        .then(Commands.argument("index", IntegerArgumentType.integer())
+            .executes(MapManager::executeMapRemoveTeamSpawns))
+        .build();
+
+    LiteralCommandNode<CommandSourceStack> soloSpawnPointCommand = Commands.literal("solo")
+        .executes(MapManager::executeMapListSoloSpawns)
+        .build();
     soloSpawnPointCommand.addChild(soloSpawnPointListCommand);
     soloSpawnPointCommand.addChild(soloSpawnPointRemoveCommand);
 
+    LiteralCommandNode<CommandSourceStack> teamSpawnPointCommand = Commands.literal("team")
+        .then(Commands.argument("team", new TeamArgument())
+            .executes(MapManager::executeMapListTeamSpawns)
+            .then(teamSpawnPointListCommand)
+            .then(teamSpawnPointRemoveCommand))
+        .build();
+
     LiteralCommandNode<CommandSourceStack> spawnPointCommand = Commands.literal("spawn_points").build();
     spawnPointCommand.addChild(soloSpawnPointCommand);
+    spawnPointCommand.addChild(teamSpawnPointCommand);
 
     LiteralCommandNode<CommandSourceStack> gameruleCommand = Commands.literal("gamerules")
         .then(Commands.argument("bool_game_rule", new BooleanGameruleKeyArgument())
@@ -748,26 +777,43 @@ public class MapManager implements Listener {
     return Command.SINGLE_SUCCESS;
   }
 
-  // TODO: Handle No Maps Edgecase
   private static int executeListMaps(final CommandContext<CommandSourceStack> ctx)
       throws CommandSyntaxException {
     final CommandSender sender = ctx.getSource().getSender();
 
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
 
-    Component message = MiniMessage.miniMessage().deserialize("[EggSplosion] Current Maps - ");
-    Iterator<String> mapNameIterator = mapManager.getMaps().keySet().iterator();
-    while (mapNameIterator.hasNext()) {
-      String mapName = mapNameIterator.next();
-      message = message.appendNewline().appendSpace().appendSpace()
-          .append(MiniMessage.miniMessage().deserialize("<gray><map_name></gray>",
-              Placeholder.component("map_name", Component.text(mapName))));
-      if (mapNameIterator.hasNext()) {
-        message = message.append(Component.text(", "));
-      }
-    }
+    if (mapManager.getMaps().size() > 0) {
+      Component message = MiniMessage.miniMessage().deserialize("[EggSplosion] Current Maps - ");
+      Iterator<String> mapNameIterator = mapManager.getMaps().keySet().iterator();
+      while (mapNameIterator.hasNext()) {
+        String mapName = mapNameIterator.next();
 
-    sender.sendMessage(message);
+        Component editButton = Component.text("[Edit]").color(TextColor.fromHexString("#55FF55"))
+            .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+                .serialize(MiniMessage.miniMessage().deserialize(
+                    "/map edit <map_name> ",
+                    Placeholder.component("map_name", Component.text(mapName))))));
+
+        message = message.appendNewline().appendSpace().appendSpace()
+            .append(MiniMessage.miniMessage().deserialize("<gray><map_name></gray> - <edit_button>",
+                Placeholder.component("map_name", Component.text(mapName)),
+                Placeholder.component("edit_button", editButton)));
+        if (mapNameIterator.hasNext()) {
+          message = message.append(Component.text(", "));
+        }
+      }
+
+      sender.sendMessage(message);
+    } else {
+      Component addButton = Component.text("[Add]").color(TextColor.fromHexString("#55FF55"))
+          .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+              .serialize(Component.text("/map create"))));
+      sender.sendMessage(MiniMessage.miniMessage().deserialize(
+          "[EggSplosion] No map exist - <add_button>",
+          Placeholder.component("add_button", addButton)));
+
+    }
     return Command.SINGLE_SUCCESS;
   }
 
@@ -781,33 +827,54 @@ public class MapManager implements Listener {
 
     GameMap map = mapManager.getMapByName(mapName);
 
-    Component message = MiniMessage.miniMessage().deserialize(
-        "[EggSplosion] Current Map <aqua><map_name></aqua> Effects - ",
-        Placeholder.component("map_name", Component.text(mapName)));
-    Iterator<PotionEffect> mapEffectIterator = map.getMapEffects().iterator();
-    while (mapEffectIterator.hasNext()) {
-      PotionEffect nextPotionEffect = mapEffectIterator.next();
+    if (map.getMapEffects().size() > 0) {
+      Component message = MiniMessage.miniMessage().deserialize(
+          "[EggSplosion] Current Map <aqua><map_name></aqua> Effects - ",
+          Placeholder.component("map_name", Component.text(mapName)));
+      Iterator<PotionEffect> mapEffectIterator = map.getMapEffects().iterator();
+      while (mapEffectIterator.hasNext()) {
+        PotionEffect nextPotionEffect = mapEffectIterator.next();
+        Component editButton = Component.text("[Edit]").color(TextColor.fromHexString("#55FF55"))
+            .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+                .serialize(MiniMessage.miniMessage().deserialize(
+                    "/map edit <map_name> effects add <potion_effect_type> ",
+                    Placeholder.component("map_name", Component.text(mapName)),
+                    Placeholder.component("potion_effect_type",
+                        Component.text(nextPotionEffect.getType().getKey().asString()))))));
 
-      message = message.appendNewline().appendSpace().appendSpace()
-          .append(MiniMessage.miniMessage().deserialize(
-              "<gray><effect_name> <amplifier></gray>",
-              Placeholder.component("effect_name", Component.translatable(nextPotionEffect.getType().translationKey())),
-              Placeholder.component("amplifier",
-                  nextPotionEffect.getAmplifier() < 10
-                      ? Component.translatable("enchantment.level." + (nextPotionEffect.getAmplifier() + 1))
-                      : Component.text(nextPotionEffect.getAmplifier() + 1))))
-          .append(
-              MiniMessage.miniMessage().deserialize(
-                  " - <green><click:suggest_command:\"/map edit " + mapName
-                      + " effects add "
-                      + nextPotionEffect.getType().getKey().asString()
-                      + " \">[Edit]</click></green> <red><click:suggest_command:\"/map edit " + mapName
-                      + " effects remove "
-                      + nextPotionEffect.getType().getKey().asString()
-                      + "\">[Remove]</click></red>"));
+        Component removeButton = Component.text("[Remove]").color(TextColor.fromHexString("#FF5555"))
+            .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+                .serialize(MiniMessage.miniMessage().deserialize(
+                    "/map edit <map_name> effects remove <potion_effect_type>",
+                    Placeholder.component("map_name", Component.text(mapName)),
+                    Placeholder.component("potion_effect_type",
+                        Component.text(nextPotionEffect.getType().getKey().asString()))))));
+
+        message = message.appendNewline().appendSpace().appendSpace()
+            .append(MiniMessage.miniMessage().deserialize(
+                "<gray><effect_name> <amplifier></gray> - <edit_button> <remove_button>",
+                Placeholder.component("effect_name",
+                    Component.translatable(nextPotionEffect.getType().translationKey())),
+                Placeholder.component("amplifier",
+                    nextPotionEffect.getAmplifier() < 10
+                        ? Component.translatable("enchantment.level." + (nextPotionEffect.getAmplifier() + 1))
+                        : Component.text(nextPotionEffect.getAmplifier() + 1)),
+                Placeholder.component("edit_button", editButton),
+                Placeholder.component("remove_button", removeButton)));
+      }
+
+      sender.sendMessage(message);
+    } else {
+      Component addButton = Component.text("[Add]").color(TextColor.fromHexString("#55FF55"))
+          .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+              .serialize(MiniMessage.miniMessage().deserialize(
+                  "/map edit <map_name> effects add ",
+                  Placeholder.component("map_name", Component.text(mapName))))));
+      sender.sendMessage(MiniMessage.miniMessage().deserialize(
+          "[EggSplosion] Map <aqua><map_name></aqua> has no effects - <add_button>",
+          Placeholder.component("map_name", Component.text(mapName)),
+          Placeholder.component("add_button", addButton)));
     }
-
-    sender.sendMessage(message);
     return Command.SINGLE_SUCCESS;
   }
 
@@ -921,9 +988,9 @@ public class MapManager implements Listener {
         "[EggSplosion] Map <aqua><map_name></aqua> <red>Removed</red> Capture Point <blue><capture_point_name></blue> (<x>, <y>, <z>)",
         Placeholder.component("map_name", Component.text(mapName)),
         Placeholder.component("capture_point_name", Component.text(capturePointName)),
-        Placeholder.component("x", Component.text(player.getLocation().getBlockX())),
-        Placeholder.component("y", Component.text(player.getLocation().getBlockY())),
-        Placeholder.component("z", Component.text(player.getLocation().getBlockZ()))));
+        Placeholder.component("x", Component.text(capturePointLocation.getBlockX())),
+        Placeholder.component("y", Component.text(capturePointLocation.getBlockY())),
+        Placeholder.component("z", Component.text(capturePointLocation.getBlockZ()))));
 
     return Command.SINGLE_SUCCESS;
   }
@@ -973,29 +1040,35 @@ public class MapManager implements Listener {
       while (capturePointsIterator.hasNext()) {
         String capturePointName = capturePointsIterator.next();
         Location capturePointLocation = map.getCapturePoint(capturePointName);
-        // TODO: Improve this??? properly do this?
+        Component removeButton = Component.text("[Remove]").color(TextColor.fromHexString("#FF5555"))
+            .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+                .serialize(MiniMessage.miniMessage().deserialize(
+                    "/map edit <map_name> capture_point remove <capture_point_name>",
+                    Placeholder.component("map_name", Component.text(mapName)),
+                    Placeholder.component("capture_point_name", Component
+                        .text(new NamespacedKey(mapName.toLowerCase(), capturePointName.toLowerCase()).asString()))))));
+
         message = message.appendNewline().appendSpace().appendSpace()
             .append(MiniMessage.miniMessage().deserialize(
-                "<blue><capture_point_name></blue> (<x>, <y>, <z>)",
+                "<blue><capture_point_name></blue> (<x>, <y>, <z>) - <remove_button>",
                 Placeholder.component("capture_point_name", Component.text(capturePointName)),
                 Placeholder.component("x", Component.text(capturePointLocation.getBlockX())),
                 Placeholder.component("y", Component.text(capturePointLocation.getBlockY())),
-                Placeholder.component("z", Component.text(capturePointLocation.getBlockZ()))))
-            .append(
-                MiniMessage.miniMessage().deserialize(
-                    " - <red><click:suggest_command:\"/map edit " + mapName
-                        + " capture_point remove "
-                        + (new NamespacedKey(mapName.toLowerCase(), capturePointName.toLowerCase())).asString()
-                        + "\">[Remove]</click></red>"));
+                Placeholder.component("z", Component.text(capturePointLocation.getBlockZ())),
+                Placeholder.component("remove_button", removeButton)));
       }
 
       sender.sendMessage(message);
     } else {
-      // TODO: Improve this??? properly do this?
+      Component addButton = Component.text("[Add]").color(TextColor.fromHexString("#55FF55"))
+          .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+              .serialize(MiniMessage.miniMessage().deserialize(
+                  "/map edit <map_name> capture_point add ",
+                  Placeholder.component("map_name", Component.text(mapName))))));
       sender.sendMessage(MiniMessage.miniMessage().deserialize(
-          "[EggSplosion] Map <aqua><map_name></aqua> has no capture points - <green><click:suggest_command:/map edit "
-              + mapName + " capture_point add >[Add]</click></green>",
-          Placeholder.component("map_name", Component.text(mapName))));
+          "[EggSplosion] Map <aqua><map_name></aqua> has no capture points - <add_button>",
+          Placeholder.component("map_name", Component.text(mapName)),
+          Placeholder.component("add_button", addButton)));
     }
 
     return Command.SINGLE_SUCCESS;
@@ -1083,27 +1156,30 @@ public class MapManager implements Listener {
     return Command.SINGLE_SUCCESS;
   }
 
-  private static Component generateSpawnPointMessage(Location spawnLocation, String mapName, int spawnPointIndex) {
-    Component message = MiniMessage.miniMessage().deserialize(
-        "<blue><spawn_point_index></blue> (<x>, <y>, <z>)",
+  private static Component generateSpawnPointMessage(Location spawnLocation, String mapName, int spawnPointIndex,
+      Component removeButton) {
+    TagResolver.Single xComponent = Placeholder.component("x", Component.text(spawnLocation.getBlockX()));
+    TagResolver.Single yComponent = Placeholder.component("y", Component.text(spawnLocation.getBlockY() + 1));
+    TagResolver.Single zComponent = Placeholder.component("z", Component.text(spawnLocation.getBlockZ()));
+
+    return MiniMessage.miniMessage().deserialize(
+        "<blue><spawn_point_index></blue> (<x>, <y>, <z>) - <vist_button> <remove_button>",
         Placeholder.component("spawn_point_index", Component.text(spawnPointIndex)),
-        Placeholder.component("x", Component.text(spawnLocation.getBlockX())),
-        Placeholder.component("y", Component.text(spawnLocation.getBlockY())),
-        Placeholder.component("z", Component.text(spawnLocation.getBlockZ())));
-    return message.append(MiniMessage.miniMessage().deserialize(
-        " - <green><click:run_command:/tp @s " + spawnLocation.getBlockX() + " "
-            + (spawnLocation.getBlockY() + 1)
-            + " "
-            + spawnLocation.getBlockZ()
-            + " "
-            + spawnLocation.getYaw()
-            + " "
-            + spawnLocation.getPitch()
-            + ">[Visit]</click></green> <red><click:suggest_command:\"/map edit "
-            + mapName
-            + " spawn_points solo remove "
-            + spawnPointIndex
-            + "\">[Remove]</click></red>"));
+        xComponent,
+        yComponent,
+        zComponent,
+        Placeholder.component("vist_button",
+            Component
+                .text("[Visit]").color(
+                    TextColor.fromHexString("#5555FF"))
+                .clickEvent(ClickEvent.runCommand(PlainTextComponentSerializer
+                    .plainText().serialize(MiniMessage.miniMessage().deserialize("/tp @s <x> <y> <z> <yaw> <pitch>",
+                        xComponent, yComponent, zComponent,
+                        Placeholder.component("yaw", Component.text(spawnLocation.getYaw())),
+                        Placeholder.component("pitch", Component.text(spawnLocation.getPitch()))))))
+                .hoverEvent(HoverEvent.showText(Component.text("Teleport to this spawn point")))),
+        Placeholder.component("remove_button",
+            removeButton.hoverEvent(HoverEvent.showText(Component.text("Remove this spawn point")))));
   }
 
   private static int executeMapListSoloSpawns(final CommandContext<CommandSourceStack> ctx)
@@ -1123,16 +1199,25 @@ public class MapManager implements Listener {
         int index = soloSpawnsIterator.nextIndex();
         Location soloSpawnPoint = soloSpawnsIterator.next();
 
+        Component removeButton = Component.text("[Remove]").color(TextColor.fromHexString("#FF5555"))
+            .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText().serialize(MiniMessage
+                .miniMessage().deserialize("/map edit <map_name> spawn_points solo remove <spawn_point_index>",
+                    Placeholder.component("map_name", Component.text(mapName)),
+                    Placeholder.component("spawn_point_index", Component.text(index))))));
+
         message = message.appendNewline().appendSpace().appendSpace()
-            .append(generateSpawnPointMessage(soloSpawnPoint, mapName, index));
+            .append(generateSpawnPointMessage(soloSpawnPoint, mapName, index, removeButton));
       }
       sender.sendMessage(message);
     } else {
       sender.sendMessage(MiniMessage.miniMessage().deserialize(
-          "[EggSplosion] Map <aqua><map_name></aqua> has no solo spawn points - <green><click:suggest_command:/map edit "
-              + mapName + " tools>[Add]</click></green>",
-          Placeholder.component("map_name", Component.text(mapName))));
-
+          "[EggSplosion] Map <aqua><map_name></aqua> has no solo spawn points - <add_button>",
+          Placeholder.component("map_name", Component.text(mapName)),
+          Placeholder.component("add_button",
+              Component.text("[Add]").color(TextColor.fromHexString("#55FF55")).clickEvent(
+                  ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+                      .serialize(MiniMessage.miniMessage().deserialize("/map edit <map_name> tools",
+                          Placeholder.component("map_name", Component.text(mapName)))))))));
     }
     return Command.SINGLE_SUCCESS;
   }
@@ -1151,10 +1236,90 @@ public class MapManager implements Listener {
     map.removeSoloSpawnLocation(soloSpawnIndex);
 
     Component message = MiniMessage.miniMessage().deserialize(
-        "<red>Removed</red> spawn point <blue><spawn_point_index></blue> (<x>, <y>, <z>)",
+        "<red>Removed</red> solo spawn point <blue><spawn_point_index></blue> (<x>, <y>, <z>)",
         Placeholder.component("spawn_point_index", Component.text(soloSpawnIndex)),
         Placeholder.component("x", Component.text(spawnLocation.getBlockX())),
-        Placeholder.component("y", Component.text(spawnLocation.getBlockY())),
+        Placeholder.component("y", Component.text(spawnLocation.getBlockY() + 1)),
+        Placeholder.component("z", Component.text(spawnLocation.getBlockZ())));
+
+    sender.sendMessage(message);
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapListTeamSpawns(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    Entity sender = ctx.getSource().getExecutor();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final Teams team = ctx.getArgument("team", Teams.class);
+
+    // TODO: Map Set Team Color??
+    String teamDisplayName = ScoreManager.getTeamDisplayName(ChatColor.RED);
+    TextColor color = TextColor.fromHexString("#FF5555");
+    if (team.asInt() == 1) {
+      teamDisplayName = ScoreManager.getTeamDisplayName(ChatColor.BLUE);
+      color = TextColor.fromHexString("#5555FF");
+    }
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    if (map.getSideSpawnLocations(team.asInt()).size() > 0) {
+
+      Component message = MiniMessage.miniMessage().deserialize(
+          "[EggSplosion] Current Team <team> Spawn Points - ",
+          Placeholder.component("team", Component.text(teamDisplayName).color(color)));
+      ListIterator<Location> teamSpawnsIterator = map.getSideSpawnLocations(team.asInt()).listIterator();
+
+      while (teamSpawnsIterator.hasNext()) {
+        int index = teamSpawnsIterator.nextIndex();
+        Location teamSpawnPoint = teamSpawnsIterator.next();
+
+        Component removeButton = Component.text("[Remove]").color(TextColor.fromHexString("#FF5555"))
+            .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText().serialize(MiniMessage
+                .miniMessage()
+                .deserialize("/map edit <map_name> spawn_points team <team_name> remove <spawn_point_index>",
+                    Placeholder.component("map_name", Component.text(mapName)),
+                    Placeholder.component("team_name", Component.text(team.asString())),
+                    Placeholder.component("spawn_point_index", Component.text(index))))));
+
+        message = message.appendNewline().appendSpace().appendSpace()
+            .append(generateSpawnPointMessage(teamSpawnPoint, mapName, index, removeButton));
+      }
+      sender.sendMessage(message);
+    } else {
+      sender.sendMessage(MiniMessage.miniMessage().deserialize(
+          "[EggSplosion] Map <aqua><map_name></aqua> has no team <team> spawn points - <add_button>",
+          Placeholder.component("map_name", Component.text(mapName)),
+          Placeholder.component("team", Component.text(teamDisplayName).color(color)),
+          Placeholder.component("add_button",
+              Component.text("[Add]").color(TextColor.fromHexString("#55FF55")).clickEvent(
+                  ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+                      .serialize(MiniMessage.miniMessage().deserialize("/map edit <map_name> tools",
+                          Placeholder.component("map_name", Component.text(mapName)))))))));
+    }
+    return Command.SINGLE_SUCCESS;
+  }
+
+  private static int executeMapRemoveTeamSpawns(final CommandContext<CommandSourceStack> ctx)
+      throws CommandSyntaxException {
+    Entity sender = ctx.getSource().getExecutor();
+
+    MapManager mapManager = EggSplosion.getInstance().getMapManager();
+    final String mapName = ctx.getArgument("map_name", String.class);
+    final Integer teamSpawnIndex = IntegerArgumentType.getInteger(ctx, "index");
+    final Teams team = ctx.getArgument("team", Teams.class);
+
+    GameMap map = mapManager.getMapByName(mapName);
+
+    Location spawnLocation = map.getSideSpawnLocations(team.asInt()).get(teamSpawnIndex);
+    map.removeSideSpawnLocation(team.asInt(), teamSpawnIndex);
+
+    Component message = MiniMessage.miniMessage().deserialize(
+        "<red>Removed</red> solo spawn point <blue><spawn_point_index></blue> (<x>, <y>, <z>)",
+        Placeholder.component("spawn_point_index", Component.text(teamSpawnIndex)),
+        Placeholder.component("x", Component.text(spawnLocation.getBlockX())),
+        Placeholder.component("y", Component.text(spawnLocation.getBlockY() + 1)),
         Placeholder.component("z", Component.text(spawnLocation.getBlockZ())));
 
     sender.sendMessage(message);
@@ -1206,9 +1371,27 @@ public class MapManager implements Listener {
     MapManager mapManager = EggSplosion.getInstance().getMapManager();
     final String mapName = ctx.getArgument("map_name", String.class);
 
-    Location to_teleport = mapManager.gameMaps.get(mapName).getSpawnPoint();
+    GameMap map = mapManager.getMapByName(mapName);
+
+    Random random = new Random();
+
+    Location to_teleport = map.getSpawnPoint();
+    Location to_teleport_team_a = map.getSideASpawnLocations().get(random.nextInt(map.getSideASpawnLocations().size()));
+    Location to_teleport_team_b = map.getSideBSpawnLocations().get(random.nextInt(map.getSideBSpawnLocations().size()));
     if (to_teleport != null) {
-      player.teleport(to_teleport);
+      player.teleport(to_teleport.clone().add(new Vector(0, 1, 0)));
+    } else if (to_teleport_team_a != null || to_teleport_team_b != null) {
+      if (to_teleport_team_a != null && to_teleport_team_b != null) {
+        if (random.nextInt(2) == 0) {
+          player.teleport(to_teleport_team_a.clone().add(0, 1, 0));
+        } else {
+          player.teleport(to_teleport_team_b.clone().add(0, 1, 0));
+        }
+      } else if (to_teleport_team_a != null) {
+        player.teleport(to_teleport_team_a.clone().add(0, 1, 0));
+      } else {
+        player.teleport(to_teleport_team_b.clone().add(0, 1, 0));
+      }
     } else {
       to_teleport = mapManager.gameMaps.get(mapName).getCornerA();
       player.teleport(to_teleport);

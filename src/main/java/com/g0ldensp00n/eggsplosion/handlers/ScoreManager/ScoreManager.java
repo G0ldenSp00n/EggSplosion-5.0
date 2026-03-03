@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.Lobby;
 import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.GameModeLobbyTypes.GameLobby;
+import com.g0ldensp00n.eggsplosion.handlers.MapManager.Arguments.TeamArgument;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -38,7 +40,7 @@ public class ScoreManager {
       Boolean hideTeamNameTags) {
     this(scoreToWin, type, lobby);
 
-    String teamAName = teamAColor.name().substring(0, 1) + teamAColor.name().toLowerCase().substring(1);
+    String teamAName = getTeamDisplayName(teamAColor);
     teamA = scoreboard.registerNewTeam(teamAName + " Team");
     teamA.setPrefix("" + teamAColor);
     teamA.setColor(teamAColor);
@@ -47,7 +49,7 @@ public class ScoreManager {
       teamA.setOption(Option.NAME_TAG_VISIBILITY, OptionStatus.FOR_OTHER_TEAMS);
     }
 
-    String teamBName = teamBColor.name().substring(0, 1) + teamBColor.name().toLowerCase().substring(1);
+    String teamBName = getTeamDisplayName(teamBColor);
     teamB = scoreboard.registerNewTeam(teamBName + " Team");
     teamB.setPrefix("" + teamBColor);
     teamB.setColor(teamBColor);
@@ -55,6 +57,48 @@ public class ScoreManager {
     if (hideTeamNameTags) {
       teamB.setOption(Option.NAME_TAG_VISIBILITY, OptionStatus.FOR_OTHER_TEAMS);
     }
+  }
+
+  public static enum Teams {
+    TEAM_A,
+    TEAM_B;
+
+    public int asInt() {
+      switch (this) {
+        case TEAM_A:
+          return 0;
+        case TEAM_B:
+          return 1;
+      }
+      return -1;
+    }
+
+    public String asString() {
+      switch (this) {
+        case TEAM_A:
+          return "team_a";
+        case TEAM_B:
+          return "team_b";
+        default:
+          return "INVALID";
+      }
+    }
+
+    public static Teams fromString(String value) throws CommandSyntaxException {
+      switch (value) {
+        case "team_a":
+          return TEAM_A;
+        case "team_b":
+          return TEAM_B;
+        default:
+          throw TeamArgument.ERROR_INVALID_GAMERULE_KEY.create(value);
+      }
+    }
+  };
+
+  public static String getTeamDisplayName(ChatColor teamColor) {
+    String teamAName = teamColor.name().substring(0, 1) + teamColor.name().toLowerCase().substring(1);
+    return teamAName;
   }
 
   public ScoreManager(ScoreType type, Lobby lobby, ChatColor teamAColor, ChatColor teamBColor,

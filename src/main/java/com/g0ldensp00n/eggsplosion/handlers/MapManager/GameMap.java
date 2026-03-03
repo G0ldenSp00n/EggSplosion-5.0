@@ -461,6 +461,10 @@ public class GameMap {
     this.soloSpawnLocations.remove(spawnPointIndex);
   }
 
+  public void removeSideSpawnLocation(int teamID, int spawnPointIndex) {
+    this.sideSpawnLocations.get(teamID).remove(spawnPointIndex);
+  }
+
   public List<Location> getSideSpawnLocations(Integer side) {
     return sideSpawnLocations.get(side);
   }
