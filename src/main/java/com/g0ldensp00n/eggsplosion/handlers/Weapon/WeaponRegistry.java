@@ -1,20 +1,16 @@
 package com.g0ldensp00n.eggsplosion.handlers.Weapon;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.block.BlockType;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.LlamaSpit;
@@ -26,10 +22,7 @@ import org.bukkit.inventory.ItemType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
-
 import com.g0ldensp00n.eggsplosion.EggSplosion;
-import com.g0ldensp00n.eggsplosion.handlers.Utils.Utils;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DamageEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DashEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.DelayEffect;
@@ -43,12 +36,28 @@ import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.SplashPotionEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.TeleportEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.VisualEffect;
 import com.g0ldensp00n.eggsplosion.handlers.Weapon.Effects.EffectListeners.KnockbackEffectListener;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
+import io.papermc.paper.command.brigadier.MessageComponentSerializer;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
+import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
 import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
-public class WeaponRegistry implements CommandExecutor, TabCompleter {
+public class WeaponRegistry {
         private static WeaponRegistry instance;
         private static NamespacedKey weaponIDKey = new NamespacedKey(EggSplosion.getInstance(), "weapon_id");
         private static NamespacedKey isWeaponPrimaryFireKey = new NamespacedKey(EggSplosion.getInstance(),
@@ -200,6 +209,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .deserialize("<gradient:#041820:#61c3cb>Sculked Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.DIAMOND_HOE)
                                 .withSneakAction(WeaponAction.builder().withReloadTime(600)
+                                                .withActionName(Component.text("Blinding Shriek"))
+                                                .withActionDescription(
+                                                                "Perform a shriek causing blindness to teammates and enemies nearby.")
                                                 .addCastEffect(VisualEffect.builder()
                                                                 .addParticle(Particle.SHRIEK.builder().data(0))
                                                                 .addParticleWithDelay(Particle.SHRIEK.builder().data(0),
@@ -231,6 +243,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withPlayerAsSource().build())
                                                 .build())
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(640)
+                                                .withActionName(Component.text("Sonic Boom"))
+                                                .withActionDescription(
+                                                                "Build up a sonic blast damaging enemies in a line in front of you.")
                                                 .withVelocityMultiplier(2.75f)
                                                 .addCastEffect(new DelayEffect(30, Arrays.asList(new SonicBoomEffect(
                                                                 Particle.SONIC_BOOM, 2, 30,
@@ -248,6 +263,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withPlayerAsSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(12)
+                                                .withActionName(Component.text("Echo"))
+                                                .withActionDescription(
+                                                                "Perform a shriek cuasing blindness to teammates and enemies nearby.")
                                                 .withVelocityMultiplier(4.0f)
                                                 .withProjectileMaterial(Material.ECHO_SHARD)
                                                 .addEffect(new ExplosionEffect(2.2f))
@@ -284,9 +302,16 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 "<gradient:#de0b0b:#ffe8e8>Spartan Laser</gradient>"))
                                 .withWeaponItemMaterial(Material.STONE_HOE)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(580)
+                                                .withActionName(Component.text("Photonic Boom"))
+                                                .withActionDescription(
+                                                                "Build up a blast vaporizing the blocks and people in front of you.")
                                                 .addCastEffect(new DelayEffect(38,
                                                                 Arrays.asList(new SonicBoomEffect(null, 2, 25, 5,
-                                                                                Arrays.asList(new ExplosionEffect(2.5f),
+                                                                                Arrays.asList(new ExplosionEffect(2.8f),
+                                                                                                new DamageEffect(4.5f,
+                                                                                                                40.0f,
+                                                                                                                DamageType.OUTSIDE_BORDER,
+                                                                                                                false),
                                                                                                 GeometricVisualEffect
                                                                                                                 .builder()
                                                                                                                 .withParticleBuilder(
@@ -353,6 +378,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .build())
                                 .withSecondaryAction(
                                                 WeaponAction.builder().withReloadTime(10)
+                                                                .withActionName(Component.text("Grenade Launcher"))
+                                                                .withActionDescription(
+                                                                                "Lob a grenade causing an explosion.")
                                                                 .withProjectileMaxTicksLived(10)
                                                                 .withVelocityMultiplier(1.5f)
                                                                 .withProjectileMaterial(Material.TURTLE_EGG)
@@ -404,6 +432,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .build())
 
                                 .withSneakAction(WeaponAction.builder().withReloadTime(450)
+                                                .withActionName(Component.text("Spartan Sprint"))
+                                                .withActionDescription("Gain a temporary movement speed buff.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.SPEED, 300,
                                                                 2))))
@@ -443,6 +473,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 "<gradient:#1C273B:#6C6699>Breezy Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.BREEZE_ROD)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Strong Gust"))
+                                                .withActionDescription("Perform a large forward leaping dash.")
                                                 .addCastEffect(new DashEffect(1.8f))
                                                 .addCastEffect(breezyDashEffect)
                                                 .addCastEffect(new DelayEffect(8, Arrays.asList(breezyDashEffect)))
@@ -456,6 +488,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .build())
                                 .withSecondaryAction(
                                                 WeaponAction.builder().withReloadTime(14)
+                                                                .withActionName(Component.text("Turbulence"))
+                                                                .withActionDescription(
+                                                                                "Shoot a wind-charge exploding on impact and dealing knock-back.")
                                                                 .withProjectile(WindCharge.class)
                                                                 .withVelocityMultiplier(1.25f)
                                                                 .addCastEffect(
@@ -491,6 +526,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 DamageType.PLAYER_EXPLOSION, false))
                                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(300)
+                                                .withActionName(Component.text("Light Headed"))
+                                                .withActionDescription(
+                                                                "Enter a whirlwind gaining a temporary movement speed buff.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.SPEED, 50, 3)))
                                                                 .withHiddenSplashEffect())
@@ -533,6 +571,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 "<gradient:#4F2400:#FCFC82>Blazing Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.BLAZE_ROD)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Burning Passion"))
+                                                .withActionDescription("A quick dash forward.")
                                                 .addCastEffect(new DashEffect(1.2f))
                                                 .addCastEffect(blazingDashEffect)
                                                 .addCastEffect(new DelayEffect(8, Arrays.asList(blazingDashEffect)))
@@ -546,6 +586,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .build())
                                 .withSecondaryAction(
                                                 WeaponAction.builder().withReloadTime(38)
+                                                                .withActionName(Component.text("Blazing Volley"))
+                                                                .withActionDescription(
+                                                                                "Fire a volley of 3 fire charge projectiles causing explosions.")
                                                                 .withProjectile(SmallFireball.class)
                                                                 .withVelocityMultiplier(1.25f)
                                                                 .withBurstCount(3)
@@ -579,6 +622,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                                 DamageType.PLAYER_EXPLOSION, false))
                                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(480)
+                                                .withActionName(Component.text("Hot Temper"))
+                                                .withActionDescription(
+                                                                "Hover into the air before slowly falling down again.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.LEVITATION, 50, 3)))
                                                                 .withHiddenSplashEffect())
@@ -618,6 +664,10 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 MiniMessage.miniMessage().deserialize(
                                                                 "<gradient:#2C456C:#435F91>Wanderer's</gradient> <gradient:#F2C039:#CC8E29>Hoe</gradient>"))
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(100)
+                                                .withActionName(MiniMessage.miniMessage()
+                                                                .deserialize("A Dazzling Escape"))
+                                                .withActionDescription(
+                                                                "Fire an Emerald Projectile providing knock-back to anything hit.")
                                                 .withVelocityMultiplier(4.8f)
                                                 .addEffect(new KnockbackEffect(1.2f))
                                                 .withProjectileMaterial(Material.EMERALD)
@@ -652,6 +702,10 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withActionName(MiniMessage.miniMessage()
+                                                                .deserialize("Don't Talk to my Son"))
+                                                .withActionDescription(
+                                                                "Spit an explosive blast dealing damage to the enemy team and a small knock-back to anything hit")
                                                 .withVelocityMultiplier(4.8f)
                                                 .addCastEffect(SoundEffect.builder().addSound(Sound.sound()
                                                                 .source(Sound.Source.UI)
@@ -679,6 +733,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .withProjectile(LlamaSpit.class)
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(320)
+                                                .withActionName(MiniMessage.miniMessage().deserialize("Back to Trade"))
+                                                .withActionDescription("A quick forward dash.")
                                                 .withVelocityMultiplier(4.8f)
                                                 .addCastEffect(new DashEffect(0.9f))
                                                 .addCastEffect(dashGeometricEffect)
@@ -704,6 +760,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withWeaponItemMaterial(Material.GRASS_BLOCK)
                                 .withPrimaryAction(
                                                 WeaponAction.builder().withReloadTime(100).withVelocityMultiplier(2.8f)
+                                                                .withActionName(Component.text("Glimmering Pearl"))
+                                                                .withActionDescription(
+                                                                                "Blick through the void, performing a short range teleport.")
                                                                 .addEffect(GeometricVisualEffect.builder()
                                                                                 .withParticleBuilder(
                                                                                                 Particle.PORTAL
@@ -756,6 +815,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withProjectileMaterial(Material.ENDER_PEARL)
                                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(18)
+                                                .withActionName(Component.text("Look for the Eye"))
+                                                .withActionDescription("Throw an eye, causing an explosion.")
                                                 .withVelocityMultiplier(4.8f)
                                                 .addEffect(new DelayEffect(10,
                                                                 Arrays.asList(new ExplosionEffect(2.6f))))
@@ -805,6 +866,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .build())
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(450)
+                                                .withActionName(Component.text("Unaverted Gaze"))
+                                                .withActionDescription(
+                                                                "Enter a seething rage gaining a temporary movement speed buff.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.SPEED, 300,
                                                                 2))).withHiddenSplashEffect())
@@ -844,6 +908,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 "<gradient:#FFFFFF:#6CC2F2>Allay Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.AMETHYST_SHARD)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Excited Dash"))
+                                                .withActionDescription("A quick forward dash.")
                                                 .addCastEffect(new DashEffect(1.2f))
                                                 .addCastEffect(allayDashEffect)
                                                 .addCastEffect(new DelayEffect(8, Arrays.asList(allayDashEffect)))
@@ -857,6 +923,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .build())
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(100)
+                                                .withActionName(Component.text("Amethyst Crackle"))
+                                                .withActionDescription(
+                                                                "Launch two amethyst shards exploding in a crackle of light.")
                                                 .withVelocityMultiplier(2.8f)
                                                 .addCastEffect(new SplashPotionEffect(
                                                                 Arrays.asList(new PotionEffect(
@@ -869,6 +938,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .volume(3.0f).build()).withPlayerAsSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withActionName(Component.text("Healing Aura"))
+                                                .withActionDescription(
+                                                                "Perform a short heal on yourself and very nearby allies.")
                                                 .withVelocityMultiplier(4.8f)
                                                 .withProjectiles(2)
                                                 .addEffect(new ExplosionEffect(2.6f))
@@ -912,6 +984,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 "<gradient:#FFFFFF:#593210>Pillager Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.CROSSBOW)
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Pillaging Charge"))
+                                                .withActionDescription("A quick forward dash.")
                                                 .addCastEffect(new DashEffect(1.2f))
                                                 .addCastEffect(SoundEffect.builder().addSound(
                                                                 Sound.sound()
@@ -936,6 +1010,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .build())
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(100)
+                                                .withActionName(Component.text("Reinforcing Celebration"))
+                                                .withActionDescription("Gain a short heal.")
                                                 .withVelocityMultiplier(2.8f)
                                                 .addCastEffect(new SplashPotionEffect(
                                                                 Arrays.asList(new PotionEffect(
@@ -950,6 +1026,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withPlayerAsSource().build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(14)
+                                                .withActionName(Component.text("Firework Barrage"))
+                                                .withActionDescription(
+                                                                "Shoot three short range fireworks, causing explosions.")
                                                 .withProjectile(Firework.class)
                                                 .withVelocityMultiplier(1.4f)
                                                 .withProjectiles(3)
@@ -969,7 +1048,7 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withParticleBuilder(
                                                                                 Particle.FIREWORK
                                                                                                 .builder())
-                                                                .withParticleCount(200)
+                                                                .withParticleCount(100)
                                                                 .withShape(GeometricVisualEffect.Shape.Sphere
                                                                                 .builder()
                                                                                 .withOffset(new GeometricVisualEffect.Offset.FromPoint()
@@ -998,6 +1077,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                 .deserialize("<gradient:#221a17:#42352d>Withered Hoe</gradient>"))
                                 .withWeaponItemMaterial(Material.NETHERITE_HOE)
                                 .withSneakAction(WeaponAction.builder()
+                                                .withActionName(Component.text("Withering Depths"))
+                                                .withActionDescription(
+                                                                "Explode creating a large hole, withering and damaging nearby enemies.")
                                                 .withReloadTime(300)
                                                 .addCastEffect(SoundEffect.builder()
                                                                 .addSound(Sound.sound().source(Sound.Source.UI).type(
@@ -1025,6 +1107,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .withHiddenSplashEffect())
                                                 .build())
                                 .withPrimaryAction(WeaponAction.builder().withProjectile(WitherSkull.class)
+                                                .withActionName(Component.text("Wither Storm"))
+                                                .withActionDescription(
+                                                                "Launch a charged wither skull breaking all breakable blocks as though their blast resistance was the same. Withers enemies.")
                                                 .withVelocityMultiplier(1.7f)
                                                 .withReloadTime(50)
                                                 .addCastEffect(SoundEffect.builder()
@@ -1056,6 +1141,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withProjectile(WitherSkull.class)
+                                                .withActionName(Component.text("Spooky Scary"))
+                                                .withActionDescription(
+                                                                "Launch a wither skull creating an explosion and withering enemies.")
                                                 .withVelocityMultiplier(2.7f)
                                                 .withReloadTime(20)
                                                 .addCastEffect(SoundEffect.builder()
@@ -1103,6 +1191,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                 .withDisplayName(MiniMessage.miniMessage()
                                                 .deserialize("<gradient:#6AA84F:#223622>Slimy Hoe</gradient>"))
                                 .withPrimaryAction(WeaponAction.builder().withReloadTime(450)
+                                                .withActionName(Component.text("Bouncy Step"))
+                                                .withActionDescription("Gain a temporary jump boost.")
                                                 .addCastEffect(new SelfPotionEffect(Arrays.asList(new PotionEffect(
                                                                 PotionEffectType.JUMP_BOOST, 300,
                                                                 3))))
@@ -1123,6 +1213,8 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .build())
                                                 .build())
                                 .withSneakAction(WeaponAction.builder().withReloadTime(25)
+                                                .withActionName(Component.text("Squishy Leap"))
+                                                .withActionDescription("Perform a small dash.")
                                                 .addCastEffect(new DashEffect(1.2f))
                                                 .addCastEffect(slimyDashEffect)
                                                 .addCastEffect(new DelayEffect(8, Arrays.asList(slimyDashEffect)))
@@ -1135,6 +1227,9 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                                                                 .build())
                                                 .build())
                                 .withSecondaryAction(WeaponAction.builder().withReloadTime(35)
+                                                .withActionName(Component.text("Slimy Splatter"))
+                                                .withActionDescription(
+                                                                "Launch a slime-ball that splits into other slime-balls on collision creating a chain of explosions.")
                                                 .withVelocityMultiplier(4.2f)
                                                 .withProjectileSplittingCount(3)
                                                 .withMaxProjectileSplits(1)
@@ -1234,60 +1329,156 @@ public class WeaponRegistry implements CommandExecutor, TabCompleter {
                 return weapons.getOrDefault(key, defaultWeapon);
         }
 
+        public Weapon getWeaponByID(String weapon_id) {
+                return weapons.getOrDefault(new NamespacedKey(EggSplosion.getInstance(), weapon_id), defaultWeapon);
+        }
+
         public Weapon getRandomWeapon() {
                 Random random = new Random();
                 return (Weapon) weapons.values().toArray()[random.nextInt(weapons.values().size())];
         }
 
-        @Override
-        public boolean onCommand(CommandSender sender, @NotNull Command command, @NotNull String commandLabel,
-                        @NotNull String @NotNull [] args) {
-                if (commandLabel.equalsIgnoreCase("weapon")) {
-                        if (sender instanceof Player) {
-                                Player player = (Player) sender;
-                                if (args.length == 0) {
-                                        NamespacedKey woodenHoeID = new NamespacedKey(EggSplosion.getInstance(),
-                                                        "wooden_hoe");
-                                        player.give(getWeaponByID(woodenHoeID).getItem());
-
-                                        NamespacedKey stoneHoeID = new NamespacedKey(EggSplosion.getInstance(),
-                                                        "stone_hoe");
-                                        player.give(getWeaponByID(stoneHoeID).getItem());
-
-                                        NamespacedKey copperHoeID = new NamespacedKey(EggSplosion.getInstance(),
-                                                        "copper_hoe");
-                                        player.give(getWeaponByID(copperHoeID).getItem());
-                                } else if (args.length == 1) {
-                                        NamespacedKey weaponID = NamespacedKey.fromString(args[0]);
-                                        Weapon weapon = getWeaponByID(weaponID);
-                                        if (weapon != null) {
-                                                player.give(weapon.getItem());
-                                        } else {
-                                                player.sendMessage(MiniMessage.miniMessage().deserialize(
-                                                                "No weapon with ID <weapon_id>",
-                                                                Placeholder.component("weapon_id",
-                                                                                MiniMessage.miniMessage().deserialize(
-                                                                                                weaponID.asString()))));
-                                        }
-                                }
-
-                        }
-                }
-                return true;
+        public static LiteralCommandNode<CommandSourceStack> createWeaponCommand() {
+                LiteralCommandNode<CommandSourceStack> weapon = Commands.literal("weapon")
+                                .then(Commands.literal("give").then(Commands
+                                                .argument("weapon_id", ArgumentTypes.namespacedKey())
+                                                .suggests(WeaponRegistry::getWeaponNamespacedKeySuggestions)
+                                                .executes(WeaponRegistry::executeGiveSenderSpecificWeapon)
+                                                .then(Commands.argument("target", ArgumentTypes.player())
+                                                                .executes(WeaponRegistry::executeGiveSpecificWeapon))))
+                                .then(Commands.literal("list").executes(WeaponRegistry::executeListWeapons))
+                                .build();
+                return weapon;
         }
 
-        @Override
-        public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
-                if (cmd.getName().equalsIgnoreCase("weapon")) {
-                        switch (args.length) {
-                                case 1:
-                                        List<String> commands = new ArrayList<>();
-                                        for (NamespacedKey weaponID : weapons.keySet()) {
-                                                commands.add(weaponID.asString());
-                                        }
-                                        return Utils.FilterTabComplete(args[0], commands);
-                        }
-                }
-                return null;
+        private static CompletableFuture<Suggestions> getWeaponNamespacedKeySuggestions(
+                        final CommandContext<CommandSourceStack> ctx,
+                        final SuggestionsBuilder builder) {
+                WeaponRegistry registry = WeaponRegistry.getInstance();
+                WeaponRegistry.getInstance().weapons.keySet()
+                                .stream()
+                                .filter(entry -> entry
+                                                .asString()
+                                                .toLowerCase()
+                                                .startsWith(builder
+                                                                .getRemainingLowerCase()))
+                                .forEach(entry -> {
+                                        builder.suggest(entry
+                                                        .asString(),
+                                                        MessageComponentSerializer.message().serialize(
+                                                                        registry.getWeaponByID(entry).displayName));
+                                });
+                return builder.buildFuture();
+
         }
+
+        private static int executeListWeapons(final CommandContext<CommandSourceStack> ctx)
+                        throws CommandSyntaxException {
+                final CommandSender sender = ctx.getSource().getSender();
+
+                WeaponRegistry registry = WeaponRegistry.getInstance();
+
+                Component message = MiniMessage.miniMessage().deserialize("[EggSplosion] Weapons - ");
+                for (NamespacedKey weaponKey : registry.weapons.keySet()) {
+                        Weapon weapon = registry.getWeaponByID(weaponKey);
+                        Component giveButton = Component.text("[Give]").color(TextColor.fromHexString("#55FF55"))
+                                        .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+                                                        .serialize(MiniMessage.miniMessage().deserialize(
+                                                                        "/weapon give <weapon_name>",
+                                                                        Placeholder.component("weapon_name", Component
+                                                                                        .text(weaponKey.asString()))))))
+                                        .hoverEvent(
+                                                        HoverEvent.showText(
+                                                                        Component.text("Give yourself this weapon")));
+
+                        if (weapon.displayName != null) {
+                                message = message.appendNewline().appendSpace().appendSpace()
+                                                .append(MiniMessage.miniMessage().deserialize(
+                                                                "[<weapon_name>] - <give_button>",
+                                                                Placeholder.component("weapon_name",
+                                                                                weapon.displayName.hoverEvent(
+                                                                                                weapon.getItem().asHoverEvent())),
+                                                                Placeholder.component("give_button", giveButton)));
+                        } else {
+                                message = message.appendNewline().appendSpace().appendSpace()
+                                                .append(MiniMessage.miniMessage().deserialize(
+                                                                "<weapon_name> - <give_button>",
+                                                                Placeholder.component("weapon_name",
+                                                                                weapon.getItem().displayName()),
+                                                                Placeholder.component("give_button", giveButton)));
+                        }
+
+                }
+
+                sender.sendMessage(message);
+                return Command.SINGLE_SUCCESS;
+        }
+
+        private static int executeGiveDefaultWeapons(final CommandContext<CommandSourceStack> ctx)
+                        throws CommandSyntaxException {
+                final PlayerSelectorArgumentResolver playerSelector = ctx
+                                .getArgument("target",
+                                                PlayerSelectorArgumentResolver.class);
+                WeaponRegistry registry = WeaponRegistry.getInstance();
+                Weapon woodenHoe = registry.getWeaponByID("wooden_hoe");
+                Weapon stoneHoe = registry.getWeaponByID("stone_hoe");
+                Weapon copperHoe = registry.getWeaponByID("copper_hoe");
+                Weapon ironHoe = registry.getWeaponByID("iron_hoe");
+                Weapon goldenHoe = registry.getWeaponByID("golden_hoe");
+                Weapon diamondHoe = registry.getWeaponByID("diamond_hoe");
+
+                playerSelector.resolve(ctx.getSource())
+                                .forEach(targetPlayer -> {
+                                        targetPlayer.give(woodenHoe.getItem());
+                                        targetPlayer.give(stoneHoe.getItem());
+                                        targetPlayer.give(copperHoe.getItem());
+                                        targetPlayer.give(ironHoe.getItem());
+                                        targetPlayer.give(goldenHoe.getItem());
+                                        targetPlayer.give(diamondHoe.getItem());
+                                });
+                return Command.SINGLE_SUCCESS;
+        }
+
+        private static int executeGiveSenderSpecificWeapon(final CommandContext<CommandSourceStack> ctx)
+                        throws CommandSyntaxException {
+                if (!(ctx.getSource().getExecutor() instanceof Player player)) {
+                        return Command.SINGLE_SUCCESS;
+                }
+
+                final NamespacedKey weaponKey = ctx.getArgument(
+                                "weapon_id",
+                                NamespacedKey.class);
+
+                Weapon weapon = WeaponRegistry.getInstance()
+                                .getWeaponByID(weaponKey);
+                if (weapon != null) {
+                        player.give(weapon.getItem());
+                        return Command.SINGLE_SUCCESS;
+                }
+                return 0;
+        }
+
+        private static int executeGiveSpecificWeapon(final CommandContext<CommandSourceStack> ctx)
+                        throws CommandSyntaxException {
+                final PlayerSelectorArgumentResolver playerSelector = ctx
+                                .getArgument("target",
+                                                PlayerSelectorArgumentResolver.class);
+                final NamespacedKey weaponKey = ctx.getArgument(
+                                "weapon_id",
+                                NamespacedKey.class);
+
+                Weapon weapon = WeaponRegistry.getInstance()
+                                .getWeaponByID(weaponKey);
+                if (weapon != null) {
+                        playerSelector.resolve(ctx.getSource())
+                                        .forEach(targetPlayer -> {
+                                                targetPlayer.give(
+                                                                weapon
+                                                                                .getItem());
+                                        });
+                        return Command.SINGLE_SUCCESS;
+                }
+                return 0;
+        }
+
 }

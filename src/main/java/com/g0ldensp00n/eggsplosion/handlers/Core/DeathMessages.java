@@ -22,6 +22,8 @@ public class DeathMessages implements Listener {
   private LobbyManager lobbyManager;
   private List<String> deathMessagesPlayerOnPlayer;
   private List<String> deathMessagesPlayerOnPlayerFall;
+  private List<String> deathMessagesPlayerVaporize;
+  private List<String> deathMessagesPlayerSonicBoom;
 
   public DeathMessages(Plugin plugin, LobbyManager lobbyManager) {
     this.lobbyManager = lobbyManager;
@@ -34,6 +36,15 @@ public class DeathMessages implements Listener {
 
     deathMessagesPlayerOnPlayerFall = new ArrayList<>();
     deathMessagesPlayerOnPlayerFall.add("was Humpty Dumptied by");
+
+    deathMessagesPlayerVaporize = new ArrayList<>();
+    deathMessagesPlayerVaporize.add("was fried by");
+    deathMessagesPlayerVaporize.add("was turned to an eggy gas by");
+
+    deathMessagesPlayerSonicBoom = new ArrayList<>();
+    deathMessagesPlayerSonicBoom.add("was shattered");
+    deathMessagesPlayerSonicBoom.add("was de-shelled");
+
   }
 
   @EventHandler
@@ -85,6 +96,23 @@ public class DeathMessages implements Listener {
             .get(random.nextInt(deathMessagesPlayerOnPlayerFall.size()));
 
         playerLobby.broadcastCustomDeathMessage(deathMessage, victim, killer);
+      } else if (damageType == DamageType.OUTSIDE_BORDER) {
+        killer.playSound(victim.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
+
+        Random random = new Random();
+        String deathMessage = deathMessagesPlayerVaporize
+            .get(random.nextInt(deathMessagesPlayerVaporize.size()));
+
+        playerLobby.broadcastCustomDeathMessage(deathMessage, victim, killer);
+      } else if (damageType == DamageType.SONIC_BOOM) {
+        killer.playSound(victim.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1, 1);
+
+        Random random = new Random();
+        String deathMessage = deathMessagesPlayerSonicBoom
+            .get(random.nextInt(deathMessagesPlayerSonicBoom.size()));
+
+        playerLobby.broadcastCustomDeathMessage(deathMessage, victim, killer);
+
       } else {
         playerLobby.broadcastDefaultDeathMessage(playerDeathEvent.deathMessage(), victim, killer);
       }

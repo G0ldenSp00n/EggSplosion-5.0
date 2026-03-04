@@ -3,7 +3,6 @@ package com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.GameModeLob
 import java.util.List;
 
 import com.g0ldensp00n.eggsplosion.handlers.GameModeManager.GameMode;
-import com.g0ldensp00n.eggsplosion.handlers.LobbyManager.LobbyTypes.Lobby;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.GameMap;
 import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;

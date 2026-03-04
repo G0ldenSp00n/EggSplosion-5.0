@@ -11,11 +11,15 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
+import net.kyori.adventure.text.Component;
+
 public class WeaponAction {
   Collection<WeaponEffect> fireEffects;
   Collection<WeaponEffect> castEffects;
   Collection<WeaponEffect> reloadEffects;
   Collection<WeaponEffect> trailEffects;
+  Component actionName = null;
+  String actionDescription = null;
   int fireReloadTicks;
   float fireVelocityMultiplier;
   Particle trailParticle;
@@ -36,14 +40,15 @@ public class WeaponAction {
       Collection<WeaponEffect> castEffects, Collection<WeaponEffect> reloadEffects,
       Collection<WeaponEffect> trailEffects) {
     this(fireEffects, castEffects, reloadEffects, trailEffects, 10, -1, 1.0f, Egg.class, Material.EGG,
-        false, 1, 1, 0, 0, 0, 1, 1);
+        false, 1, 1, 0, 0, 0, 1, 1, null, null);
   }
 
   public WeaponAction(Collection<WeaponEffect> fireEffects, Collection<WeaponEffect> castEffects,
       Collection<WeaponEffect> reloadEffects, Collection<WeaponEffect> trailEffects, int fireReloadTicks,
       int maxTicksLived, float fireVelocityMultiplier, Class<? extends Projectile> projectile,
       Material projectileMaterial, boolean isCharged, int projectileCount, int burstCount, int burstDelayTicks,
-      int splitCount, int maxSplit, int trailEffectDelay, int trailEffectTimer) {
+      int splitCount, int maxSplit, int trailEffectDelay, int trailEffectTimer, Component actionName,
+      String actionNameDescription) {
     this.fireEffects = fireEffects;
     this.castEffects = castEffects;
     this.reloadEffects = reloadEffects;
@@ -61,6 +66,8 @@ public class WeaponAction {
     this.maxSplit = maxSplit;
     this.trailEffectDelay = trailEffectDelay;
     this.trailEffectTimer = trailEffectTimer;
+    this.actionName = actionName;
+    this.actionDescription = actionNameDescription;
   }
 
   public boolean isPrimaryAction() {
@@ -109,6 +116,8 @@ public class WeaponAction {
     Collection<WeaponEffect> castEffects;
     Collection<WeaponEffect> reloadEffects;
     Collection<WeaponEffect> trailEffects;
+    Component actionName;
+    String actionDescription;
     int fireReloadTicks;
     int projectileMaxTicksLived = -1;
     Material projectileMaterial;
@@ -215,6 +224,16 @@ public class WeaponAction {
       return this;
     }
 
+    public Builder withActionName(Component actionName) {
+      this.actionName = actionName;
+      return this;
+    }
+
+    public Builder withActionDescription(String actionDescription) {
+      this.actionDescription = actionDescription;
+      return this;
+    }
+
     public WeaponAction build() {
       if (projectileMaterial == null) {
         projectileMaterial = Material.EGG;
@@ -224,7 +243,7 @@ public class WeaponAction {
           projectileMaxTicksLived,
           fireVelocityMultiplier,
           projectile, projectileMaterial, isCharged, projectileCount, burstCount, burstDelayTicks, splitCount,
-          maxSplit, trailEffectDelay, trailEffectTimer);
+          maxSplit, trailEffectDelay, trailEffectTimer, actionName, actionDescription);
     }
   }
 }

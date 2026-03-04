@@ -18,6 +18,10 @@ import com.g0ldensp00n.eggsplosion.handlers.MapManager.MapManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreManager;
 import com.g0ldensp00n.eggsplosion.handlers.ScoreManager.ScoreType;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -69,7 +73,9 @@ public class WaitingLobby extends Lobby implements Listener {
     player.teleport(getMap().getSpawnPoint());
     equipPlayer(player);
     configurePlayer(player);
-    player.sendMessage("[EggSplosion] You have joined lobby " + ChatColor.AQUA + getLobbyName());
+    player.sendMessage(MiniMessage.miniMessage().deserialize(
+        "[EggSplosion] You have joined lobby <dark_purple><lobby_name></dark_purple>",
+        Placeholder.component("lobby_name", Component.text(getLobbyName()))));
   }
 
   protected void handlePlayerLeave(Player player) {

@@ -1,5 +1,5 @@
-api-version: '1.21.11'
 name: EggSplosion
 version: '5.1'
 main: com.g0ldensp00n.eggsplosion.EggSplosion
-description: My first Bukkit plugin with Gradle
+description: EggSplosion Plugin
+api-version: '1.21.11'
