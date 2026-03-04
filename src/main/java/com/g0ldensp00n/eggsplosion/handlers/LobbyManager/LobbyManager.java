@@ -26,7 +26,12 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -219,7 +224,7 @@ public class LobbyManager implements Listener {
     if (waiting_room != null) {
       Lobby createdLobby = lobbyManager.addLobby(10, lobbyName, waiting_room);
       sender.sendRichMessage(
-          "[EggSplosion] Lobby <aqua><lobby_name></aqua> created!",
+          "[EggSplosion] Lobby <dark_purple><lobby_name></dark_purple> created!",
           Placeholder.component("lobby_name", Component.text(lobbyName)));
 
       if (sender instanceof Player player) {
@@ -266,7 +271,9 @@ public class LobbyManager implements Listener {
     if (lobby != null) {
       lobbyManager.joinLobby(lobby, player);
     } else {
-      player.sendRichMessage("<red>[EggSplosion]</red> Lobby " + lobbyName + " does not exist");
+      player.sendMessage(MiniMessage.miniMessage().deserialize(
+          "<red>[EggSplosion]</red> Lobby <dark_purple><lobby_name></dark_purple> does not exist",
+          Placeholder.component("lobby_name", Component.text(lobbyName))));
     }
 
     player.updateCommands();
@@ -282,7 +289,9 @@ public class LobbyManager implements Listener {
     Lobby playerLobby = lobbyManager.getPlayersLobby(player);
     lobbyManager.joinLobby(lobbyManager.getMainLobby(), player);
 
-    player.sendMessage("[EggSplosion] Left Lobby " + ChatColor.AQUA + playerLobby.getLobbyName());
+    player.sendMessage(
+        MiniMessage.miniMessage().deserialize("[EggSplosion] Left Lobby <dark_purple><lobby_name></dark_purple>",
+            Placeholder.component("lobby_name", Component.text(playerLobby.getLobbyName()))));
     if (playerLobby.getPlayers().size() == 0) {
       lobbyManager.lobbies.remove(playerLobby.getLobbyName());
       for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
@@ -297,14 +306,35 @@ public class LobbyManager implements Listener {
 
   private static int executeListLobbies(final CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
     final CommandSender sender = ctx.getSource().getSender();
-    Hashtable<String, Lobby> lobbies = EggSplosion.getInstance().getLobbyManager().lobbies;
-    String lobbiesList = "[EggSplosion] Current Lobbies - ";
+    LobbyManager lobbyManager = EggSplosion.getInstance().getLobbyManager();
+    Hashtable<String, Lobby> lobbies = lobbyManager.lobbies;
+    Component lobbiesList = Component.text("[EggSplosion] Current Lobbies - ");
     Iterator<String> lobbiesIterator = lobbies.keys().asIterator();
     while (lobbiesIterator.hasNext()) {
       String nextLobby = lobbiesIterator.next();
-      lobbiesList += ChatColor.AQUA + nextLobby + ChatColor.RESET;
-      if (lobbiesIterator.hasNext()) {
-        lobbiesList += ", ";
+      TagResolver.Single lobbyName = Placeholder.component("lobby_name", Component.text(nextLobby));
+      Component joinButton = Component.text("[Join]").color(TextColor.fromHexString("#55FF55"))
+          .clickEvent(ClickEvent.suggestCommand(PlainTextComponentSerializer.plainText()
+              .serialize(MiniMessage.miniMessage().deserialize(
+                  "/lobby join <lobby_name>",
+                  lobbyName))));
+
+      Component leaveButton = Component.text("[Leave]").color(TextColor.fromHexString("#FF5555"))
+          .clickEvent(ClickEvent.suggestCommand("/lobby leave"));
+
+      if (sender instanceof Player player && lobbyManager.getPlayersLobby(player).getLobbyName() == nextLobby) {
+        lobbiesList = lobbiesList.appendNewline()
+            .append(
+                MiniMessage.miniMessage().deserialize(
+                    "Lobby <dark_purple><lobby_name></dark_purple> <dark_gray>(Current Lobby)</dark_gray> - <leave_button>",
+                    lobbyName,
+                    Placeholder.component("leave_button", leaveButton)));
+      } else {
+        lobbiesList = lobbiesList.appendNewline()
+            .append(
+                MiniMessage.miniMessage().deserialize("Lobby <dark_purple><lobby_name></dark_purple> - <join_button>",
+                    lobbyName,
+                    Placeholder.component("join_button", joinButton)));
       }
     }
 
